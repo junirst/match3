@@ -66,8 +66,8 @@ flutter:
     - assets/tower_button.png
     - assets/settings_button.png
     - assets/back_button.png
-    - lib/bgm/bgm.mp3
-    - lib/bgm/sfx.mp3
+    - assets/bgm/bgm.mp3
+    - assets/bgm/sfx.mp3
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:

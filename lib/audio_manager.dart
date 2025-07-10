@@ -28,7 +28,7 @@ class AudioManager {
     if (!_isBgmEnabled || _isBgmPlaying) return;
 
     try {
-      await _bgmPlayer.play(AssetSource('lib/bgm/bgm.mp3'));
+      await _bgmPlayer.play(AssetSource('bgm/bgm.mp3'));
       _isBgmPlaying = true;
     } catch (e) {
       print('Error playing background music: $e');
@@ -58,7 +58,7 @@ class AudioManager {
     if (!_isSfxEnabled) return;
 
     try {
-      await _sfxPlayer.play(AssetSource('lib/bgm/sfx.mp3'));
+      await _sfxPlayer.play(AssetSource('bgm/sfx.mp3'));
     } catch (e) {
       print('Error playing sound effect: $e');
     }
