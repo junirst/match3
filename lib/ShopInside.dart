@@ -58,11 +58,11 @@ class ShopScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildOutfitButton(),
+                _buildOutfitButton(context),
                 const SizedBox(height: 30),
-                _buildWeaponButton(),
+                _buildWeaponButton(context),
                 const SizedBox(height: 20),
-                _buildUpgradeButton(),
+                _buildUpgradeButton(context),
               ],
             ),
           ),
@@ -90,10 +90,10 @@ class ShopScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildOutfitButton() {
+  Widget _buildOutfitButton(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Add your outfit button functionality here
+        Navigator.pushNamed(context, '/outfit');
       },
       child: Container(
         width: 180,
@@ -106,15 +106,14 @@ class ShopScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildWeaponButton() {
+  Widget _buildWeaponButton(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Add your weapon button functionality here
+        Navigator.pushNamed(context, '/weapon');
       },
       child: Container(
         width: 180,
         height: 80,
-
         child: ClipRRect(
           borderRadius: BorderRadius.circular(5),
           child: Image.asset('assets/weaponbutton.png', fit: BoxFit.cover),
@@ -123,15 +122,14 @@ class ShopScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUpgradeButton() {
+  Widget _buildUpgradeButton(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Add your upgrade button functionality here
+        Navigator.pushNamed(context, '/upgrade');
       },
       child: Container(
         width: 180,
         height: 80,
-
         child: ClipRRect(
           borderRadius: BorderRadius.circular(5),
           child: Image.asset('assets/upgradebutton.png', fit: BoxFit.cover),

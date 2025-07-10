@@ -112,16 +112,3 @@ class _OpeningScreenState extends State<OpeningScreen>
     );
   }
 }
-
-void main() {
-  runApp(
-    MaterialApp(
-      initialRoute: '/',
-      routes: {
-        '/': (context) => OpeningScreen(),
-        '/main_menu': (context) => MainMenuScreen(),
-        '/shop': (context) => ShopScreen(),
-      },
-    ),
-  );
-}

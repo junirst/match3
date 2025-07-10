@@ -1,27 +1,34 @@
 import 'package:flutter/material.dart';
 import 'opening_screen.dart';
 import 'main_menu_screen.dart';
-import 'audio_manager.dart';
+import 'ShopInside.dart';
+import 'OutfitInside.dart';
+import 'WeaponInside.dart';
+import 'UpgradeInside.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize audio manager
-  await AudioManager().init();
-
-  runApp(MyApp());
+void main() {
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Match 3 Game',
-      theme: ThemeData(primarySwatch: Colors.blue),
+      title: 'Flutter Demo',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+      ),
       initialRoute: '/',
       routes: {
-        '/': (context) => OpeningScreen(),
-        '/main_menu': (context) => MainMenuScreen(),
+        '/': (context) => const OpeningScreen(),
+        '/main_menu': (context) => const MainMenuScreen(),
+        '/shop': (context) => const ShopScreen(),
+        '/outfit': (context) => const OutfitScreen(),
+        '/weapon': (context) => const WeaponScreen(),
+        '/upgrade': (context) => const UpgradeScreen(),
       },
     );
   }
