@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'main_menu_screen.dart';
+import 'audio_manager.dart';
 
 class OpeningScreen extends StatefulWidget {
   @override
@@ -14,6 +14,9 @@ class _OpeningScreenState extends State<OpeningScreen>
   @override
   void initState() {
     super.initState();
+
+    // Start background music
+    AudioManager().playBackgroundMusic();
 
     _buttonController = AnimationController(
       vsync: this,
@@ -36,6 +39,8 @@ class _OpeningScreenState extends State<OpeningScreen>
     return Scaffold(
       body: GestureDetector(
         onTap: () {
+          // Play sound effect
+          AudioManager().playSfx();
           Navigator.pushNamed(context, '/main_menu');
         },
         child: Stack(
@@ -86,7 +91,11 @@ class _OpeningScreenState extends State<OpeningScreen>
                         Shadow(offset: Offset(1, -1), color: Colors.black),
                         Shadow(offset: Offset(-1, 1), color: Colors.black),
                         Shadow(offset: Offset(1, 1), color: Colors.black),
-                        Shadow(offset: Offset(0, 0), color: Colors.black, blurRadius: 2),
+                        Shadow(
+                          offset: Offset(0, 0),
+                          color: Colors.black,
+                          blurRadius: 2,
+                        ),
                       ],
                     ),
                   ),
@@ -98,14 +107,4 @@ class _OpeningScreenState extends State<OpeningScreen>
       ),
     );
   }
-}
-
-void main() {
-  runApp(MaterialApp(
-    initialRoute: '/',
-    routes: {
-      '/': (context) => OpeningScreen(),
-      '/main_menu': (context) => MainMenuScreen(),
-    },
-  ));
 }

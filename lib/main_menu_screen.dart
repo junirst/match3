@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'audio_manager.dart';
 
 class MainMenuScreen extends StatefulWidget {
   @override
@@ -13,6 +14,9 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   double _backScale = 1.0;
 
   void _onButtonTap(String buttonName, Function setStateCallback) {
+    // Play sound effect
+    AudioManager().playSfx();
+    
     setState(() {
       switch (buttonName) {
         case 'story':
