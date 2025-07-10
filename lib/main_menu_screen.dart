@@ -18,7 +18,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   void _onButtonTap(String buttonName, Function setStateCallback) {
     // Play sound effect
     AudioManager().playSfx();
-    
+
     setState(() {
       switch (buttonName) {
         case 'story':
@@ -50,6 +50,8 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
         Navigator.pushNamed(context, '/');
       } else if (buttonName == 'shop') {
         Navigator.pushNamed(context, '/shop');
+      } else if (buttonName == 'settings') {
+        Navigator.pushNamed(context, '/settings');
       }
     });
   }

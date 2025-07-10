@@ -5,6 +5,7 @@ import 'ShopInside.dart';
 import 'OutfitInside.dart';
 import 'WeaponInside.dart';
 import 'UpgradeInside.dart';
+import 'SettingInside.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,11 +17,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Match3 Game',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
+      debugShowCheckedModeBanner: false,
       initialRoute: '/',
       routes: {
         '/': (context) => const OpeningScreen(),
@@ -29,6 +31,7 @@ class MyApp extends StatelessWidget {
         '/outfit': (context) => const OutfitScreen(),
         '/weapon': (context) => const WeaponScreen(),
         '/upgrade': (context) => const UpgradeScreen(),
+        '/settings': (context) => const SettingScreen(),
       },
     );
   }
