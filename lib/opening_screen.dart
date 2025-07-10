@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'main_menu_screen.dart';
 import 'ShopInside.dart';
+import 'audio_manager.dart';
 
 class OpeningScreen extends StatefulWidget {
   const OpeningScreen({super.key});
@@ -17,6 +18,9 @@ class _OpeningScreenState extends State<OpeningScreen>
   @override
   void initState() {
     super.initState();
+
+    // Start background music
+    AudioManager().playBackgroundMusic();
 
     _buttonController = AnimationController(
       vsync: this,
@@ -39,6 +43,8 @@ class _OpeningScreenState extends State<OpeningScreen>
     return Scaffold(
       body: GestureDetector(
         onTap: () {
+          // Play sound effect
+          AudioManager().playSfx();
           Navigator.pushNamed(context, '/main_menu');
         },
         child: Stack(
