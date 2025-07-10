@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'main_menu_screen.dart';
+import 'ShopInside.dart';
 
 class OpeningScreen extends StatefulWidget {
+  const OpeningScreen({super.key});
+
   @override
   _OpeningScreenState createState() => _OpeningScreenState();
 }
@@ -86,7 +89,11 @@ class _OpeningScreenState extends State<OpeningScreen>
                         Shadow(offset: Offset(1, -1), color: Colors.black),
                         Shadow(offset: Offset(-1, 1), color: Colors.black),
                         Shadow(offset: Offset(1, 1), color: Colors.black),
-                        Shadow(offset: Offset(0, 0), color: Colors.black, blurRadius: 2),
+                        Shadow(
+                          offset: Offset(0, 0),
+                          color: Colors.black,
+                          blurRadius: 2,
+                        ),
                       ],
                     ),
                   ),
@@ -101,11 +108,14 @@ class _OpeningScreenState extends State<OpeningScreen>
 }
 
 void main() {
-  runApp(MaterialApp(
-    initialRoute: '/',
-    routes: {
-      '/': (context) => OpeningScreen(),
-      '/main_menu': (context) => MainMenuScreen(),
-    },
-  ));
+  runApp(
+    MaterialApp(
+      initialRoute: '/',
+      routes: {
+        '/': (context) => OpeningScreen(),
+        '/main_menu': (context) => MainMenuScreen(),
+        '/shop': (context) => ShopScreen(),
+      },
+    ),
+  );
 }

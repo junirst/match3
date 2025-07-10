@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class MainMenuScreen extends StatefulWidget {
+  const MainMenuScreen({super.key});
+
   @override
   _MainMenuScreenState createState() => _MainMenuScreenState();
 }
@@ -42,12 +44,18 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
       });
       if (buttonName == 'back') {
         Navigator.pushNamed(context, '/');
+      } else if (buttonName == 'shop') {
+        Navigator.pushNamed(context, '/shop');
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final screenWidth = screenSize.width;
+    final screenHeight = screenSize.height;
+
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -65,17 +73,17 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           ),
           // Logo placeholder in top center
           Padding(
-            padding: EdgeInsets.only(top: 40),
+            padding: EdgeInsets.only(top: screenHeight * 0.05),
             child: Align(
               alignment: Alignment.topCenter,
               child: Image.asset(
                 'assets/logo.png',
-                width: 1250,
-                height: 250,
+                width: screenWidth * 0.8,
+                height: screenHeight * 0.15,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
-                    width: 100,
-                    height: 100,
+                    width: screenWidth * 0.2,
+                    height: screenHeight * 0.1,
                     color: Colors.grey, // Fallback
                   );
                 },
@@ -84,16 +92,23 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           ),
           // Welcome text in top-left with Distillery Display font
           Padding(
-            padding: EdgeInsets.only(top: 16.0, left: 120.0), // Right of logo
+            padding: EdgeInsets.only(
+              top: screenHeight * 0.02,
+              left: screenWidth * 0.05,
+            ),
             child: Text(
               'WELCOME BACK, PLAYER NAME',
               style: TextStyle(
                 fontFamily: 'DistilleryDisplay',
-                fontSize: 20,
+                fontSize: screenWidth * 0.025,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
                 shadows: [
-                  Shadow(offset: Offset(1, 1), color: Colors.black, blurRadius: 2),
+                  Shadow(
+                    offset: Offset(1, 1),
+                    color: Colors.black,
+                    blurRadius: 2,
+                  ),
                 ],
               ),
             ),
@@ -110,19 +125,19 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                     duration: Duration(milliseconds: 100),
                     child: Image.asset(
                       'assets/story_button.png', // Placeholder for Story Mode PNG
-                      width: 700,
-                      height: 125,
+                      width: screenWidth * 0.6,
+                      height: screenHeight * 0.08,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
-                          width: 200,
-                          height: 60,
+                          width: screenWidth * 0.4,
+                          height: screenHeight * 0.06,
                           color: Colors.grey, // Fallback
                         );
                       },
                     ),
                   ),
                 ),
-                SizedBox(height: 20),
+                SizedBox(height: screenHeight * 0.02),
                 GestureDetector(
                   onTap: () => _onButtonTap('tower', setState),
                   child: AnimatedScale(
@@ -130,19 +145,19 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                     duration: Duration(milliseconds: 100),
                     child: Image.asset(
                       'assets/tower_button.png', // Placeholder for Tower Mode PNG
-                      width: 700,
-                      height: 125,
+                      width: screenWidth * 0.6,
+                      height: screenHeight * 0.08,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
-                          width: 200,
-                          height: 60,
+                          width: screenWidth * 0.4,
+                          height: screenHeight * 0.06,
                           color: Colors.grey, // Fallback
                         );
                       },
                     ),
                   ),
                 ),
-                SizedBox(height: 20),
+                SizedBox(height: screenHeight * 0.02),
                 GestureDetector(
                   onTap: () => _onButtonTap('shop', setState),
                   child: AnimatedScale(
@@ -150,12 +165,12 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                     duration: Duration(milliseconds: 100),
                     child: Image.asset(
                       'assets/shop_button.png', // Placeholder for Shop PNG
-                      width: 700,
-                      height: 125,
+                      width: screenWidth * 0.6,
+                      height: screenHeight * 0.08,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
-                          width: 200,
-                          height: 60,
+                          width: screenWidth * 0.4,
+                          height: screenHeight * 0.06,
                           color: Colors.grey, // Fallback
                         );
                       },
@@ -169,7 +184,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
-              padding: EdgeInsets.only(right: 0.0, top: 30.0, bottom: 150.0),
+              padding: EdgeInsets.only(bottom: screenHeight * 0.18),
               child: GestureDetector(
                 onTap: () => _onButtonTap('settings', setState),
                 child: AnimatedScale(
@@ -177,12 +192,12 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   duration: Duration(milliseconds: 100),
                   child: Image.asset(
                     'assets/settings_button.png', // Placeholder for Settings PNG
-                    width: 300,
-                    height: 125,
+                    width: screenWidth * 0.25,
+                    height: screenHeight * 0.08,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
-                        width: 60,
-                        height: 60,
+                        width: screenWidth * 0.15,
+                        height: screenHeight * 0.06,
                         color: Colors.grey, // Fallback
                       );
                     },
@@ -195,7 +210,10 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           Align(
             alignment: Alignment.bottomRight,
             child: Padding(
-              padding: EdgeInsets.only(bottom: 20.0, right: 10, left: 80),
+              padding: EdgeInsets.only(
+                bottom: screenHeight * 0.03,
+                right: screenWidth * 0.02,
+              ),
               child: GestureDetector(
                 onTap: () => _onButtonTap('back', setState),
                 child: AnimatedScale(
@@ -203,12 +221,12 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   duration: Duration(milliseconds: 100),
                   child: Image.asset(
                     'assets/back_button.png', // Placeholder for Back PNG
-                    width: 150,
-                    height: 125,
+                    width: screenWidth * 0.12,
+                    height: screenHeight * 0.08,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
-                        width: 50,
-                        height: 50,
+                        width: screenWidth * 0.1,
+                        height: screenHeight * 0.06,
                         color: Colors.grey, // Fallback
                       );
                     },
