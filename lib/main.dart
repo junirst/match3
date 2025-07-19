@@ -6,6 +6,8 @@ import 'OutfitInside.dart';
 import 'WeaponInside.dart';
 import 'UpgradeInside.dart';
 import 'SettingInside.dart';
+import 'ChapterScreen.dart';
+import 'Chapter1.dart';
 
 void main() {
   runApp(const MyApp());
@@ -32,6 +34,8 @@ class MyApp extends StatelessWidget {
         '/weapon': (context) => const WeaponScreen(),
         '/upgrade': (context) => const UpgradeScreen(),
         '/settings': (context) => const SettingScreen(),
+        '/story': (context) => const Chapterscreen(),
+        '/chapter1': (context) => const Chapter1Screen(),
       },
     );
   }

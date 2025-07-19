@@ -52,6 +52,10 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
         Navigator.pushNamed(context, '/shop');
       } else if (buttonName == 'settings') {
         Navigator.pushNamed(context, '/settings');
+      } else if (buttonName == 'story') {
+        Navigator.pushNamed(context, '/story');
+      } else if (buttonName == 'Chapter1') {
+        Navigator.pushNamed(context, '/Chapter1');
       }
     });
   }
