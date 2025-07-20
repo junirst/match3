@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'audio_manager.dart';
+import 'audio_settings_screen.dart';
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({super.key});
@@ -14,7 +15,6 @@ class _SettingScreenState extends State<SettingScreen> {
   double _backScale = 1.0;
 
   void _onButtonTap(String buttonName) {
-    // Play sound effect
     AudioManager().playSfx();
 
     setState(() {
@@ -31,7 +31,7 @@ class _SettingScreenState extends State<SettingScreen> {
       }
     });
 
-    Future.delayed(Duration(milliseconds: 100), () {
+    Future.delayed(const Duration(milliseconds: 100), () {
       setState(() {
         _audioScale = 1.0;
         _languageScale = 1.0;
@@ -41,15 +41,11 @@ class _SettingScreenState extends State<SettingScreen> {
       if (buttonName == 'back') {
         Navigator.pop(context);
       } else if (buttonName == 'audio') {
-        // Add audio settings functionality here
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Audio settings functionality not implemented yet'),
-            duration: Duration(seconds: 1),
-          ),
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const AudioSettingsScreen()),
         );
       } else if (buttonName == 'language') {
-        // Add language settings functionality here
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -72,7 +68,6 @@ class _SettingScreenState extends State<SettingScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Background image
           Container(
             color: Colors.grey[800],
             child: Image.asset(
@@ -83,8 +78,6 @@ class _SettingScreenState extends State<SettingScreen> {
               },
             ),
           ),
-
-          // Settings button in top left (replacing logo)
           Positioned(
             top: screenHeight * 0.05,
             left: screenWidth * 0.05,
@@ -110,18 +103,15 @@ class _SettingScreenState extends State<SettingScreen> {
               },
             ),
           ),
-
-          // Center buttons (Audio and Language)
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Audio button
                 GestureDetector(
                   onTap: () => _onButtonTap('audio'),
                   child: AnimatedScale(
                     scale: _audioScale,
-                    duration: Duration(milliseconds: 100),
+                    duration: const Duration(milliseconds: 100),
                     child: Image.asset(
                       'assets/Audiobutton.png',
                       width: screenWidth * 0.6,
@@ -148,15 +138,12 @@ class _SettingScreenState extends State<SettingScreen> {
                     ),
                   ),
                 ),
-
                 SizedBox(height: screenHeight * 0.05),
-
-                // Language button
                 GestureDetector(
                   onTap: () => _onButtonTap('language'),
                   child: AnimatedScale(
                     scale: _languageScale,
-                    duration: Duration(milliseconds: 100),
+                    duration: const Duration(milliseconds: 100),
                     child: Image.asset(
                       'assets/Languagebutton.png',
                       width: screenWidth * 0.6,
@@ -186,8 +173,6 @@ class _SettingScreenState extends State<SettingScreen> {
               ],
             ),
           ),
-
-          // Back button in bottom right
           Positioned(
             bottom: screenHeight * 0.03,
             right: screenWidth * 0.03,
@@ -195,7 +180,7 @@ class _SettingScreenState extends State<SettingScreen> {
               onTap: () => _onButtonTap('back'),
               child: AnimatedScale(
                 scale: _backScale,
-                duration: Duration(milliseconds: 100),
+                duration: const Duration(milliseconds: 100),
                 child: Image.asset(
                   'assets/backbutton.png',
                   width: screenWidth * 0.12,

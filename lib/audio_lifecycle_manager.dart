@@ -5,7 +5,7 @@ class AudioLifecycleManager extends StatefulWidget {
   final Widget child;
 
   const AudioLifecycleManager({Key? key, required this.child})
-    : super(key: key);
+      : super(key: key);
 
   @override
   _AudioLifecycleManagerState createState() => _AudioLifecycleManagerState();
@@ -13,16 +13,30 @@ class AudioLifecycleManager extends StatefulWidget {
 
 class _AudioLifecycleManagerState extends State<AudioLifecycleManager>
     with WidgetsBindingObserver {
+  final AudioManager _audioManager = AudioManager();
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _initializeAudio();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _audioManager.dispose();
     super.dispose();
+  }
+
+  Future<void> _initializeAudio() async {
+    await _audioManager.init();
+    if (_audioManager.isBgmEnabled && !_audioManager.isBgmPlaying) {
+      await _audioManager.playBackgroundMusic();
+    }
+    if (_audioManager.isMainEnabled) {
+      await _audioManager.playMain();
+    }
   }
 
   @override
@@ -31,21 +45,25 @@ class _AudioLifecycleManagerState extends State<AudioLifecycleManager>
 
     switch (state) {
       case AppLifecycleState.resumed:
-        // App came back to foreground, resume music
-        AudioManager().resumeBackgroundMusic();
+        if (_audioManager.isBgmEnabled) {
+          _audioManager.resumeBackgroundMusic();
+        }
+        if (_audioManager.isMainEnabled) {
+          _audioManager.resumeMain();
+        }
         break;
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
-        // App went to background, pause music
-        AudioManager().pauseBackgroundMusic();
+        _audioManager.pauseBackgroundMusic();
+        _audioManager.pauseMain();
         break;
       case AppLifecycleState.detached:
-        // App is being terminated
-        AudioManager().stopBackgroundMusic();
+        _audioManager.stopBackgroundMusic();
+        _audioManager.stopMain();
         break;
       case AppLifecycleState.hidden:
-        // App is hidden
-        AudioManager().pauseBackgroundMusic();
+        _audioManager.pauseBackgroundMusic();
+        _audioManager.pauseMain();
         break;
     }
   }
