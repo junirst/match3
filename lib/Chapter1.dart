@@ -38,12 +38,142 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
     // Play sound effect
     AudioManager().playSfx();
 
-    // Navigate to level gameplay
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Level $levelNumber functionality not implemented yet'),
-        duration: Duration(seconds: 1),
-      ),
+    // Show level popup dialog
+    _showLevelDialog(levelNumber);
+  }
+
+  void _showLevelDialog(int levelNumber) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        final screenSize = MediaQuery.of(context).size;
+        final screenWidth = screenSize.width;
+        final screenHeight = screenSize.height;
+
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            width: screenWidth * 0.8,
+            height: screenHeight * 0.5,
+            decoration: BoxDecoration(
+              color: Colors.brown[100],
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.brown[800]!, width: 4),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black54,
+                  blurRadius: 10,
+                  offset: Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Level title
+                Text(
+                  'Level 1.$levelNumber',
+                  style: TextStyle(
+                    fontSize: screenWidth * 0.08,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.brown[800],
+                  ),
+                ),
+
+                SizedBox(height: screenHeight * 0.03),
+
+                // Play button
+                GestureDetector(
+                  onTap: () {
+                    AudioManager().playSfx();
+                    Navigator.pop(context);
+                    // Navigate to actual gameplay here - replace with your game screen
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Starting Level 1.$levelNumber'),
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+                  },
+                  child: Image.asset(
+                    'assets/PlayButton.png',
+                    width: screenWidth * 0.3,
+                    height: screenHeight * 0.12,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: screenWidth * 0.3,
+                        height: screenHeight * 0.12,
+                        decoration: BoxDecoration(
+                          color: Colors.green[600],
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(
+                            color: Colors.green[800]!,
+                            width: 3,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'PLAY',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: screenWidth * 0.06,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                SizedBox(height: screenHeight * 0.03),
+
+                // Reward section
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Reward: ${levelNumber * 50}',
+                      style: TextStyle(
+                        fontSize: screenWidth * 0.05,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.brown[700],
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    // Gold coin icon
+                    Container(
+                      width: screenWidth * 0.08,
+                      height: screenWidth * 0.08,
+                      decoration: BoxDecoration(
+                        color: Colors.amber,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.orange[800]!,
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 2,
+                            offset: Offset(1, 1),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.monetization_on,
+                        color: Colors.orange[800],
+                        size: screenWidth * 0.05,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
