@@ -54,6 +54,93 @@ class _ChapterscreenState extends State<Chapterscreen> {
     });
   }
 
+  Widget _buildChapterButton(String text, String buttonType, double scale, VoidCallback onTap, double screenWidth, double screenHeight) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedScale(
+        scale: scale,
+        duration: Duration(milliseconds: 100),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Image.asset(
+              'assets/frame.png',
+              width: screenWidth * 0.8,
+              height: screenHeight * 0.12,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  width: screenWidth * 0.8,
+                  height: screenHeight * 0.12,
+                  color: Colors.grey,
+                );
+              },
+            ),
+            Text(
+              text,
+              style: TextStyle(
+                fontFamily: 'Bungee',
+                fontSize: screenWidth * 0.05,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                shadows: [
+                  Shadow(offset: Offset(-1, -1), color: Colors.black),
+                  Shadow(offset: Offset(1, -1), color: Colors.black),
+                  Shadow(offset: Offset(-1, 1), color: Colors.black),
+                  Shadow(offset: Offset(1, 1), color: Colors.black),
+                  Shadow(
+                    offset: Offset(0, 0),
+                    color: Colors.black,
+                    blurRadius: 2,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStoryModeHeader(double screenWidth, double screenHeight) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Image.asset(
+          'assets/frame.png',
+          width: screenWidth * 0.4,
+          height: screenHeight * 0.08,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              width: screenWidth * 0.4,
+              height: screenHeight * 0.08,
+              color: Colors.grey,
+            );
+          },
+        ),
+        Text(
+          'STORY MODE',
+          style: TextStyle(
+            fontFamily: 'Bungee',
+            fontSize: screenWidth * 0.03,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            shadows: [
+              Shadow(offset: Offset(-1, -1), color: Colors.black),
+              Shadow(offset: Offset(1, -1), color: Colors.black),
+              Shadow(offset: Offset(-1, 1), color: Colors.black),
+              Shadow(offset: Offset(1, 1), color: Colors.black),
+              Shadow(
+                offset: Offset(0, 0),
+                color: Colors.black,
+                blurRadius: 2,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
@@ -76,31 +163,11 @@ class _ChapterscreenState extends State<Chapterscreen> {
             ),
           ),
 
-          // Story Mode button in top left
+          // Story Mode header in top left
           Positioned(
             top: screenHeight * 0.05,
             left: screenWidth * 0.05,
-            child: Image.asset(
-              'assets/story_button.png',
-              width: screenWidth * 0.25,
-              height: screenHeight * 0.08,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  width: screenWidth * 0.25,
-                  height: screenHeight * 0.08,
-                  decoration: BoxDecoration(
-                    color: Colors.orange,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'STORY MODE',
-                      style: TextStyle(color: Colors.white, fontSize: 12),
-                    ),
-                  ),
-                );
-              },
-            ),
+            child: _buildStoryModeHeader(screenWidth, screenHeight),
           ),
 
           // Center buttons (Chapter 1 and Chapter 2)
@@ -109,75 +176,25 @@ class _ChapterscreenState extends State<Chapterscreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Chapter 1 button
-                GestureDetector(
-                  onTap: () => _onButtonTap('chapter1'),
-                  child: AnimatedScale(
-                    scale: _chapter1Scale,
-                    duration: Duration(milliseconds: 100),
-                    child: Image.asset(
-                      'assets/Chapter1.png',
-                      width: screenWidth * 0.6,
-                      height: screenHeight * 0.1,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: screenWidth * 0.6,
-                          height: screenHeight * 0.1,
-                          decoration: BoxDecoration(
-                            color: Colors.brown,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.orange, width: 2),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'CHAPTER 1',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+                _buildChapterButton(
+                  'CHAPTER 1',
+                  'chapter1',
+                  _chapter1Scale,
+                      () => _onButtonTap('chapter1'),
+                  screenWidth,
+                  screenHeight,
                 ),
 
                 SizedBox(height: screenHeight * 0.05),
 
                 // Chapter 2 button
-                GestureDetector(
-                  onTap: () => _onButtonTap('chapter2'),
-                  child: AnimatedScale(
-                    scale: _chapter2Scale,
-                    duration: Duration(milliseconds: 100),
-                    child: Image.asset(
-                      'assets/Chapter2.png',
-                      width: screenWidth * 0.6,
-                      height: screenHeight * 0.1,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: screenWidth * 0.6,
-                          height: screenHeight * 0.1,
-                          decoration: BoxDecoration(
-                            color: Colors.brown,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.orange, width: 2),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'CHAPTER 2',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+                _buildChapterButton(
+                  'CHAPTER 2',
+                  'chapter2',
+                  _chapter2Scale,
+                      () => _onButtonTap('chapter2'),
+                  screenWidth,
+                  screenHeight,
                 ),
               ],
             ),

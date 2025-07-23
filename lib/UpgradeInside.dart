@@ -45,10 +45,32 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
       children: List.generate(4, (index) {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4.0),
-          child: Icon(
-            index < progress ? Icons.check : Icons.circle_outlined,
-            size: 24,
-            color: index < progress ? Colors.green : Colors.grey,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            width: 24, // Increased size for visibility
+            height: 24,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: index < progress ? Colors.greenAccent.withOpacity(0.9) : Colors.grey[700]!.withOpacity(0.5),
+              border: Border.all(
+                color: index < progress ? Colors.green : Colors.grey[400]!,
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: index < progress ? Colors.green.withOpacity(0.4) : Colors.black.withOpacity(0.2),
+                  blurRadius: 4,
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+            child: Center(
+              child: Icon(
+                index < progress ? Icons.circle : Icons.circle_outlined,
+                size: 16,
+                color: index < progress ? Colors.white : Colors.grey[300],
+              ),
+            ),
           ),
         );
       }),
@@ -85,35 +107,54 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
 
           // Top Bar
           Positioned(
-            top: 40,
-            left: 16,
-            right: 16,
+            top: 20, // Adjusted for larger size
+            left: 12,
+            right: 12,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Custom Image Label
-                Image.asset(
-                  'assets/upgradebutton.png',
-                  height: 60,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 60,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.green,
-                        borderRadius: BorderRadius.circular(12),
+                // Custom Image Label with "UPGRADES" - Made bigger
+                GestureDetector(
+                  onTap: () {
+                    // Add your upgrades button functionality here if needed
+                  },
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/frame.png',
+                        width: 200, // Increased from 120
+                        height: 100, // Increased from 60
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            width: 160,
+                            height: 80,
+                            color: Colors.grey,
+                          );
+                        },
                       ),
-                      child: const Text(
+                      Text(
                         'UPGRADES',
                         style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontFamily: 'DistilleryDisplay',
+                          fontFamily: 'Bungee',
+                          fontSize: 24, // Increased for larger box
                           fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          shadows: [
+                            Shadow(offset: Offset(-1, -1), color: Colors.black),
+                            Shadow(offset: Offset(1, -1), color: Colors.black),
+                            Shadow(offset: Offset(-1, 1), color: Colors.black),
+                            Shadow(offset: Offset(1, 1), color: Colors.black),
+                            Shadow(
+                              offset: Offset(0, 0),
+                              color: Colors.black,
+                              blurRadius: 2,
+                            ),
+                          ],
                         ),
                       ),
-                    );
-                  },
+                    ],
+                  ),
                 ),
                 // Coin Count
                 Row(
@@ -121,22 +162,22 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
                     const Text(
                       '9999',
                       style: TextStyle(
-                        fontSize: 28,
+                        fontSize: 24,
                         color: Colors.white,
                         shadows: [
                           Shadow(
-                            blurRadius: 3,
+                            blurRadius: 2,
                             color: Colors.black,
-                            offset: const Offset(1.5, 1.5),
+                            offset: const Offset(1, 1),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 5),
                     const Icon(
                       Icons.monetization_on,
                       color: Colors.amber,
-                      size: 32,
+                      size: 28,
                     ),
                   ],
                 ),
@@ -151,11 +192,11 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   _buildUpgradeRow(context, 'sword', 'LVL ${upgradeLevels['sword']}', Colors.red),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 25),
                   _buildUpgradeRow(context, 'heart', 'LVL ${upgradeLevels['heart']}', Colors.green),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 25),
                   _buildUpgradeRow(context, 'star', 'LVL ${upgradeLevels['star']}', Colors.yellow),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 25),
                   _buildUpgradeRow(context, 'shield', 'LVL ${upgradeLevels['shield']}', Colors.blue),
                 ],
               ),
@@ -164,20 +205,20 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
 
           // Bottom back button
           Positioned(
-            bottom: 20,
-            right: 20,
+            bottom: 16,
+            right: 16,
             child: GestureDetector(
               onTap: () {
                 Navigator.pop(context);
               },
               child: Image.asset(
                 'assets/backbutton.png',
-                height: 70,
-                width: 70,
+                height: 60,
+                width: 60,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
-                    height: 70,
-                    width: 70,
+                    height: 60,
+                    width: 60,
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
@@ -185,7 +226,7 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
                     child: const Icon(
                       Icons.arrow_back,
                       color: Colors.black,
-                      size: 32,
+                      size: 28,
                     ),
                   );
                 },
@@ -204,11 +245,11 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
       children: [
         // Upgrade Icon Space with PNG
         Container(
-          width: 120,
-          height: 120,
+          width: 100,
+          height: 100,
           decoration: BoxDecoration(
             color: color.withOpacity(0.3),
-            borderRadius: BorderRadius.circular(60),
+            borderRadius: BorderRadius.circular(50),
           ),
           child: Image.asset(
             upgradeType == 'sword' ? 'assets/sword.png' :
@@ -220,37 +261,38 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
               return const Icon(
                 Icons.inventory,
                 color: Colors.white,
-                size: 60,
+                size: 50,
               );
             },
           ),
         ),
-        const SizedBox(width: 15),
+        const SizedBox(width: 12),
         // Level Text
         Padding(
-          padding: const EdgeInsets.only(top: 10.0),
+          padding: const EdgeInsets.only(top: 8.0),
           child: Text(
             levelText,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 20,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
-              fontFamily: 'DistilleryDisplay',
+              fontFamily: 'Bungee',
             ),
           ),
         ),
-        const SizedBox(width: 15),
+        const SizedBox(width: 12),
         // Progress Bar
         _buildProgressBar(upgradeProgress[upgradeType]!),
-        const SizedBox(width: 15),
+        const SizedBox(width: 12),
         // Purchase Button with PNG and Price
         Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             GestureDetector(
               onTap: () => _purchaseUpgrade(upgradeType),
               child: Container(
-                width: 60,
-                height: 60,
+                width: 50,
+                height: 50,
                 decoration: const BoxDecoration(
                   color: Colors.brown,
                   shape: BoxShape.circle,
@@ -262,37 +304,30 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
                     return const Icon(
                       Icons.add,
                       color: Colors.white,
-                      size: 36,
+                      size: 30,
                     );
                   },
                 ),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             // Price and Coin Icon
             Row(
-              children: [
-                const Text(
+              children: const [
+                Text(
                   '100',
                   style: TextStyle(
-                    fontSize: 20,
                     color: Colors.white,
-                    fontFamily: 'DistilleryDisplay',
+                    fontSize: 16,
+                    fontFamily: 'Bungee',
                     fontWeight: FontWeight.bold,
-                    shadows: [
-                      Shadow(
-                        blurRadius: 2,
-                        color: Colors.black,
-                        offset: Offset(1, 1),
-                      ),
-                    ],
                   ),
                 ),
-                const SizedBox(width: 4),
-                const Icon(
+                SizedBox(width: 3),
+                Icon(
                   Icons.monetization_on,
                   color: Colors.amber,
-                  size: 24,
+                  size: 20,
                 ),
               ],
             ),

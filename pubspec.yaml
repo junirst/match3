@@ -58,6 +58,9 @@ flutter:
     - family: DistilleryDisplay
       fonts:
         - asset: assets/fonts/DistilleryDisplay.ttf
+    - family: Bungee
+      fonts:
+        - asset: assets/fonts/Bungee-Regular.ttf
   assets:
     - assets/
     - assets/bgm/

@@ -58,6 +58,93 @@ class _SettingScreenState extends State<SettingScreen> {
     });
   }
 
+  Widget _buildSettingButton(String text, String buttonType, double scale, VoidCallback onTap, double screenWidth, double screenHeight) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedScale(
+        scale: scale,
+        duration: const Duration(milliseconds: 100),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Image.asset(
+              'assets/frame.png',
+              width: screenWidth * 0.8,
+              height: screenHeight * 0.12,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  width: screenWidth * 0.8,
+                  height: screenHeight * 0.12,
+                  color: Colors.grey,
+                );
+              },
+            ),
+            Text(
+              text,
+              style: TextStyle(
+                fontFamily: 'Bungee',
+                fontSize: screenWidth * 0.05,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                shadows: [
+                  Shadow(offset: Offset(-1, -1), color: Colors.black),
+                  Shadow(offset: Offset(1, -1), color: Colors.black),
+                  Shadow(offset: Offset(-1, 1), color: Colors.black),
+                  Shadow(offset: Offset(1, 1), color: Colors.black),
+                  Shadow(
+                    offset: Offset(0, 0),
+                    color: Colors.black,
+                    blurRadius: 2,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsHeader(double screenWidth, double screenHeight) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Image.asset(
+          'assets/frame.png',
+          width: screenWidth * 0.4,
+          height: screenHeight * 0.08,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              width: screenWidth * 0.4,
+              height: screenHeight * 0.08,
+              color: Colors.grey,
+            );
+          },
+        ),
+        Text(
+          'SETTINGS',
+          style: TextStyle(
+            fontFamily: 'Bungee',
+            fontSize: screenWidth * 0.03,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            shadows: [
+              Shadow(offset: Offset(-1, -1), color: Colors.black),
+              Shadow(offset: Offset(1, -1), color: Colors.black),
+              Shadow(offset: Offset(-1, 1), color: Colors.black),
+              Shadow(offset: Offset(1, 1), color: Colors.black),
+              Shadow(
+                offset: Offset(0, 0),
+                color: Colors.black,
+                blurRadius: 2,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
@@ -81,94 +168,28 @@ class _SettingScreenState extends State<SettingScreen> {
           Positioned(
             top: screenHeight * 0.05,
             left: screenWidth * 0.05,
-            child: Image.asset(
-              'assets/settings_button.png',
-              width: screenWidth * 0.25,
-              height: screenHeight * 0.08,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  width: screenWidth * 0.25,
-                  height: screenHeight * 0.08,
-                  decoration: BoxDecoration(
-                    color: Colors.orange,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'SETTINGS',
-                      style: TextStyle(color: Colors.white, fontSize: 12),
-                    ),
-                  ),
-                );
-              },
-            ),
+            child: _buildSettingsHeader(screenWidth, screenHeight),
           ),
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                GestureDetector(
-                  onTap: () => _onButtonTap('audio'),
-                  child: AnimatedScale(
-                    scale: _audioScale,
-                    duration: const Duration(milliseconds: 100),
-                    child: Image.asset(
-                      'assets/Audiobutton.png',
-                      width: screenWidth * 0.6,
-                      height: screenHeight * 0.1,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: screenWidth * 0.6,
-                          height: screenHeight * 0.1,
-                          decoration: BoxDecoration(
-                            color: Colors.blue,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'AUDIO',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+                _buildSettingButton(
+                  'AUDIO',
+                  'audio',
+                  _audioScale,
+                      () => _onButtonTap('audio'),
+                  screenWidth,
+                  screenHeight,
                 ),
                 SizedBox(height: screenHeight * 0.05),
-                GestureDetector(
-                  onTap: () => _onButtonTap('language'),
-                  child: AnimatedScale(
-                    scale: _languageScale,
-                    duration: const Duration(milliseconds: 100),
-                    child: Image.asset(
-                      'assets/Languagebutton.png',
-                      width: screenWidth * 0.6,
-                      height: screenHeight * 0.1,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: screenWidth * 0.6,
-                          height: screenHeight * 0.1,
-                          decoration: BoxDecoration(
-                            color: Colors.green,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'LANGUAGE',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+                _buildSettingButton(
+                  'LANGUAGE',
+                  'language',
+                  _languageScale,
+                      () => _onButtonTap('language'),
+                  screenWidth,
+                  screenHeight,
                 ),
               ],
             ),

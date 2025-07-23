@@ -3,7 +3,6 @@ import 'opening_screen.dart';
 import 'main_menu_screen.dart';
 import 'ShopInside.dart';
 import 'OutfitInside.dart';
-import 'WeaponInside.dart';
 import 'UpgradeInside.dart';
 import 'SettingInside.dart';
 import 'ChapterScreen.dart';
@@ -31,7 +30,6 @@ class MyApp extends StatelessWidget {
         '/main_menu': (context) => const MainMenuScreen(),
         '/shop': (context) => const ShopScreen(),
         '/outfit': (context) => const OutfitScreen(),
-        '/weapon': (context) => const WeaponScreen(),
         '/upgrade': (context) => const UpgradeScreen(),
         '/settings': (context) => const SettingScreen(),
         '/story': (context) => const Chapterscreen(),

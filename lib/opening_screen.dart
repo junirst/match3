@@ -86,8 +86,8 @@ class _OpeningScreenState extends State<OpeningScreen>
                   child: Text(
                     'PRESS TO CONTINUE',
                     style: TextStyle(
-                      fontFamily: 'DistilleryDisplay',
-                      fontSize: 40,
+                      fontFamily: 'Bungee',
+                      fontSize: 30,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                       shadows: [

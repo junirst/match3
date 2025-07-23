@@ -3,8 +3,57 @@ import 'package:flutter/material.dart';
 class ShopScreen extends StatelessWidget {
   const ShopScreen({super.key});
 
+  Widget _buildShopButton(BuildContext context, String text, String route, double screenWidth, double screenHeight) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(context, route);
+      },
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Image.asset(
+            'assets/frame.png',
+            width: screenWidth * 0.8,
+            height: screenHeight * 0.12,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                width: screenWidth * 0.8,
+                height: screenHeight * 0.12,
+                color: Colors.grey,
+              );
+            },
+          ),
+          Text(
+            text,
+            style: TextStyle(
+              fontFamily: 'Bungee',
+              fontSize: screenWidth * 0.05,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              shadows: [
+                Shadow(offset: Offset(-1, -1), color: Colors.black),
+                Shadow(offset: Offset(1, -1), color: Colors.black),
+                Shadow(offset: Offset(-1, 1), color: Colors.black),
+                Shadow(offset: Offset(1, 1), color: Colors.black),
+                Shadow(
+                  offset: Offset(0, 0),
+                  color: Colors.black,
+                  blurRadius: 2,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final screenWidth = screenSize.width;
+    final screenHeight = screenSize.height;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -13,21 +62,50 @@ class ShopScreen extends StatelessWidget {
             child: Image.asset('assets/backgroundshop.png', fit: BoxFit.cover),
           ),
 
-          // Shop button (Top-left)
+          // Shop button (Top-left) - Updated to use frame.png with "SHOP" text, made bigger
           Positioned(
-            top: 40,
+            top: 20, // Adjusted for larger size
             left: 20,
             child: GestureDetector(
               onTap: () {
-                // Add your shop button functionality here
+                // Add your shop button functionality here if needed
               },
-              child: Container(
-                width: 80,
-                height: 40,
-                child: Image.asset(
-                  'assets/shopbutton.png',
-                  fit: BoxFit.contain,
-                ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Image.asset(
+                    'assets/frame.png',
+                    width: 160, // Increased from 120
+                    height: 80, // Increased from 60
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: 160,
+                        height: 80,
+                        color: Colors.grey,
+                      );
+                    },
+                  ),
+                  Text(
+                    'SHOP',
+                    style: TextStyle(
+                      fontFamily: 'Bungee',
+                      fontSize: 24, // Increased for larger box
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      shadows: [
+                        Shadow(offset: Offset(-1, -1), color: Colors.black),
+                        Shadow(offset: Offset(1, -1), color: Colors.black),
+                        Shadow(offset: Offset(-1, 1), color: Colors.black),
+                        Shadow(offset: Offset(1, 1), color: Colors.black),
+                        Shadow(
+                          offset: Offset(0, 0),
+                          color: Colors.black,
+                          blurRadius: 2,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -58,11 +136,9 @@ class ShopScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildOutfitButton(context),
+                _buildShopButton(context, 'OUTFIT', '/outfit', screenWidth, screenHeight),
                 const SizedBox(height: 30),
-                _buildWeaponButton(context),
-                const SizedBox(height: 20),
-                _buildUpgradeButton(context),
+                _buildShopButton(context, 'UPGRADE', '/upgrade', screenWidth, screenHeight),
               ],
             ),
           ),
@@ -86,54 +162,6 @@ class ShopScreen extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildOutfitButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.pushNamed(context, '/outfit');
-      },
-      child: Container(
-        width: 180,
-        height: 80,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(5),
-          child: Image.asset('assets/outfitbutton.png', fit: BoxFit.cover),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWeaponButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.pushNamed(context, '/weapon');
-      },
-      child: Container(
-        width: 180,
-        height: 80,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(5),
-          child: Image.asset('assets/weaponbutton.png', fit: BoxFit.cover),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUpgradeButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.pushNamed(context, '/upgrade');
-      },
-      child: Container(
-        width: 180,
-        height: 80,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(5),
-          child: Image.asset('assets/upgradebutton.png', fit: BoxFit.cover),
-        ),
       ),
     );
   }

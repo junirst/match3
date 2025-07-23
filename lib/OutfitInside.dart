@@ -35,24 +35,46 @@ class OutfitScreen extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Custom Image Label
-                Image.asset(
-                  'assets/outfitbutton.png',
-                  height: 40,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 40,
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.blue,
-                        borderRadius: BorderRadius.circular(8),
+                // Custom Image Label with "OUTFITS"
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/frame.png',
+                      height: 100,
+                      width: 200,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 80,
+                          width: 200,
+                          decoration: BoxDecoration(
+                            color: Colors.blue,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        );
+                      },
+                    ),
+                    const Text(
+                      'OUTFITS',
+                      style: TextStyle(
+                        fontFamily: 'Bungee',
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        shadows: [
+                          Shadow(offset: Offset(-1, -1), color: Colors.black),
+                          Shadow(offset: Offset(1, -1), color: Colors.black),
+                          Shadow(offset: Offset(-1, 1), color: Colors.black),
+                          Shadow(offset: Offset(1, 1), color: Colors.black),
+                          Shadow(
+                            offset: Offset(0, 0),
+                            color: Colors.black,
+                            blurRadius: 2,
+                          ),
+                        ],
                       ),
-                      child: const Text(
-                        'OUTFIT',
-                        style: TextStyle(color: Colors.white, fontSize: 16),
-                      ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
 
                 // Coin Count
@@ -61,7 +83,7 @@ class OutfitScreen extends StatelessWidget {
                     const Text(
                       '9999',
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 24,
                         color: Colors.white,
                         shadows: [
                           Shadow(
@@ -72,11 +94,11 @@ class OutfitScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 6),
                     const Icon(
                       Icons.monetization_on,
                       color: Colors.amber,
-                      size: 24,
+                      size: 30,
                     ),
                   ],
                 ),
@@ -84,22 +106,35 @@ class OutfitScreen extends StatelessWidget {
             ),
           ),
 
-          // Center Grid
+          // Invisible container to prevent overlap with top bar
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 120, // Height to cover top bar area
+            child: Container(
+              color: Colors.transparent,
+            ),
+          ),
+
+          // Center Grid with Scroll
           Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                buildItemRow(context),
-                const SizedBox(height: 30),
-                buildItemRow(context),
-              ],
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(top: 140, bottom: 100), // Increased top padding
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(4, (index) => [
+                  buildItemRow(context),
+                  const SizedBox(height: 40),
+                ]).expand((element) => element).toList(),
+              ),
             ),
           ),
 
           // Bottom back button
           Positioned(
-            bottom: 16,
-            right: 16,
+            bottom: 20,
+            right: 20,
             child: GestureDetector(
               onTap: () {
                 // Add safety check for navigation
@@ -112,12 +147,12 @@ class OutfitScreen extends StatelessWidget {
               },
               child: Image.asset(
                 'assets/backbutton.png',
-                height: 50,
-                width: 50,
+                height: 70,
+                width: 70,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
-                    height: 50,
-                    width: 50,
+                    height: 70,
+                    width: 70,
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
@@ -125,7 +160,7 @@ class OutfitScreen extends StatelessWidget {
                     child: const Icon(
                       Icons.arrow_back,
                       color: Colors.black,
-                      size: 24,
+                      size: 34,
                     ),
                   );
                 },
@@ -152,28 +187,28 @@ class OutfitScreen extends StatelessWidget {
           children: [
             Image.asset(
               'assets/itemslot.png',
-              height: 80,
-              width: 80,
+              height: 100,
+              width: 100,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
-                  height: 80,
-                  width: 80,
+                  height: 100,
+                  width: 100,
                   decoration: BoxDecoration(
                     color: Colors.grey[600],
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: Colors.white, width: 2),
                   ),
                   child: const Icon(
                     Icons.inventory,
                     color: Colors.white,
-                    size: 40,
+                    size: 50,
                   ),
                 );
               },
             ),
             Positioned(
-              bottom: 4,
-              right: 4,
+              bottom: 6,
+              right: 6,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -181,7 +216,7 @@ class OutfitScreen extends StatelessWidget {
                     '1',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 12,
+                      fontSize: 16,
                       shadows: [
                         Shadow(
                           blurRadius: 2,
@@ -191,18 +226,18 @@ class OutfitScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 2),
+                  const SizedBox(width: 3),
                   const Icon(
                     Icons.monetization_on,
                     color: Colors.amber,
-                    size: 14,
+                    size: 18,
                   ),
                 ],
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         GestureDetector(
           onTap: () {
             // Add purchase logic here
@@ -215,20 +250,20 @@ class OutfitScreen extends StatelessWidget {
           },
           child: Image.asset(
             'assets/buybutton.png',
-            height: 40,
-            width: 40,
+            height: 50,
+            width: 50,
             errorBuilder: (context, error, stackTrace) {
               return Container(
-                height: 40,
-                width: 40,
+                height: 50,
+                width: 50,
                 decoration: BoxDecoration(
                   color: Colors.green,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(25),
                 ),
                 child: const Icon(
                   Icons.shopping_cart,
                   color: Colors.white,
-                  size: 20,
+                  size: 28,
                 ),
               );
             },

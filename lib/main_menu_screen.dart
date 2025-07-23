@@ -60,6 +60,53 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     });
   }
 
+  Widget _buildMenuButton(String text, String buttonType, double scale, VoidCallback onTap, double screenWidth, double screenHeight) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedScale(
+        scale: scale,
+        duration: Duration(milliseconds: 100),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Image.asset(
+              'assets/frame.png',
+              width: screenWidth * 0.8,
+              height: screenHeight * 0.12,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  width: screenWidth * 0.8,
+                  height: screenHeight * 0.12,
+                  color: Colors.grey,
+                );
+              },
+            ),
+            Text(
+              text,
+              style: TextStyle(
+                fontFamily: 'Bungee',
+                fontSize: screenWidth * 0.05,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                shadows: [
+                  Shadow(offset: Offset(-1, -1), color: Colors.black),
+                  Shadow(offset: Offset(1, -1), color: Colors.black),
+                  Shadow(offset: Offset(-1, 1), color: Colors.black),
+                  Shadow(offset: Offset(1, 1), color: Colors.black),
+                  Shadow(
+                    offset: Offset(0, 0),
+                    color: Colors.black,
+                    blurRadius: 2,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
@@ -123,69 +170,36 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               ),
             ),
           ),
-          // Buttons with pop animation using PNG placeholders
+          // Buttons with pop animation using frame.png and Bungee text
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                GestureDetector(
-                  onTap: () => _onButtonTap('story', setState),
-                  child: AnimatedScale(
-                    scale: _storyScale,
-                    duration: Duration(milliseconds: 100),
-                    child: Image.asset(
-                      'assets/story_button.png', // Placeholder for Story Mode PNG
-                      width: screenWidth * 0.6,
-                      height: screenHeight * 0.08,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: screenWidth * 0.4,
-                          height: screenHeight * 0.06,
-                          color: Colors.grey, // Fallback
-                        );
-                      },
-                    ),
-                  ),
+                _buildMenuButton(
+                  'STORY MODE',
+                  'story',
+                  _storyScale,
+                      () => _onButtonTap('story', setState),
+                  screenWidth,
+                  screenHeight,
                 ),
                 SizedBox(height: screenHeight * 0.02),
-                GestureDetector(
-                  onTap: () => _onButtonTap('tower', setState),
-                  child: AnimatedScale(
-                    scale: _towerScale,
-                    duration: Duration(milliseconds: 100),
-                    child: Image.asset(
-                      'assets/tower_button.png', // Placeholder for Tower Mode PNG
-                      width: screenWidth * 0.6,
-                      height: screenHeight * 0.08,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: screenWidth * 0.4,
-                          height: screenHeight * 0.06,
-                          color: Colors.grey, // Fallback
-                        );
-                      },
-                    ),
-                  ),
+                _buildMenuButton(
+                  'TOWER MODE',
+                  'tower',
+                  _towerScale,
+                      () => _onButtonTap('tower', setState),
+                  screenWidth,
+                  screenHeight,
                 ),
                 SizedBox(height: screenHeight * 0.02),
-                GestureDetector(
-                  onTap: () => _onButtonTap('shop', setState),
-                  child: AnimatedScale(
-                    scale: _shopScale,
-                    duration: Duration(milliseconds: 100),
-                    child: Image.asset(
-                      'assets/shop_button.png', // Placeholder for Shop PNG
-                      width: screenWidth * 0.6,
-                      height: screenHeight * 0.08,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: screenWidth * 0.4,
-                          height: screenHeight * 0.06,
-                          color: Colors.grey, // Fallback
-                        );
-                      },
-                    ),
-                  ),
+                _buildMenuButton(
+                  'SHOP',
+                  'shop',
+                  _shopScale,
+                      () => _onButtonTap('shop', setState),
+                  screenWidth,
+                  screenHeight,
                 ),
               ],
             ),
