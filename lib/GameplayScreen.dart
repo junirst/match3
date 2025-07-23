@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flame/game.dart';
 import 'dart:math';
 import 'audio_manager.dart';
+import 'flame_match3_game.dart'; // Add this import
 
 class GameplayScreen extends StatefulWidget {
   final int chapter;
@@ -14,69 +16,12 @@ class GameplayScreen extends StatefulWidget {
 
 class _GameplayScreenState extends State<GameplayScreen> {
   bool _isPaused = false;
-  List<List<int>> grid = [];
-  final Random _random = Random();
-  bool _isGridInitialized = false;
-
-  // Image paths for the match-3 game (0=sword, 1=shield, 2=heart, 3=star)
-  final List<String> gameImages = [
-    'assets/sword.png', // sword
-    'assets/shield.png', // shield
-    'assets/heart.png', // heart
-    'assets/star.png', // star
-  ];
-
-  // Fallback icons if images fail to load
-  final List<IconData> gameIcons = [
-    Icons.sports_martial_arts, // sword
-    Icons.shield, // shield
-    Icons.favorite, // heart
-    Icons.star, // star
-  ];
-
-  final List<Color> iconColors = [
-    Colors.grey[300]!, // sword - silver
-    Colors.blue[300]!, // shield - blue
-    Colors.red[300]!, // heart - red
-    Colors.yellow[300]!, // star - yellow
-  ];
+  late Match3Game game;
 
   @override
   void initState() {
     super.initState();
-    _initializeGrid();
-  }
-
-  void _initializeGrid() {
-    // Initialize the grid with random values in one step - changed to 5x5
-    grid = List.generate(5, (i) => List.generate(5, (j) => _random.nextInt(4)));
-
-    // Mark grid as initialized
-    _isGridInitialized = true;
-
-    print(
-      "Grid initialized with ${grid.length} rows and ${grid[0].length} columns",
-    );
-    print("Sample row: ${grid[0]}");
-  }
-
-  void _onTileTap(int row, int col) {
-    // Add bounds checking
-    if (!_isGridInitialized ||
-        row < 0 ||
-        row >= grid.length ||
-        col < 0 ||
-        col >= grid[row].length) {
-      print('Invalid tile tap: row=$row, col=$col');
-      return;
-    }
-
-    AudioManager().playSfx();
-    print('Tapped tile at row: $row, col: $col, icon: ${grid[row][col]}');
-
-    setState(() {
-      grid[row][col] = (grid[row][col] + 1) % 4;
-    });
+    game = Match3Game();
   }
 
   void _onPausePressed() {
@@ -86,6 +31,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
     });
 
     if (_isPaused) {
+      game.paused = true;
       _showPauseDialog();
     }
   }
@@ -138,6 +84,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                         setState(() {
                           _isPaused = false;
                         });
+                        game.paused = false;
                         Navigator.pop(context);
                       },
                       child: Container(
@@ -201,25 +148,8 @@ class _GameplayScreenState extends State<GameplayScreen> {
   }
 
   Widget _buildGameGrid(double screenWidth, double screenHeight) {
-    // Add safety check
-    if (!_isGridInitialized || grid.isEmpty) {
-      return Container(
-        width: screenWidth * 0.8,
-        height: screenWidth * 0.8,
-        decoration: BoxDecoration(
-          color: Colors.brown[700]!.withOpacity(0.3),
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: Colors.brown[800]!, width: 3),
-        ),
-        child: Center(
-          child: CircularProgressIndicator(color: Colors.brown[600]),
-        ),
-      );
-    }
-
     // Use responsive sizing that fits available space
     double gridSize = screenWidth * 0.85;
-    double tileSize = gridSize / 5;
 
     return Container(
       width: gridSize,
@@ -231,76 +161,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
       ),
       child: Padding(
         padding: EdgeInsets.all(10),
-        child: GridView.builder(
-          physics: NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 5,
-            crossAxisSpacing: 4,
-            mainAxisSpacing: 4,
-          ),
-          itemCount: 25,
-          itemBuilder: (context, index) {
-            int row = index ~/ 5;
-            int col = index % 5;
-
-            // Additional safety check
-            if (row >= grid.length || col >= grid[row].length) {
-              return Container(
-                decoration: BoxDecoration(
-                  color: Colors.brown[100],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.brown[600]!, width: 2),
-                ),
-              );
-            }
-
-            // Get the image type for this position
-            int imageType = grid[row][col];
-
-            return GestureDetector(
-              onTap: () => _onTileTap(row, col),
-              child: AnimatedContainer(
-                duration: Duration(milliseconds: 200),
-                decoration: BoxDecoration(
-                  color: Colors.brown[100],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.brown[600]!, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 2,
-                      offset: Offset(1, 1),
-                    ),
-                  ],
-                ),
-                child: Container(
-                  padding: EdgeInsets.all(4),
-                  child: Center(
-                    child: Image.asset(
-                      gameImages[imageType],
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        // Fallback to original icons if images fail to load
-                        return Icon(
-                          gameIcons[imageType],
-                          color: iconColors[imageType],
-                          size: tileSize * 0.5,
-                          shadows: [
-                            Shadow(
-                              color: Colors.black54,
-                              blurRadius: 1,
-                              offset: Offset(1, 1),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
+        child: GameWidget<Match3Game>.controlled(gameFactory: () => game),
       ),
     );
   }
@@ -349,6 +210,33 @@ class _GameplayScreenState extends State<GameplayScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // Sword hand image positioned above the wooden part
+          Positioned(
+            right: screenWidth * 0.02,
+            top: screenHeight * 0.15, // Moved higher up
+            bottom: screenHeight * 0.55, // Adjusted to be above wooden area
+            child: Image.asset(
+              'assets/SwordHand.png',
+              width: screenWidth * 0.2,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  width: screenWidth * 0.2,
+                  height: screenHeight * 0.3,
+                  decoration: BoxDecoration(
+                    color: Colors.brown[300],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.sports_martial_arts,
+                    size: screenWidth * 0.1,
+                    color: Colors.brown[600],
                   ),
                 );
               },
@@ -437,8 +325,8 @@ class _GameplayScreenState extends State<GameplayScreen> {
                       padding: EdgeInsets.only(
                         left: screenWidth * 0.05,
                         right: screenWidth * 0.05,
-                        top: screenWidth * 0.60, // Add more top padding
-                        bottom: screenWidth * 0.02, // Reduce bottom padding
+                        top: screenWidth * 0.57,
+                        bottom: screenWidth * 0.02,
                       ),
                       child: _buildGameGrid(screenWidth, screenHeight),
                     ),
