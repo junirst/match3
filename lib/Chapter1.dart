@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'audio_manager.dart';
+import 'GameplayScreen.dart';
 
 class Chapter1Screen extends StatefulWidget {
   const Chapter1Screen({super.key});
@@ -83,16 +84,17 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
 
                 SizedBox(height: screenHeight * 0.03),
 
-                // Play button
+                // Play button - UPDATED TO NAVIGATE TO GAMEPLAYSCREEN
                 GestureDetector(
                   onTap: () {
                     AudioManager().playSfx();
-                    Navigator.pop(context);
-                    // Navigate to actual gameplay here - replace with your game screen
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Starting Level 1.$levelNumber'),
-                        duration: Duration(seconds: 1),
+                    Navigator.pop(context); // Close the dialog first
+                    // Navigate to GameplayScreen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            GameplayScreen(chapter: 1, level: levelNumber),
                       ),
                     );
                   },
