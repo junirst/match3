@@ -1,10 +1,66 @@
 import 'package:flutter/material.dart';
 
-class UpgradeScreen extends StatelessWidget {
+class UpgradeScreen extends StatefulWidget {
   const UpgradeScreen({super.key});
 
   @override
+  _UpgradeScreenState createState() => _UpgradeScreenState();
+}
+
+class _UpgradeScreenState extends State<UpgradeScreen> {
+  // Track upgrade levels (initially set to 1)
+  Map<String, int> upgradeLevels = {
+    'sword': 1,
+    'heart': 1,
+    'star': 1,
+    'shield': 1,
+  };
+
+  // Track progress for each upgrade (0-4 steps)
+  Map<String, int> upgradeProgress = {
+    'sword': 0,
+    'heart': 0,
+    'star': 0,
+    'shield': 0,
+  };
+
+  // Maximum level for upgrades
+  static const int maxLevel = 4;
+
+  void _purchaseUpgrade(String upgradeType) {
+    setState(() {
+      if (upgradeProgress[upgradeType]! < maxLevel && upgradeLevels[upgradeType]! < 10) {
+        upgradeProgress[upgradeType] = (upgradeProgress[upgradeType]! + 1);
+        if (upgradeProgress[upgradeType] == maxLevel) {
+          upgradeLevels[upgradeType] = (upgradeLevels[upgradeType]! + 1);
+          upgradeProgress[upgradeType] = 0; // Reset progress after reaching max level
+        }
+      }
+    });
+  }
+
+  Widget _buildProgressBar(int progress) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(4, (index) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+          child: Icon(
+            index < progress ? Icons.check : Icons.circle_outlined,
+            size: 24,
+            color: index < progress ? Colors.green : Colors.grey,
+          ),
+        );
+      }),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final screenWidth = screenSize.width;
+    final screenHeight = screenSize.height;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -38,45 +94,49 @@ class UpgradeScreen extends StatelessWidget {
                 // Custom Image Label
                 Image.asset(
                   'assets/upgradebutton.png',
-                  height: 40,
+                  height: 60,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
-                      height: 40,
-                      padding: const EdgeInsets.all(8),
+                      height: 60,
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.green,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Text(
-                        'UPGRADE',
-                        style: TextStyle(color: Colors.white, fontSize: 16),
+                        'UPGRADES',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontFamily: 'DistilleryDisplay',
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     );
                   },
                 ),
-
                 // Coin Count
                 Row(
                   children: [
                     const Text(
                       '9999',
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 28,
                         color: Colors.white,
                         shadows: [
                           Shadow(
-                            blurRadius: 2,
+                            blurRadius: 3,
                             color: Colors.black,
-                            offset: Offset(1, 1),
+                            offset: const Offset(1.5, 1.5),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 6),
                     const Icon(
                       Icons.monetization_on,
                       color: Colors.amber,
-                      size: 24,
+                      size: 32,
                     ),
                   ],
                 ),
@@ -84,38 +144,40 @@ class UpgradeScreen extends StatelessWidget {
             ),
           ),
 
-          // Center Grid
+          // Center Upgrade List
           Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                buildItemRow(context),
-                const SizedBox(height: 30),
-                buildItemRow(context),
-              ],
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildUpgradeRow(context, 'sword', 'LVL ${upgradeLevels['sword']}', Colors.red),
+                  const SizedBox(height: 30),
+                  _buildUpgradeRow(context, 'heart', 'LVL ${upgradeLevels['heart']}', Colors.green),
+                  const SizedBox(height: 30),
+                  _buildUpgradeRow(context, 'star', 'LVL ${upgradeLevels['star']}', Colors.yellow),
+                  const SizedBox(height: 30),
+                  _buildUpgradeRow(context, 'shield', 'LVL ${upgradeLevels['shield']}', Colors.blue),
+                ],
+              ),
             ),
           ),
 
           // Bottom back button
           Positioned(
-            bottom: 16,
-            right: 16,
+            bottom: 20,
+            right: 20,
             child: GestureDetector(
               onTap: () {
-                if (Navigator.of(context).canPop()) {
-                  Navigator.pop(context);
-                } else {
-                  Navigator.pushReplacementNamed(context, '/shop');
-                }
+                Navigator.pop(context);
               },
               child: Image.asset(
                 'assets/backbutton.png',
-                height: 50,
-                width: 50,
+                height: 70,
+                width: 70,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
-                    height: 50,
-                    width: 50,
+                    height: 70,
+                    width: 70,
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
@@ -123,7 +185,7 @@ class UpgradeScreen extends StatelessWidget {
                     child: const Icon(
                       Icons.arrow_back,
                       color: Colors.black,
-                      size: 24,
+                      size: 32,
                     ),
                   );
                 },
@@ -135,103 +197,106 @@ class UpgradeScreen extends StatelessWidget {
     );
   }
 
-  Widget buildItemRow(BuildContext context) {
+  Widget _buildUpgradeRow(BuildContext context, String upgradeType, String levelText, Color color) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: List.generate(2, (index) => buildItemCard(context)),
-    );
-  }
-
-  Widget buildItemCard(BuildContext context) {
-    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Stack(
-          alignment: Alignment.bottomRight,
-          children: [
-            Image.asset(
-              'assets/itemslot.png',
-              height: 80,
-              width: 80,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  height: 80,
-                  width: 80,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[600],
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                  child: const Icon(
-                    Icons.inventory,
-                    color: Colors.white,
-                    size: 40,
-                  ),
-                );
-              },
-            ),
-            Positioned(
-              bottom: 4,
-              right: 4,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    '10',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      shadows: [
-                        Shadow(
-                          blurRadius: 2,
-                          color: Colors.black,
-                          offset: Offset(1, 1),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 2),
-                  const Icon(
-                    Icons.monetization_on,
-                    color: Colors.amber,
-                    size: 14,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        GestureDetector(
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  'Upgrade purchase functionality not implemented yet',
-                ),
-                duration: Duration(seconds: 1),
-              ),
-            );
-          },
+        // Upgrade Icon Space with PNG
+        Container(
+          width: 120,
+          height: 120,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(60),
+          ),
           child: Image.asset(
-            'assets/buybutton.png',
-            height: 40,
-            width: 40,
+            upgradeType == 'sword' ? 'assets/sword.png' :
+            upgradeType == 'heart' ? 'assets/heart.png' :
+            upgradeType == 'star' ? 'assets/star.png' :
+            'assets/shield.png',
+            fit: BoxFit.contain,
             errorBuilder: (context, error, stackTrace) {
-              return Container(
-                height: 40,
-                width: 40,
-                decoration: BoxDecoration(
-                  color: Colors.green,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Icon(
-                  Icons.shopping_cart,
-                  color: Colors.white,
-                  size: 20,
-                ),
+              return const Icon(
+                Icons.inventory,
+                color: Colors.white,
+                size: 60,
               );
             },
           ),
+        ),
+        const SizedBox(width: 15),
+        // Level Text
+        Padding(
+          padding: const EdgeInsets.only(top: 10.0),
+          child: Text(
+            levelText,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'DistilleryDisplay',
+            ),
+          ),
+        ),
+        const SizedBox(width: 15),
+        // Progress Bar
+        _buildProgressBar(upgradeProgress[upgradeType]!),
+        const SizedBox(width: 15),
+        // Purchase Button with PNG and Price
+        Row(
+          children: [
+            GestureDetector(
+              onTap: () => _purchaseUpgrade(upgradeType),
+              child: Container(
+                width: 60,
+                height: 60,
+                decoration: const BoxDecoration(
+                  color: Colors.brown,
+                  shape: BoxShape.circle,
+                ),
+                child: Image.asset(
+                  'assets/plusbutton.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(
+                      Icons.add,
+                      color: Colors.white,
+                      size: 36,
+                    );
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            // Price and Coin Icon
+            Row(
+              children: [
+                const Text(
+                  '100',
+                  style: TextStyle(
+                    fontSize: 20,
+                    color: Colors.white,
+                    fontFamily: 'DistilleryDisplay',
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 2,
+                        color: Colors.black,
+                        offset: Offset(1, 1),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(
+                  Icons.monetization_on,
+                  color: Colors.amber,
+                  size: 24,
+                ),
+              ],
+            ),
+          ],
         ),
       ],
     );
