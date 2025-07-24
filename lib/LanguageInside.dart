@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
-import 'audio_manager.dart';
-import 'audio_settings_screen.dart';
-import 'LanguageInside.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'audio_manager.dart';
 import 'language_manager.dart';
 
-class SettingScreen extends StatefulWidget {
-  const SettingScreen({super.key});
+class LanguageScreen extends StatefulWidget {
+  const LanguageScreen({super.key});
 
   @override
-  _SettingScreenState createState() => _SettingScreenState();
+  _LanguageScreenState createState() => _LanguageScreenState();
 }
 
-class _SettingScreenState extends State<SettingScreen> {
-  double _audioScale = 1.0;
-  double _languageScale = 1.0;
+class _LanguageScreenState extends State<LanguageScreen> {
+  double _englishScale = 1.0;
+  double _vietnameseScale = 1.0;
   double _backScale = 1.0;
-  String _currentLanguage = LanguageManager.currentLanguage;
+  String _selectedLanguage = LanguageManager.currentLanguage;
 
   @override
   void initState() {
@@ -27,12 +25,15 @@ class _SettingScreenState extends State<SettingScreen> {
   Future<void> _loadLanguagePreference() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _currentLanguage = prefs.getString('language') ?? LanguageManager.currentLanguage;
+      _selectedLanguage = prefs.getString('language') ?? LanguageManager.currentLanguage;
+      LanguageManager.setLanguage(_selectedLanguage);
     });
   }
 
-  String _getLocalizedText(String englishText, String vietnameseText) {
-    return _currentLanguage == 'Vietnamese' ? vietnameseText : englishText;
+  Future<void> _saveLanguagePreference(String language) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('language', language);
+    LanguageManager.setLanguage(language);
   }
 
   void _onButtonTap(String buttonName) {
@@ -40,11 +41,11 @@ class _SettingScreenState extends State<SettingScreen> {
 
     setState(() {
       switch (buttonName) {
-        case 'audio':
-          _audioScale = 1.1;
+        case 'english':
+          _englishScale = 1.1;
           break;
-        case 'language':
-          _languageScale = 1.1;
+        case 'vietnamese':
+          _vietnameseScale = 1.1;
           break;
         case 'back':
           _backScale = 1.1;
@@ -54,28 +55,97 @@ class _SettingScreenState extends State<SettingScreen> {
 
     Future.delayed(const Duration(milliseconds: 100), () {
       setState(() {
-        _audioScale = 1.0;
-        _languageScale = 1.0;
+        _englishScale = 1.0;
+        _vietnameseScale = 1.0;
         _backScale = 1.0;
       });
 
       if (buttonName == 'back') {
         Navigator.pop(context);
-      } else if (buttonName == 'audio') {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const AudioSettingsScreen()),
-        );
-      } else if (buttonName == 'language') {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const LanguageScreen()),
-        );
+      } else if (buttonName == 'english' && _selectedLanguage != 'English') {
+        _showLanguageConfirmationDialog('English');
+      } else if (buttonName == 'vietnamese' && _selectedLanguage != 'Vietnamese') {
+        _showLanguageConfirmationDialog('Vietnamese');
       }
     });
   }
 
-  Widget _buildSettingButton(String text, String buttonType, double scale, VoidCallback onTap, double screenWidth, double screenHeight) {
+  void _showLanguageConfirmationDialog(String newLanguage) {
+    String title = newLanguage == 'English' ? 'Change Language' : 'Thay đổi ngôn ngữ';
+    String content = newLanguage == 'English'
+        ? 'Are you sure you want to change the language to English?'
+        : 'Bạn có chắc chắn muốn thay đổi ngôn ngữ sang Tiếng Việt?';
+    String confirmText = newLanguage == 'English' ? 'Yes' : 'Có';
+    String cancelText = newLanguage == 'English' ? 'Cancel' : 'Hủy';
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[850],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          title: Text(
+            title,
+            style: TextStyle(
+              fontFamily: 'Bungee',
+              color: Colors.white,
+              fontSize: 18,
+            ),
+          ),
+          content: Text(
+            content,
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 16,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                cancelText,
+                style: TextStyle(
+                  color: Colors.red[300],
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                setState(() {
+                  _selectedLanguage = newLanguage;
+                });
+
+                await _saveLanguagePreference(newLanguage);
+
+                Navigator.of(context).pop();
+
+                // Reset to OpeningScreen immediately
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/',
+                      (route) => false,
+                );
+              },
+              child: Text(
+                confirmText,
+                style: TextStyle(
+                  color: Colors.green[300],
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildLanguageButton(String text, String buttonType, double scale, VoidCallback onTap, double screenWidth, double screenHeight, {bool isSelected = false}) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedScale(
@@ -96,8 +166,23 @@ class _SettingScreenState extends State<SettingScreen> {
                 );
               },
             ),
+            if (isSelected)
+              Positioned(
+                right: screenWidth * 0.15,
+                child: Icon(
+                  Icons.check_circle,
+                  color: Colors.green,
+                  size: screenWidth * 0.06,
+                  shadows: [
+                    Shadow(offset: Offset(-1, -1), color: Colors.black),
+                    Shadow(offset: Offset(1, -1), color: Colors.black),
+                    Shadow(offset: Offset(-1, 1), color: Colors.black),
+                    Shadow(offset: Offset(1, 1), color: Colors.black),
+                  ],
+                ),
+              ),
             Text(
-              _getLocalizedText(text, text), // Use localized text
+              text,
               style: TextStyle(
                 fontFamily: 'Bungee',
                 fontSize: screenWidth * 0.05,
@@ -122,7 +207,7 @@ class _SettingScreenState extends State<SettingScreen> {
     );
   }
 
-  Widget _buildSettingsHeader(double screenWidth, double screenHeight) {
+  Widget _buildLanguageHeader(double screenWidth, double screenHeight) {
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -139,7 +224,7 @@ class _SettingScreenState extends State<SettingScreen> {
           },
         ),
         Text(
-          _getLocalizedText('SETTINGS', 'CÀI ĐẶT'),
+          'LANGUAGE',
           style: TextStyle(
             fontFamily: 'Bungee',
             fontSize: screenWidth * 0.03,
@@ -185,28 +270,30 @@ class _SettingScreenState extends State<SettingScreen> {
           Positioned(
             top: screenHeight * 0.05,
             left: screenWidth * 0.05,
-            child: _buildSettingsHeader(screenWidth, screenHeight),
+            child: _buildLanguageHeader(screenWidth, screenHeight),
           ),
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildSettingButton(
-                  _getLocalizedText('AUDIO', 'ÂM THANH'),
-                  'audio',
-                  _audioScale,
-                      () => _onButtonTap('audio'),
+                _buildLanguageButton(
+                  'ENGLISH',
+                  'english',
+                  _englishScale,
+                      () => _onButtonTap('english'),
                   screenWidth,
                   screenHeight,
+                  isSelected: _selectedLanguage == 'English',
                 ),
                 SizedBox(height: screenHeight * 0.05),
-                _buildSettingButton(
-                  _getLocalizedText('LANGUAGE', 'NGÔN NGỮ'),
-                  'language',
-                  _languageScale,
-                      () => _onButtonTap('language'),
+                _buildLanguageButton(
+                  'TIẾNG VIỆT',
+                  'vietnamese',
+                  _vietnameseScale,
+                      () => _onButtonTap('vietnamese'),
                   screenWidth,
                   screenHeight,
+                  isSelected: _selectedLanguage == 'Vietnamese',
                 ),
               ],
             ),

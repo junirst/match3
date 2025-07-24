@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'main_menu_screen.dart';
 import 'ShopInside.dart';
 import 'audio_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'language_manager.dart';
 
 class OpeningScreen extends StatefulWidget {
   const OpeningScreen({super.key});
@@ -14,6 +16,7 @@ class _OpeningScreenState extends State<OpeningScreen>
     with TickerProviderStateMixin {
   late AnimationController _buttonController;
   late Animation<double> _buttonAnimation;
+  String _currentLanguage = LanguageManager.currentLanguage;
 
   @override
   void initState() {
@@ -30,6 +33,8 @@ class _OpeningScreenState extends State<OpeningScreen>
       CurvedAnimation(parent: _buttonController, curve: Curves.easeInOut),
     );
     _buttonController.forward();
+
+    _loadLanguagePreference();
   }
 
   @override
@@ -38,12 +43,22 @@ class _OpeningScreenState extends State<OpeningScreen>
     super.dispose();
   }
 
+  Future<void> _loadLanguagePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _currentLanguage = prefs.getString('language') ?? LanguageManager.currentLanguage;
+    });
+  }
+
+  String _getLocalizedText(String englishText, String vietnameseText) {
+    return _currentLanguage == 'Vietnamese' ? vietnameseText : englishText;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: GestureDetector(
         onTap: () {
-          // Play sound effect
           AudioManager().playSfx();
           Navigator.pushNamed(context, '/main_menu');
         },
@@ -56,7 +71,7 @@ class _OpeningScreenState extends State<OpeningScreen>
                 'assets/background.png',
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
-                  return Container(color: Colors.grey[800]); // Fallback
+                  return Container(color: Colors.grey[800]);
                 },
               ),
             ),
@@ -71,7 +86,7 @@ class _OpeningScreenState extends State<OpeningScreen>
                     return Container(
                       width: 650,
                       height: 485,
-                      color: Colors.grey, // Fallback
+                      color: Colors.grey,
                     );
                   },
                 ),
@@ -84,7 +99,7 @@ class _OpeningScreenState extends State<OpeningScreen>
                 child: ScaleTransition(
                   scale: _buttonAnimation,
                   child: Text(
-                    'PRESS TO CONTINUE',
+                    _getLocalizedText('PRESS TO CONTINUE', 'ẤN ĐỂ TIẾP TỤC'),
                     style: TextStyle(
                       fontFamily: 'Bungee',
                       fontSize: 30,

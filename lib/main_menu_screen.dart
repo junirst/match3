@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'audio_manager.dart';
+import 'language_manager.dart';
 
 class MainMenuScreen extends StatefulWidget {
   const MainMenuScreen({super.key});
@@ -15,8 +17,26 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   double _settingsScale = 1.0;
   double _backScale = 1.0;
 
+  String _currentLanguage = LanguageManager.currentLanguage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLanguagePreference();
+  }
+
+  Future<void> _loadLanguagePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _currentLanguage = LanguageManager.currentLanguage; // Sync with LanguageManager
+    });
+  }
+
+  String _getLocalizedText(String englishText, String vietnameseText) {
+    return _currentLanguage == 'Vietnamese' ? vietnameseText : englishText;
+  }
+
   void _onButtonTap(String buttonName, Function setStateCallback) {
-    // Play sound effect
     AudioManager().playSfx();
 
     setState(() {
@@ -55,7 +75,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
       } else if (buttonName == 'story') {
         Navigator.pushNamed(context, '/story');
       } else if (buttonName == 'Chapter1') {
-        Navigator.pushNamed(context, '/Chapter1');
+        Navigator.pushNamed(context, '/chapter1');
       }
     });
   }
@@ -117,18 +137,16 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Placeholder for background image
           Container(
             color: Colors.grey[800],
             child: Image.asset(
               'assets/background.png',
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
-                return Container(color: Colors.grey[800]); // Fallback
+                return Container(color: Colors.grey[800]);
               },
             ),
           ),
-          // Logo placeholder in top center
           Padding(
             padding: EdgeInsets.only(top: screenHeight * 0.05),
             child: Align(
@@ -141,20 +159,19 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   return Container(
                     width: screenWidth * 0.2,
                     height: screenHeight * 0.1,
-                    color: Colors.grey, // Fallback
+                    color: Colors.grey,
                   );
                 },
               ),
             ),
           ),
-          // Welcome text in top-left with Distillery Display font
           Padding(
             padding: EdgeInsets.only(
               top: screenHeight * 0.02,
               left: screenWidth * 0.05,
             ),
             child: Text(
-              'WELCOME BACK, PLAYER NAME',
+              _getLocalizedText('WELCOME BACK, PLAYER NAME', 'CHÀO MỪNG TRỞ LẠI, TÊN NGƯỜI CHƠI'),
               style: TextStyle(
                 fontFamily: 'DistilleryDisplay',
                 fontSize: screenWidth * 0.025,
@@ -170,13 +187,12 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               ),
             ),
           ),
-          // Buttons with pop animation using frame.png and Bungee text
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildMenuButton(
-                  'STORY MODE',
+                  _getLocalizedText('STORY MODE', 'CHẾ ĐỘ CỐT TRUYỆN'),
                   'story',
                   _storyScale,
                       () => _onButtonTap('story', setState),
@@ -185,7 +201,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                 ),
                 SizedBox(height: screenHeight * 0.02),
                 _buildMenuButton(
-                  'TOWER MODE',
+                  _getLocalizedText('TOWER MODE', 'CHẾ ĐỘ THÁP'),
                   'tower',
                   _towerScale,
                       () => _onButtonTap('tower', setState),
@@ -194,7 +210,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                 ),
                 SizedBox(height: screenHeight * 0.02),
                 _buildMenuButton(
-                  'SHOP',
+                  _getLocalizedText('SHOP', 'CỬA HÀNG'),
                   'shop',
                   _shopScale,
                       () => _onButtonTap('shop', setState),
@@ -204,7 +220,6 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               ],
             ),
           ),
-          // Settings button with PNG
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
@@ -215,14 +230,14 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   scale: _settingsScale,
                   duration: Duration(milliseconds: 100),
                   child: Image.asset(
-                    'assets/settings_button.png', // Placeholder for Settings PNG
+                    'assets/settings_button.png',
                     width: screenWidth * 0.25,
                     height: screenHeight * 0.08,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
                         width: screenWidth * 0.15,
                         height: screenHeight * 0.06,
-                        color: Colors.grey, // Fallback
+                        color: Colors.grey,
                       );
                     },
                   ),
@@ -230,7 +245,6 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               ),
             ),
           ),
-          // Back button with PNG
           Align(
             alignment: Alignment.bottomRight,
             child: Padding(
@@ -244,14 +258,14 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   scale: _backScale,
                   duration: Duration(milliseconds: 100),
                   child: Image.asset(
-                    'assets/back_button.png', // Placeholder for Back PNG
+                    'assets/back_button.png',
                     width: screenWidth * 0.12,
                     height: screenHeight * 0.08,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
                         width: screenWidth * 0.1,
                         height: screenHeight * 0.06,
-                        color: Colors.grey, // Fallback
+                        color: Colors.grey,
                       );
                     },
                   ),
