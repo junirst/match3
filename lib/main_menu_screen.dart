@@ -54,13 +54,22 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
         Navigator.pushNamed(context, '/settings');
       } else if (buttonName == 'story') {
         Navigator.pushNamed(context, '/story');
+      } else if (buttonName == 'tower') {
+        Navigator.pushNamed(context, '/tower_mode');
       } else if (buttonName == 'Chapter1') {
         Navigator.pushNamed(context, '/Chapter1');
       }
     });
   }
 
-  Widget _buildMenuButton(String text, String buttonType, double scale, VoidCallback onTap, double screenWidth, double screenHeight) {
+  Widget _buildMenuButton(
+    String text,
+    String buttonType,
+    double scale,
+    VoidCallback onTap,
+    double screenWidth,
+    double screenHeight,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedScale(
@@ -179,7 +188,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   'STORY MODE',
                   'story',
                   _storyScale,
-                      () => _onButtonTap('story', setState),
+                  () => _onButtonTap('story', setState),
                   screenWidth,
                   screenHeight,
                 ),
@@ -188,7 +197,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   'TOWER MODE',
                   'tower',
                   _towerScale,
-                      () => _onButtonTap('tower', setState),
+                  () => _onButtonTap('tower', setState),
                   screenWidth,
                   screenHeight,
                 ),
@@ -197,7 +206,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   'SHOP',
                   'shop',
                   _shopScale,
-                      () => _onButtonTap('shop', setState),
+                  () => _onButtonTap('shop', setState),
                   screenWidth,
                   screenHeight,
                 ),
