@@ -74,13 +74,22 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
         Navigator.pushNamed(context, '/settings');
       } else if (buttonName == 'story') {
         Navigator.pushNamed(context, '/story');
+      } else if (buttonName == 'tower') {
+        Navigator.pushNamed(context, '/tower_mode');
       } else if (buttonName == 'Chapter1') {
         Navigator.pushNamed(context, '/chapter1');
       }
     });
   }
 
-  Widget _buildMenuButton(String text, String buttonType, double scale, VoidCallback onTap, double screenWidth, double screenHeight) {
+  Widget _buildMenuButton(
+    String text,
+    String buttonType,
+    double scale,
+    VoidCallback onTap,
+    double screenWidth,
+    double screenHeight,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedScale(
@@ -195,7 +204,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   _getLocalizedText('STORY MODE', 'CHẾ ĐỘ CỐT TRUYỆN'),
                   'story',
                   _storyScale,
-                      () => _onButtonTap('story', setState),
+                  () => _onButtonTap('story', setState),
                   screenWidth,
                   screenHeight,
                 ),
@@ -204,7 +213,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   _getLocalizedText('TOWER MODE', 'CHẾ ĐỘ THÁP'),
                   'tower',
                   _towerScale,
-                      () => _onButtonTap('tower', setState),
+                  () => _onButtonTap('tower', setState),
                   screenWidth,
                   screenHeight,
                 ),
@@ -213,7 +222,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   _getLocalizedText('SHOP', 'CỬA HÀNG'),
                   'shop',
                   _shopScale,
-                      () => _onButtonTap('shop', setState),
+                  () => _onButtonTap('shop', setState),
                   screenWidth,
                   screenHeight,
                 ),

@@ -7,6 +7,7 @@ import 'UpgradeInside.dart';
 import 'SettingInside.dart';
 import 'ChapterScreen.dart';
 import 'Chapter1.dart';
+import 'TowerMode.dart';
 
 
 void main() {
@@ -35,6 +36,7 @@ class MyApp extends StatelessWidget {
         '/settings': (context) => const SettingScreen(),
         '/story': (context) => const Chapterscreen(),
         '/chapter1': (context) => const Chapter1Screen(),
+        '/tower_mode': (context) => const TowerModeScreen(),
       },
     );
   }
