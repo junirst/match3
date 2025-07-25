@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'audio_manager.dart';
+import 'language_manager.dart';
 
 class AudioSettingsScreen extends StatefulWidget {
   const AudioSettingsScreen({super.key});
@@ -13,11 +15,13 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
   double _sfxVolume = 100.0;
   double _musicVolume = 100.0;
   double _buttonScale = 1.0;
+  String _currentLanguage = LanguageManager.currentLanguage;
 
   @override
   void initState() {
     super.initState();
     _initializeAudio();
+    _loadLanguagePreference();
   }
 
   Future<void> _initializeAudio() async {
@@ -29,6 +33,18 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
     if (!audioManager.isBgmPlaying) {
       await audioManager.playBackgroundMusic();
     }
+  }
+
+  Future<void> _loadLanguagePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _currentLanguage = prefs.getString('language') ?? 'English'; // Default to English
+      LanguageManager.setLanguage(_currentLanguage);
+    });
+  }
+
+  String _getLocalizedText(String englishText, String vietnameseText) {
+    return _currentLanguage == 'Vietnamese' ? vietnameseText : englishText;
   }
 
   void _onButtonTap(String buttonName) {
@@ -95,11 +111,23 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
                     ),
                     SizedBox(width: screenWidth * 0.02),
                     Text(
-                      'MAIN VOLUME: ${_mainVolume.round()}',
+                      _getLocalizedText('MAIN VOLUME: ${_mainVolume.round()}', 'ÂM LƯỢNG CHÍNH: ${_mainVolume.round()}'),
                       style: const TextStyle(
-                        fontFamily: 'DistilleryDisplay',
+                        fontFamily: 'Bungee',
                         color: Colors.white,
                         fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        shadows: [
+                          Shadow(offset: Offset(-1, -1), color: Colors.black),
+                          Shadow(offset: Offset(1, -1), color: Colors.black),
+                          Shadow(offset: Offset(-1, 1), color: Colors.black),
+                          Shadow(offset: Offset(1, 1), color: Colors.black),
+                          Shadow(
+                            offset: Offset(0, 0),
+                            color: Colors.black,
+                            blurRadius: 2,
+                          ),
+                        ],
                       ),
                     ),
                     SizedBox(width: screenWidth * 0.02),
@@ -127,11 +155,23 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
                     ),
                     SizedBox(width: screenWidth * 0.02),
                     Text(
-                      'SFX: ${_sfxVolume.round()}',
+                      _getLocalizedText('SFX: ${_sfxVolume.round()}', 'HIỆU ỨNG ÂM THANH: ${_sfxVolume.round()}'),
                       style: const TextStyle(
-                        fontFamily: 'DistilleryDisplay',
+                        fontFamily: 'Bungee',
                         color: Colors.white,
                         fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        shadows: [
+                          Shadow(offset: Offset(-1, -1), color: Colors.black),
+                          Shadow(offset: Offset(1, -1), color: Colors.black),
+                          Shadow(offset: Offset(-1, 1), color: Colors.black),
+                          Shadow(offset: Offset(1, 1), color: Colors.black),
+                          Shadow(
+                            offset: Offset(0, 0),
+                            color: Colors.black,
+                            blurRadius: 2,
+                          ),
+                        ],
                       ),
                     ),
                     SizedBox(width: screenWidth * 0.02),
@@ -159,11 +199,23 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
                     ),
                     SizedBox(width: screenWidth * 0.02),
                     Text(
-                      'MUSIC: ${_musicVolume.round()}',
+                      _getLocalizedText('MUSIC: ${_musicVolume.round()}', 'NHẠC NỀN: ${_musicVolume.round()}'),
                       style: const TextStyle(
-                        fontFamily: 'DistilleryDisplay',
+                        fontFamily: 'Bungee',
                         color: Colors.white,
                         fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        shadows: [
+                          Shadow(offset: Offset(-1, -1), color: Colors.black),
+                          Shadow(offset: Offset(1, -1), color: Colors.black),
+                          Shadow(offset: Offset(-1, 1), color: Colors.black),
+                          Shadow(offset: Offset(1, 1), color: Colors.black),
+                          Shadow(
+                            offset: Offset(0, 0),
+                            color: Colors.black,
+                            blurRadius: 2,
+                          ),
+                        ],
                       ),
                     ),
                     SizedBox(width: screenWidth * 0.02),

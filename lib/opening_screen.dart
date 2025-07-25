@@ -46,7 +46,8 @@ class _OpeningScreenState extends State<OpeningScreen>
   Future<void> _loadLanguagePreference() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _currentLanguage = prefs.getString('language') ?? LanguageManager.currentLanguage;
+      _currentLanguage = prefs.getString('language') ?? 'English'; // Default to English
+      LanguageManager.setLanguage(_currentLanguage);
     });
   }
 

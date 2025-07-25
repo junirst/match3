@@ -28,7 +28,8 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   Future<void> _loadLanguagePreference() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _currentLanguage = LanguageManager.currentLanguage; // Sync with LanguageManager
+      _currentLanguage = prefs.getString('language') ?? 'English'; // Default to English
+      LanguageManager.setLanguage(_currentLanguage);
     });
   }
 
@@ -71,25 +72,24 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
       } else if (buttonName == 'shop') {
         Navigator.pushNamed(context, '/shop');
       } else if (buttonName == 'settings') {
-        Navigator.pushNamed(context, '/settings');
+        Navigator.pushNamed(context, '/settings').then((_) {
+          // Refresh language when returning from settings
+          _loadLanguagePreference();
+        });
       } else if (buttonName == 'story') {
         Navigator.pushNamed(context, '/story');
-      } else if (buttonName == 'tower') {
-        Navigator.pushNamed(context, '/tower_mode');
-      } else if (buttonName == 'Chapter1') {
-        Navigator.pushNamed(context, '/chapter1');
       }
     });
   }
 
   Widget _buildMenuButton(
-    String text,
-    String buttonType,
-    double scale,
-    VoidCallback onTap,
-    double screenWidth,
-    double screenHeight,
-  ) {
+      String text,
+      String buttonType,
+      double scale,
+      VoidCallback onTap,
+      double screenWidth,
+      double screenHeight,
+      ) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedScale(
@@ -201,10 +201,10 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildMenuButton(
-                  _getLocalizedText('STORY MODE', 'CHẾ ĐỘ CỐT TRUYỆN'),
+                  _getLocalizedText('STORY MODE', 'CỐT TRUYỆN'),
                   'story',
                   _storyScale,
-                  () => _onButtonTap('story', setState),
+                      () => _onButtonTap('story', setState),
                   screenWidth,
                   screenHeight,
                 ),
@@ -213,7 +213,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   _getLocalizedText('TOWER MODE', 'CHẾ ĐỘ THÁP'),
                   'tower',
                   _towerScale,
-                  () => _onButtonTap('tower', setState),
+                      () => _onButtonTap('tower', setState),
                   screenWidth,
                   screenHeight,
                 ),
@@ -222,7 +222,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   _getLocalizedText('SHOP', 'CỬA HÀNG'),
                   'shop',
                   _shopScale,
-                  () => _onButtonTap('shop', setState),
+                      () => _onButtonTap('shop', setState),
                   screenWidth,
                   screenHeight,
                 ),

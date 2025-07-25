@@ -27,7 +27,8 @@ class _SettingScreenState extends State<SettingScreen> {
   Future<void> _loadLanguagePreference() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _currentLanguage = prefs.getString('language') ?? LanguageManager.currentLanguage;
+      _currentLanguage = prefs.getString('language') ?? 'English';
+      LanguageManager.setLanguage(_currentLanguage);
     });
   }
 
@@ -70,12 +71,15 @@ class _SettingScreenState extends State<SettingScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const LanguageScreen()),
-        );
+        ).then((_) {
+          // Refresh the language when returning from language screen
+          _loadLanguagePreference();
+        });
       }
     });
   }
 
-  Widget _buildSettingButton(String text, String buttonType, double scale, VoidCallback onTap, double screenWidth, double screenHeight) {
+  Widget _buildSettingButton(String englishText, String vietnameseText, String buttonType, double scale, VoidCallback onTap, double screenWidth, double screenHeight) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedScale(
@@ -97,7 +101,7 @@ class _SettingScreenState extends State<SettingScreen> {
               },
             ),
             Text(
-              _getLocalizedText(text, text), // Use localized text
+              _getLocalizedText(englishText, vietnameseText),
               style: TextStyle(
                 fontFamily: 'Bungee',
                 fontSize: screenWidth * 0.05,
@@ -192,7 +196,8 @@ class _SettingScreenState extends State<SettingScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildSettingButton(
-                  _getLocalizedText('AUDIO', 'ÂM THANH'),
+                  'AUDIO',
+                  'ÂM THANH',
                   'audio',
                   _audioScale,
                       () => _onButtonTap('audio'),
@@ -201,7 +206,8 @@ class _SettingScreenState extends State<SettingScreen> {
                 ),
                 SizedBox(height: screenHeight * 0.05),
                 _buildSettingButton(
-                  _getLocalizedText('LANGUAGE', 'NGÔN NGỮ'),
+                  'LANGUAGE',
+                  'NGÔN NGỮ',
                   'language',
                   _languageScale,
                       () => _onButtonTap('language'),

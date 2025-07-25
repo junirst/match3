@@ -25,7 +25,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
   Future<void> _loadLanguagePreference() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _selectedLanguage = prefs.getString('language') ?? LanguageManager.currentLanguage;
+      _selectedLanguage = prefs.getString('language') ?? 'English';
       LanguageManager.setLanguage(_selectedLanguage);
     });
   }
@@ -124,7 +124,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
 
                 Navigator.of(context).pop();
 
-                // Reset to OpeningScreen immediately
+                // Reset to OpeningScreen immediately with the new language
                 Navigator.pushNamedAndRemoveUntil(
                   context,
                   '/',
