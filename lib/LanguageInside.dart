@@ -36,6 +36,10 @@ class _LanguageScreenState extends State<LanguageScreen> {
     LanguageManager.setLanguage(language);
   }
 
+  String _getLocalizedText(String englishText, String vietnameseText) {
+    return _selectedLanguage == 'Vietnamese' ? vietnameseText : englishText;
+  }
+
   void _onButtonTap(String buttonName) {
     AudioManager().playSfx();
 
@@ -224,7 +228,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
           },
         ),
         Text(
-          'LANGUAGE',
+          _getLocalizedText('LANGUAGE', 'NGÔN NGỮ'),
           style: TextStyle(
             fontFamily: 'Bungee',
             fontSize: screenWidth * 0.03,

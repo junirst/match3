@@ -34,9 +34,6 @@ class _AudioLifecycleManagerState extends State<AudioLifecycleManager>
     if (_audioManager.isBgmEnabled && !_audioManager.isBgmPlaying) {
       await _audioManager.playBackgroundMusic();
     }
-    if (_audioManager.isMainEnabled) {
-      await _audioManager.playMain();
-    }
   }
 
   @override
@@ -48,22 +45,16 @@ class _AudioLifecycleManagerState extends State<AudioLifecycleManager>
         if (_audioManager.isBgmEnabled) {
           _audioManager.resumeBackgroundMusic();
         }
-        if (_audioManager.isMainEnabled) {
-          _audioManager.resumeMain();
-        }
         break;
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
         _audioManager.pauseBackgroundMusic();
-        _audioManager.pauseMain();
         break;
       case AppLifecycleState.detached:
         _audioManager.stopBackgroundMusic();
-        _audioManager.stopMain();
         break;
       case AppLifecycleState.hidden:
         _audioManager.pauseBackgroundMusic();
-        _audioManager.pauseMain();
         break;
     }
   }

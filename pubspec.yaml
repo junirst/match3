@@ -66,6 +66,8 @@ flutter:
   assets:
     - assets/
     - assets/bgm/
+    - assets/bgm/bgm.mp3
+    - assets/bgm/sfx.mp3
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:

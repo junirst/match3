@@ -11,7 +11,6 @@ class AudioSettingsScreen extends StatefulWidget {
 }
 
 class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
-  double _mainVolume = 100.0;
   double _sfxVolume = 100.0;
   double _musicVolume = 100.0;
   double _buttonScale = 1.0;
@@ -27,7 +26,6 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
   Future<void> _initializeAudio() async {
     final audioManager = AudioManager();
     await audioManager.init();
-    await audioManager.setVolume('main', _mainVolume / 100);
     await audioManager.setVolume('sfx', _sfxVolume / 100);
     await audioManager.setVolume('bgm', _musicVolume / 100);
     if (!audioManager.isBgmPlaying) {
@@ -64,7 +62,6 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
 
   void _updateVolume(String type, double value) {
     setState(() {
-      if (type == 'main') _mainVolume = value.clamp(0.0, 100.0);
       if (type == 'sfx') _sfxVolume = value.clamp(0.0, 100.0);
       if (type == 'bgm') _musicVolume = value.clamp(0.0, 100.0);
     });
@@ -98,50 +95,6 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    GestureDetector(
-                      onTap: () => _updateVolume('main', _mainVolume - 10),
-                      child: Image.asset(
-                        'assets/minusbutton.png',
-                        width: screenWidth * 0.1,
-                        height: screenHeight * 0.06,
-                      ),
-                    ),
-                    SizedBox(width: screenWidth * 0.02),
-                    Text(
-                      _getLocalizedText('MAIN VOLUME: ${_mainVolume.round()}', 'ÂM LƯỢNG CHÍNH: ${_mainVolume.round()}'),
-                      style: const TextStyle(
-                        fontFamily: 'Bungee',
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          Shadow(offset: Offset(-1, -1), color: Colors.black),
-                          Shadow(offset: Offset(1, -1), color: Colors.black),
-                          Shadow(offset: Offset(-1, 1), color: Colors.black),
-                          Shadow(offset: Offset(1, 1), color: Colors.black),
-                          Shadow(
-                            offset: Offset(0, 0),
-                            color: Colors.black,
-                            blurRadius: 2,
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(width: screenWidth * 0.02),
-                    GestureDetector(
-                      onTap: () => _updateVolume('main', _mainVolume + 10),
-                      child: Image.asset(
-                        'assets/plusbutton.png',
-                        width: screenWidth * 0.1,
-                        height: screenHeight * 0.06,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: screenHeight * 0.03),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -185,7 +138,7 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
                     ),
                   ],
                 ),
-                SizedBox(height: screenHeight * 0.03),
+                SizedBox(height: screenHeight * 0.05),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

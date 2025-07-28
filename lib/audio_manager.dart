@@ -7,23 +7,32 @@ class AudioManager {
 
   final AudioPlayer _bgmPlayer = AudioPlayer();
   final AudioPlayer _sfxPlayer = AudioPlayer();
-  final AudioPlayer _mainPlayer = AudioPlayer();
 
   bool _isBgmEnabled = true;
   bool _isSfxEnabled = true;
-  bool _isMainEnabled = true;
   bool _isBgmPlaying = false;
 
   // Getters for audio settings
   bool get isBgmEnabled => _isBgmEnabled;
   bool get isSfxEnabled => _isSfxEnabled;
-  bool get isMainEnabled => _isMainEnabled;
   bool get isBgmPlaying => _isBgmPlaying;
 
   // Initialize audio manager
   Future<void> init() async {
+    // Set looping for background music
     await _bgmPlayer.setReleaseMode(ReleaseMode.loop);
-    await _mainPlayer.setReleaseMode(ReleaseMode.loop);
+
+    // Set up listeners to track playback state
+    _bgmPlayer.onPlayerStateChanged.listen((PlayerState state) {
+      _isBgmPlaying = state == PlayerState.playing;
+    });
+
+    // Handle completion events (backup for looping)
+    _bgmPlayer.onPlayerComplete.listen((_) {
+      if (_isBgmEnabled) {
+        playBackgroundMusic(); // Restart if loop fails
+      }
+    });
   }
 
   // Play background music
@@ -45,51 +54,47 @@ class AudioManager {
 
   // Pause background music
   Future<void> pauseBackgroundMusic() async {
-    await _bgmPlayer.pause();
+    if (_isBgmPlaying) {
+      await _bgmPlayer.pause();
+    }
   }
 
   // Resume background music
   Future<void> resumeBackgroundMusic() async {
-    if (_isBgmEnabled) {
+    if (_isBgmEnabled && !_isBgmPlaying) {
       await _bgmPlayer.resume();
     }
   }
 
-  // Play sound effect
+  // Play sound effect (no looping for SFX)
   Future<void> playSfx() async {
     if (!_isSfxEnabled) return;
     try {
       print('Attempting to play SFX from: assets/bgm/sfx.mp3');
+      // Stop any currently playing SFX first
+      await _sfxPlayer.stop();
       await _sfxPlayer.play(AssetSource('bgm/sfx.mp3'));
+      print('SFX started successfully');
     } catch (e) {
       print('Error playing sound effect: $e');
+      print('Troubleshooting steps:');
+      print('1. Check if assets/bgm/sfx.mp3 exists in your project');
+      print('2. Verify pubspec.yaml includes: assets: - assets/bgm/');
+      print('3. Run "flutter clean" and "flutter pub get"');
+      print('4. Ensure the audio file is not corrupted');
     }
   }
 
-  // Play main sound
-  Future<void> playMain() async {
-    if (!_isMainEnabled) return;
+  // Alternative method to test with a different file
+  Future<void> playSfxTest() async {
+    if (!_isSfxEnabled) return;
     try {
-      await _mainPlayer.play(AssetSource('bgm/main.mp3'));
+      // Try using the same file as BGM for testing
+      await _sfxPlayer.stop();
+      await _sfxPlayer.play(AssetSource('bgm/bgm.mp3'));
+      print('Test SFX (using BGM file) played successfully');
     } catch (e) {
-      print('Error playing main sound: $e');
-    }
-  }
-
-  // Stop main sound
-  Future<void> stopMain() async {
-    await _mainPlayer.stop();
-  }
-
-  // Pause main sound
-  Future<void> pauseMain() async {
-    await _mainPlayer.pause();
-  }
-
-  // Resume main sound
-  Future<void> resumeMain() async {
-    if (_isMainEnabled) {
-      await _mainPlayer.resume();
+      print('Error playing test SFX: $e');
     }
   }
 
@@ -108,16 +113,6 @@ class AudioManager {
     _isSfxEnabled = !_isSfxEnabled;
   }
 
-  // Toggle main sound
-  void toggleMain() {
-    _isMainEnabled = !_isMainEnabled;
-    if (_isMainEnabled) {
-      playMain();
-    } else {
-      stopMain();
-    }
-  }
-
   // Set volumes
   Future<void> setBgmVolume(double volume) async {
     await _bgmPlayer.setVolume(volume);
@@ -125,10 +120,6 @@ class AudioManager {
 
   Future<void> setSfxVolume(double volume) async {
     await _sfxPlayer.setVolume(volume);
-  }
-
-  Future<void> setMainVolume(double volume) async {
-    await _mainPlayer.setVolume(volume);
   }
 
   Future<void> setVolume(String type, double volume) async {
@@ -139,9 +130,6 @@ class AudioManager {
       case 'sfx':
         await setSfxVolume(volume);
         break;
-      case 'main':
-        await setMainVolume(volume);
-        break;
     }
   }
 
@@ -149,6 +137,5 @@ class AudioManager {
   Future<void> dispose() async {
     await _bgmPlayer.dispose();
     await _sfxPlayer.dispose();
-    await _mainPlayer.dispose();
   }
 }
