@@ -3,32 +3,32 @@ import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'audio_manager.dart';
 import 'language_manager.dart';
-import 'LeaderboardScreen.dart';
 
-class TowerModeScreen extends StatefulWidget {
-  const TowerModeScreen({super.key});
+class LeaderboardScreen extends StatefulWidget {
+  const LeaderboardScreen({super.key});
 
   @override
-  _TowerModeScreenState createState() => _TowerModeScreenState();
+  _LeaderboardScreenState createState() => _LeaderboardScreenState();
 }
 
-class _TowerModeScreenState extends State<TowerModeScreen> {
-  double _playButtonScale = 1.0;
+class _LeaderboardScreenState extends State<LeaderboardScreen> {
   double _backButtonScale = 1.0;
-  double _achievementButtonScale = 1.0;
+  String _currentLanguage = LanguageManager.currentLanguage;
+  List<Map<String, dynamic>> _players = [];
+  bool _isLoading = true;
 
   // Season data
   int _currentSeason = 0;
   DateTime? _seasonEndTime;
   String _countdownText = '';
   Timer? _countdownTimer;
-  String _currentLanguage = LanguageManager.currentLanguage;
 
   @override
   void initState() {
     super.initState();
     _loadLanguagePreference();
     _loadSeasonData();
+    _loadLeaderboardData();
   }
 
   @override
@@ -109,6 +109,25 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
     }
   }
 
+  Future<void> _loadLeaderboardData() async {
+    // Mock API call
+    await Future.delayed(Duration(seconds: 1)); // Simulate network delay
+    setState(() {
+      _players = _getMockPlayers();
+      _isLoading = false;
+    });
+  }
+
+  List<Map<String, dynamic>> _getMockPlayers() {
+    return [
+      {'name': 'EliteGamer', 'level': 50},
+      {'name': 'ShadowKing', 'level': 42},
+      {'name': 'TowerMaster', 'level': 35},
+      {'name': 'SkyWalker', 'level': 28},
+      {'name': 'IronClad', 'level': 20},
+    ];
+  }
+
   String _getLocalizedText(String englishText, String vietnameseText) {
     return _currentLanguage == 'Vietnamese' ? vietnameseText : englishText;
   }
@@ -118,36 +137,19 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
 
     setState(() {
       switch (buttonName) {
-        case 'play':
-          _playButtonScale = 1.1;
-          break;
         case 'back':
           _backButtonScale = 1.1;
-          break;
-        case 'achievement':
-          _achievementButtonScale = 1.1;
           break;
       }
     });
 
     Future.delayed(Duration(milliseconds: 100), () {
       setState(() {
-        _playButtonScale = 1.0;
         _backButtonScale = 1.0;
-        _achievementButtonScale = 1.0;
       });
 
-      if (buttonName == 'play') {
-        // Navigate to tower game
-        Navigator.pushNamed(context, '/tower_game');
-      } else if (buttonName == 'back') {
+      if (buttonName == 'back') {
         Navigator.pop(context);
-      } else if (buttonName == 'achievement') {
-        // Navigate to leaderboard
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => LeaderboardScreen()),
-        );
       }
     });
   }
@@ -195,55 +197,52 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
             ),
           ),
 
-          // Tower Mode Title
+          // Leaderboard Title with Frame
           Positioned(
-            top: screenHeight * 0.08,
+            top: screenHeight * 0.02,
             left: screenWidth * 0.05,
-            right: screenWidth * 0.05,
-            child: Center(
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Image.asset(
-                    'assets/frame.png',
-                    width: screenWidth * 0.8,
-                    height: screenHeight * 0.10,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: screenWidth * 0.8,
-                        height: screenHeight * 0.10,
-                        decoration: BoxDecoration(
-                          color: Colors.brown[600],
-                          borderRadius: BorderRadius.circular(15),
-                          border: Border.all(color: Colors.brown[800]!, width: 3),
-                        ),
-                      );
-                    },
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Image.asset(
+                  'assets/frame.png',
+                  width: screenWidth * 0.9, // Adjusted width to fit localization
+                  height: screenHeight * 0.12,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: screenWidth * 0.9,
+                      height: screenHeight * 0.12,
+                      decoration: BoxDecoration(
+                        color: Colors.brown[600],
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(color: Colors.brown[800]!, width: 3),
+                      ),
+                    );
+                  },
+                ),
+                Text(
+                  _getLocalizedText('LEADERBOARD', 'BẢNG XẾP HẠNG'),
+                  style: TextStyle(
+                    fontFamily: 'Bungee',
+                    fontSize: screenWidth * 0.06, // Increased size
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    shadows: [
+                      Shadow(offset: Offset(-1, -1), color: Colors.black),
+                      Shadow(offset: Offset(1, -1), color: Colors.black),
+                      Shadow(offset: Offset(-1, 1), color: Colors.black),
+                      Shadow(offset: Offset(1, 1), color: Colors.black),
+                      Shadow(offset: Offset(0, 0), color: Colors.black, blurRadius: 3),
+                    ],
                   ),
-                  Text(
-                    _getLocalizedText('TOWER MODE', 'CHẾ ĐỘ THÁP'),
-                    style: TextStyle(
-                      fontFamily: 'Bungee',
-                      fontSize: screenWidth * 0.045,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(offset: Offset(-1, -1), color: Colors.black),
-                        Shadow(offset: Offset(1, -1), color: Colors.black),
-                        Shadow(offset: Offset(-1, 1), color: Colors.black),
-                        Shadow(offset: Offset(1, 1), color: Colors.black),
-                        Shadow(offset: Offset(0, 0), color: Colors.black, blurRadius: 3),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
 
           // Season Information
           Positioned(
-            top: screenHeight * 0.25,
+            top: screenHeight * 0.16,
             left: 0,
             right: 0,
             child: Column(
@@ -276,126 +275,56 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
             ),
           ),
 
-          // Play Button
+          // Player List
           Positioned(
-            top: screenHeight * 0.45,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: GestureDetector(
-                onTap: () => _onButtonTap('play'),
-                child: AnimatedScale(
-                  scale: _playButtonScale,
-                  duration: Duration(milliseconds: 100),
-                  child: Stack(
-                    alignment: Alignment.center,
+            top: screenHeight * 0.30,
+            left: screenWidth * 0.05,
+            right: screenWidth * 0.05,
+            bottom: screenHeight * 0.15,
+            child: _isLoading
+                ? Center(child: CircularProgressIndicator(color: Colors.white))
+                : ListView.builder(
+              itemCount: _players.length,
+              itemBuilder: (context, index) {
+                final player = _players[index];
+                final isTopPlayer = index == 0;
+                return Padding(
+                  padding: EdgeInsets.symmetric(vertical: screenHeight * 0.01),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Image.asset(
-                        'assets/frame.png',
-                        width: screenWidth * 0.6, // Increased from 0.5 to 0.6
-                        height: screenHeight * 0.10, // Increased from 0.08 to 0.10
+                        isTopPlayer ? 'assets/topplayer.png' : 'assets/player.png',
+                        width: screenWidth * 0.12,
+                        height: screenHeight * 0.08,
                         errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            width: screenWidth * 0.6,
-                            height: screenHeight * 0.10,
-                            decoration: BoxDecoration(
-                              color: Colors.brown[600],
-                              borderRadius: BorderRadius.circular(15),
-                              border: Border.all(color: Colors.brown[800]!, width: 3),
-                            ),
+                          return Icon(
+                            Icons.person,
+                            color: isTopPlayer ? Colors.amber : Colors.white,
+                            size: screenWidth * 0.12,
                           );
                         },
                       ),
+                      SizedBox(width: screenWidth * 0.03),
                       Text(
-                        _getLocalizedText('PLAY', 'CHƠI'),
+                        player['name'],
                         style: TextStyle(
                           fontFamily: 'Bungee',
-                          fontSize: screenWidth * 0.06,
+                          fontSize: screenWidth * 0.04,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                           shadows: [
-                            Shadow(offset: Offset(-1, -1), color: Colors.black),
-                            Shadow(offset: Offset(1, -1), color: Colors.black),
-                            Shadow(offset: Offset(-1, 1), color: Colors.black),
-                            Shadow(offset: Offset(1, 1), color: Colors.black),
-                            Shadow(offset: Offset(0, 0), color: Colors.black, blurRadius: 2),
+                            Shadow(offset: Offset(1, 1), color: Colors.black, blurRadius: 2),
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // Record Information
-          Positioned(
-            top: screenHeight * 0.58,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Text(
-                _getLocalizedText('RECORD: LEVEL 42', 'KỶ LỤC: CẤP 42'),
-                style: TextStyle(
-                  fontFamily: 'Bungee',
-                  fontSize: screenWidth * 0.04,
-                  color: Colors.white,
-                  shadows: [
-                    Shadow(offset: Offset(1, 1), color: Colors.black, blurRadius: 2),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // Achievement/Trophy Button
-          Positioned(
-            bottom: screenHeight * 0.15,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: GestureDetector(
-                onTap: () => _onButtonTap('achievement'),
-                child: AnimatedScale(
-                  scale: _achievementButtonScale,
-                  duration: Duration(milliseconds: 100),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: screenWidth * 0.15,
-                        height: screenWidth * 0.15,
-                        decoration: BoxDecoration(
-                          color: Colors.brown[600],
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.brown[800]!, width: 3),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.5),
-                              blurRadius: 10,
-                              offset: Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        child: Image.asset(
-                          'assets/trophy.png',
-                          width: screenWidth * 0.08,
-                          height: screenWidth * 0.08,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Icon(
-                              Icons.error,
-                              color: Colors.red,
-                              size: screenWidth * 0.08,
-                            );
-                          },
-                        ),
-                      ),
-                      SizedBox(height: screenHeight * 0.01),
+                      SizedBox(width: screenWidth * 0.03),
                       Text(
-                        _getLocalizedText('LEADERBOARD', 'BẢNG XẾP HẠNG'),
+                        _getLocalizedText('LEVEL ${player['level']}', 'CẤP ${player['level']}'),
                         style: TextStyle(
                           fontFamily: 'Bungee',
-                          fontSize: screenWidth * 0.025,
+                          fontSize: screenWidth * 0.04,
+                          fontWeight: FontWeight.bold,
                           color: Colors.white,
                           shadows: [
                             Shadow(offset: Offset(1, 1), color: Colors.black, blurRadius: 2),
@@ -404,8 +333,8 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
                       ),
                     ],
                   ),
-                ),
-              ),
+                );
+              },
             ),
           ),
 
