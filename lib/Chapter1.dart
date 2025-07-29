@@ -246,38 +246,38 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
           ),
 
           // Level selection points (positioned across the map)
-          // Level 1 - Top left area
+          // Level 1 - Bottom center (starting point)
           Positioned(
-            top: screenHeight * 0.2,
-            left: screenWidth * 0.2,
+            top: screenHeight * 0.85,
+            left: screenWidth * 0.25,
             child: _buildLevelButton(1, screenWidth, screenHeight),
           ),
 
-          // Level 2 - Middle left
+          // Level 2 - Center-left
           Positioned(
-            top: screenHeight * 0.35,
-            left: screenWidth * 0.15,
+            top: screenHeight * 0.60,
+            left: screenWidth * 0.25,
             child: _buildLevelButton(2, screenWidth, screenHeight),
           ),
 
-          // Level 3 - Center
+          // Level 3 - Middle right
           Positioned(
-            top: screenHeight * 0.4,
-            left: screenWidth * 0.45,
+            top: screenHeight * 0.47,
+            left: screenWidth * 0.27,
             child: _buildLevelButton(3, screenWidth, screenHeight),
           ),
 
-          // Level 4 - Right side
+          // Level 4 - Top center-right
           Positioned(
-            top: screenHeight * 0.3,
-            right: screenWidth * 0.2,
+            top: screenHeight * 0.35,
+            left: screenWidth * 0.55,
             child: _buildLevelButton(4, screenWidth, screenHeight),
           ),
 
-          // Level 5 - Bottom center
+          // Level 5 - Top left area (final level)
           Positioned(
-            bottom: screenHeight * 0.25,
-            left: screenWidth * 0.4,
+            top: screenHeight * 0.23,
+            left: screenWidth * 0.15,
             child: _buildLevelButton(5, screenWidth, screenHeight),
           ),
 

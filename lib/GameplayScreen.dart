@@ -216,7 +216,144 @@ class _GameplayScreenState extends State<GameplayScreen> {
             ),
           ),
 
-          // Sword hand image positioned above the wooden part
+          // Goblin image for level 1.1 and 1.2 (BEHIND sword hand)
+          if (widget.chapter == 1 && (widget.level == 1 || widget.level == 2))
+            Positioned(
+              left:
+                  screenWidth * 0.5 -
+                  (screenWidth * 0.15), // Center horizontally
+              top:
+                  screenHeight *
+                  0.1, // Position in the middle-upper area of the nature background
+              child: Image.asset(
+                'assets/Mobs/Goblin.png',
+                width: screenWidth * 0.3,
+                height: screenWidth * 0.3,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  print('Error loading Goblin image: $error');
+                  return Container(
+                    width: screenWidth * 0.3,
+                    height: screenWidth * 0.3,
+                    decoration: BoxDecoration(
+                      color: Colors.green[400],
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.green[700]!, width: 2),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.person,
+                          size: screenWidth * 0.1,
+                          color: Colors.green[700],
+                        ),
+                        Text(
+                          'GOBLIN',
+                          style: TextStyle(
+                            color: Colors.green[700],
+                            fontSize: screenWidth * 0.03,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+
+          // Ghost image for level 1.3 and 1.4 (BEHIND sword hand)
+          if (widget.chapter == 1 && (widget.level == 3 || widget.level == 4))
+            Positioned(
+              left:
+                  screenWidth * 0.5 -
+                  (screenWidth * 0.15), // Center horizontally (same as Goblin)
+              top: screenHeight * 0.1, // Same position as Goblin
+              child: Image.asset(
+                'assets/Mobs/Ghost.png',
+                width: screenWidth * 0.3,
+                height: screenWidth * 0.3,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  print('Error loading Ghost image: $error');
+                  return Container(
+                    width: screenWidth * 0.3,
+                    height: screenWidth * 0.3,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[400],
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.grey[700]!, width: 2),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.visibility_off,
+                          size: screenWidth * 0.1,
+                          color: Colors.grey[700],
+                        ),
+                        Text(
+                          'GHOST',
+                          style: TextStyle(
+                            color: Colors.grey[700],
+                            fontSize: screenWidth * 0.03,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+
+          // Dragon image for level 1.5 (BEHIND sword hand)
+          if (widget.chapter == 1 && widget.level == 5)
+            Positioned(
+              left:
+                  screenWidth * 0.5 -
+                  (screenWidth * 0.35), // Adjusted for much bigger size
+              top: screenHeight * 0.04, // Moved up more for bigger dragon
+              child: Image.asset(
+                'assets/Mobs/Dragon.png',
+                width: screenWidth * 0.7, // Much bigger - 70% of screen width
+                height: screenWidth * 0.7, // Much bigger - 70% of screen width
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  print('Error loading Dragon image: $error');
+                  return Container(
+                    width: screenWidth * 0.7, // Much bigger
+                    height: screenWidth * 0.7, // Much bigger
+                    decoration: BoxDecoration(
+                      color: Colors.red[400],
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(color: Colors.red[700]!, width: 3),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.whatshot,
+                          size: screenWidth * 0.2, // Much bigger icon
+                          color: Colors.red[700],
+                        ),
+                        Text(
+                          'DRAGON',
+                          style: TextStyle(
+                            color: Colors.red[700],
+                            fontSize: screenWidth * 0.06, // Much bigger text
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+
+          // Sword hand image positioned ABOVE all mobs (in the foreground)
           Positioned(
             right: screenWidth * 0.02,
             top: screenHeight * 0.15, // Moved higher up
