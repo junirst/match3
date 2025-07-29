@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'audio_manager.dart';
+import 'language_manager.dart';
 
 class TowerModeScreen extends StatefulWidget {
   const TowerModeScreen({super.key});
@@ -12,6 +15,102 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
   double _playButtonScale = 1.0;
   double _backButtonScale = 1.0;
   double _achievementButtonScale = 1.0;
+
+  // Season data
+  int _currentSeason = 0;
+  DateTime? _seasonEndTime;
+  String _countdownText = '';
+  Timer? _countdownTimer;
+  String _currentLanguage = LanguageManager.currentLanguage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLanguagePreference();
+    _loadSeasonData();
+  }
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadLanguagePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _currentLanguage = prefs.getString('language') ?? 'English';
+      LanguageManager.setLanguage(_currentLanguage);
+    });
+  }
+
+  Future<void> _loadSeasonData() async {
+    // Mock season data (replace with actual API call if needed)
+    final now = DateTime.now();
+    final endTime = now.add(Duration(hours: 12)); // Example: 12 hours from now
+    setState(() {
+      _currentSeason = 0;
+      _seasonEndTime = endTime;
+    });
+    _startCountdownTimer();
+  }
+
+  void _startCountdownTimer() {
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      if (_seasonEndTime != null) {
+        final now = DateTime.now();
+        final difference = _seasonEndTime!.difference(now);
+
+        if (difference.isNegative) {
+          _loadSeasonData();
+          return;
+        }
+
+        setState(() {
+          _countdownText = _formatCountdown(difference);
+        });
+      }
+    });
+
+    if (_seasonEndTime != null) {
+      final now = DateTime.now();
+      final difference = _seasonEndTime!.difference(now);
+      setState(() {
+        _countdownText = _formatCountdown(difference);
+      });
+    }
+  }
+
+  String _formatCountdown(Duration duration) {
+    final days = duration.inDays;
+    final hours = duration.inHours - (days * 24);
+    final minutes = duration.inMinutes % 60;
+
+    if (days > 0) {
+      final dayText = days == 1 ? 'DAY' : 'DAYS';
+      final hourText = hours == 1 ? 'HOUR' : 'HOURS';
+      return _getLocalizedText(
+          '$days $dayText $hours $hourText $minutes M',
+          '$days NGÀY $hours GIỜ $minutes PHÚT'
+      );
+    } else if (hours > 0) {
+      final hourText = hours == 1 ? 'HOUR' : 'HOURS';
+      return _getLocalizedText(
+          '$hours $hourText $minutes M',
+          '$hours GIỜ $minutes PHÚT'
+      );
+    } else {
+      return _getLocalizedText(
+          '$minutes M',
+          '$minutes PHÚT'
+      );
+    }
+  }
+
+  String _getLocalizedText(String englishText, String vietnameseText) {
+    return _currentLanguage == 'Vietnamese' ? vietnameseText : englishText;
+  }
 
   void _onButtonTap(String buttonName) {
     AudioManager().playSfx();
@@ -123,7 +222,7 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
                     },
                   ),
                   Text(
-                    'TOWER MODE',
+                    _getLocalizedText('TOWER MODE', 'CHẾ ĐỘ THÁP'),
                     style: TextStyle(
                       fontFamily: 'Bungee',
                       fontSize: screenWidth * 0.045,
@@ -155,7 +254,7 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
             child: Column(
               children: [
                 Text(
-                  'SEASON 0',
+                  _getLocalizedText('SEASON $_currentSeason', 'MÙA $_currentSeason'),
                   style: TextStyle(
                     fontFamily: 'Bungee',
                     fontSize: screenWidth * 0.08,
@@ -172,7 +271,7 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
                 ),
                 SizedBox(height: screenHeight * 0.01),
                 Text(
-                  'RESETS IN: 12 HOURS 4 HOURS',
+                  _countdownText.isNotEmpty ? _getLocalizedText('RESETS IN: $_countdownText', 'RESET TRONG: $_countdownText') : _getLocalizedText('RESETS IN: 12 HOURS 4 HOURS', 'RESET TRONG: 12 GIỜ 4 GIỜ'),
                   style: TextStyle(
                     fontFamily: 'Bungee',
                     fontSize: screenWidth * 0.035,
@@ -208,7 +307,7 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
                         'assets/frame.png',
                         width: screenWidth * 0.6, // Increased from 0.5 to 0.6
                         height:
-                            screenHeight * 0.10, // Increased from 0.08 to 0.10
+                        screenHeight * 0.10, // Increased from 0.08 to 0.10
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
                             width: screenWidth * 0.6,
@@ -225,7 +324,7 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
                         },
                       ),
                       Text(
-                        'PLAY',
+                        _getLocalizedText('PLAY', 'CHƠI'),
                         style: TextStyle(
                           fontFamily: 'Bungee',
                           fontSize: screenWidth * 0.06,
@@ -258,7 +357,7 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
             right: 0,
             child: Center(
               child: Text(
-                'RECORD: LEVEL 42',
+                _getLocalizedText('RECORD: LEVEL 42', 'KỶ LỤC: CẤP 42'),
                 style: TextStyle(
                   fontFamily: 'Bungee',
                   fontSize: screenWidth * 0.04,
@@ -306,15 +405,22 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
                             ),
                           ],
                         ),
-                        child: Icon(
-                          Icons.emoji_events,
-                          color: Colors.amber,
-                          size: screenWidth * 0.08,
+                        child: Image.asset(
+                          'assets/trophy.png',
+                          width: screenWidth * 0.08,
+                          height: screenWidth * 0.08,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Icon(
+                              Icons.error,
+                              color: Colors.red,
+                              size: screenWidth * 0.08,
+                            );
+                          },
                         ),
                       ),
                       SizedBox(height: screenHeight * 0.01),
                       Text(
-                        'LEADERBOARD',
+                        _getLocalizedText('LEADERBOARD', 'BẢNG XẾP HẠNG'),
                         style: TextStyle(
                           fontFamily: 'Bungee',
                           fontSize: screenWidth * 0.025,
