@@ -99,7 +99,13 @@ class Match3Game extends FlameGame {
   Future<void> _createInitialGrid() async {
     for (int row = 0; row < gridSize; row++) {
       for (int col = 0; col < gridSize; col++) {
-        final tileType = _random.nextInt(4);
+        int tileType;
+
+        // Generate a tile type that doesn't create matches with existing tiles
+        do {
+          tileType = _random.nextInt(4);
+        } while (_wouldCreateMatch(row, col, tileType));
+
         final tile = GameTile(
           tileType: tileType,
           gridRow: row,
@@ -118,6 +124,47 @@ class Match3Game extends FlameGame {
         add(tile);
       }
     }
+  }
+
+  // Check if placing a tile type at the given position would create a match
+  bool _wouldCreateMatch(int row, int col, int tileType) {
+    // Check horizontal match (3 in a row)
+    // Check if this tile would complete a horizontal line of 3
+    if (col >= 2) {
+      // Check if the two tiles to the left are the same type
+      if (grid[row][col - 1]?.tileType == tileType &&
+          grid[row][col - 2]?.tileType == tileType) {
+        return true;
+      }
+    }
+
+    if (col >= 1 && col < gridSize - 1) {
+      // Check if placing this tile between two same tiles would create a match
+      if (grid[row][col - 1]?.tileType == tileType &&
+          grid[row][col + 1]?.tileType == tileType) {
+        return true;
+      }
+    }
+
+    // Check vertical match (3 in a column)
+    // Check if this tile would complete a vertical line of 3
+    if (row >= 2) {
+      // Check if the two tiles above are the same type
+      if (grid[row - 1][col]?.tileType == tileType &&
+          grid[row - 2][col]?.tileType == tileType) {
+        return true;
+      }
+    }
+
+    if (row >= 1 && row < gridSize - 1) {
+      // Check if placing this tile between two same tiles would create a match
+      if (grid[row - 1][col]?.tileType == tileType &&
+          grid[row + 1][col]?.tileType == tileType) {
+        return true;
+      }
+    }
+
+    return false; // No matches would be created
   }
 
   void onTileTapped(GameTile tile) {
