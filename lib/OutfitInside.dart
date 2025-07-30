@@ -55,7 +55,7 @@ class OutfitScreen extends StatelessWidget {
                       },
                     ),
                     const Text(
-                      'OUTFITS',
+                      'WEAPONS',
                       style: TextStyle(
                         fontFamily: 'Bungee',
                         fontSize: 28,
