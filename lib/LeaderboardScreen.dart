@@ -349,8 +349,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                 duration: Duration(milliseconds: 100),
                 child: Image.asset(
                   'assets/backbutton.png',
-                  width: screenWidth * 0.12,
-                  height: screenWidth * 0.12,
+                  width: screenWidth * 0.18,
+                  height: screenWidth * 0.18,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
                       width: screenWidth * 0.12,

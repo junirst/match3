@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'audio_manager.dart';
+import 'language_manager.dart';
 
 class Chapterscreen extends StatefulWidget {
   const Chapterscreen({super.key});
@@ -12,6 +13,12 @@ class _ChapterscreenState extends State<Chapterscreen> {
   double _chapter1Scale = 1.0;
   double _chapter2Scale = 1.0;
   double _backScale = 1.0;
+
+  @override
+  void initState() {
+    super.initState();
+    LanguageManager.initializeLanguage();
+  }
 
   void _onButtonTap(String buttonName) {
     // Play sound effect
@@ -43,10 +50,10 @@ class _ChapterscreenState extends State<Chapterscreen> {
       } else if (buttonName == 'chapter1') {
         Navigator.pushNamed(context, '/chapter1');
       } else if (buttonName == 'chapter2') {
-        // Navigate to Chapter 2 gameplay
+        // Navigate to Chapter 2 gameplay - Localized message
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Chapter 2 functionality not implemented yet'),
+          SnackBar(
+            content: Text(LanguageManager.getText('chapter_not_implemented')),
             duration: Duration(seconds: 1),
           ),
         );
@@ -118,7 +125,7 @@ class _ChapterscreenState extends State<Chapterscreen> {
           },
         ),
         Text(
-          'STORY MODE',
+          LanguageManager.getText('story_mode'),
           style: TextStyle(
             fontFamily: 'Bungee',
             fontSize: screenWidth * 0.03,
@@ -163,21 +170,21 @@ class _ChapterscreenState extends State<Chapterscreen> {
             ),
           ),
 
-          // Story Mode header in top left
+          // Story Mode header in top left - Localized
           Positioned(
             top: screenHeight * 0.05,
             left: screenWidth * 0.05,
             child: _buildStoryModeHeader(screenWidth, screenHeight),
           ),
 
-          // Center buttons (Chapter 1 and Chapter 2)
+          // Center buttons (Chapter 1 and Chapter 2) - Localized
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Chapter 1 button
                 _buildChapterButton(
-                  'CHAPTER 1',
+                  LanguageManager.getText('chapter_1'),
                   'chapter1',
                   _chapter1Scale,
                       () => _onButtonTap('chapter1'),
@@ -189,7 +196,7 @@ class _ChapterscreenState extends State<Chapterscreen> {
 
                 // Chapter 2 button
                 _buildChapterButton(
-                  'CHAPTER 2',
+                  LanguageManager.getText('chapter_2'),
                   'chapter2',
                   _chapter2Scale,
                       () => _onButtonTap('chapter2'),
@@ -211,8 +218,8 @@ class _ChapterscreenState extends State<Chapterscreen> {
                 duration: Duration(milliseconds: 100),
                 child: Image.asset(
                   'assets/backbutton.png',
-                  width: screenWidth * 0.12,
-                  height: screenHeight * 0.08,
+                  width: screenWidth * 0.18,
+                  height: screenHeight * 0.18,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
                       width: screenWidth * 0.12,

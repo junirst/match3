@@ -227,8 +227,8 @@ class _SettingScreenState extends State<SettingScreen> {
                 duration: const Duration(milliseconds: 100),
                 child: Image.asset(
                   'assets/backbutton.png',
-                  width: screenWidth * 0.12,
-                  height: screenHeight * 0.08,
+                  width: screenWidth * 0.18,
+                  height: screenHeight * 0.18,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
                       width: screenWidth * 0.12,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'audio_manager.dart';
 import 'GameplayScreen.dart';
+import 'language_manager.dart';
 
 class Chapter1Screen extends StatefulWidget {
   const Chapter1Screen({super.key});
@@ -11,6 +12,12 @@ class Chapter1Screen extends StatefulWidget {
 
 class _Chapter1ScreenState extends State<Chapter1Screen> {
   double _backScale = 1.0;
+
+  @override
+  void initState() {
+    super.initState();
+    LanguageManager.initializeLanguage();
+  }
 
   void _onButtonTap(String buttonName) {
     // Play sound effect
@@ -72,9 +79,9 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Level title
+                // Level title - Localized
                 Text(
-                  'Level 1.$levelNumber',
+                  '${LanguageManager.getText('level')} 1.$levelNumber',
                   style: TextStyle(
                     fontSize: screenWidth * 0.08,
                     fontWeight: FontWeight.bold,
@@ -116,7 +123,7 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
                         ),
                         child: Center(
                           child: Text(
-                            'PLAY',
+                            LanguageManager.getText('play'),
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: screenWidth * 0.06,
@@ -131,12 +138,12 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
 
                 SizedBox(height: screenHeight * 0.03),
 
-                // Reward section
+                // Reward section - Localized
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Reward: ${levelNumber * 50}',
+                      '${LanguageManager.getText('reward')} ${levelNumber * 50}',
                       style: TextStyle(
                         fontSize: screenWidth * 0.05,
                         fontWeight: FontWeight.bold,
@@ -166,7 +173,7 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
                       child: Icon(
                         Icons.monetization_on,
                         color: Colors.orange[800],
-                        size: screenWidth * 0.05,
+                        size: screenWidth * 0.09,
                       ),
                     ),
                   ],
@@ -200,7 +207,7 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
                   color: Colors.brown[200],
                   child: Center(
                     child: Text(
-                      'Chapter 1 Map',
+                      '${LanguageManager.getText('chapter')} 1 Map',
                       style: TextStyle(
                         color: Colors.brown[800],
                         fontSize: 24,
@@ -213,7 +220,7 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
             ),
           ),
 
-          // Chapter 1 title in top left
+          // Chapter 1 title in top left - Localized
           Positioned(
             top: screenHeight * 0.05,
             left: screenWidth * 0.05,
@@ -230,9 +237,9 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.orange, width: 2),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Text(
-                      'CHAPTER 1',
+                      LanguageManager.getText('chapter_1'),
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -292,8 +299,8 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
                 duration: Duration(milliseconds: 100),
                 child: Image.asset(
                   'assets/backbutton.png',
-                  width: screenWidth * 0.12,
-                  height: screenHeight * 0.08,
+                  width: screenWidth * 0.18,
+                  height: screenHeight * 0.18,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
                       width: screenWidth * 0.12,
@@ -319,10 +326,10 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
   }
 
   Widget _buildLevelButton(
-    int levelNumber,
-    double screenWidth,
-    double screenHeight,
-  ) {
+      int levelNumber,
+      double screenWidth,
+      double screenHeight,
+      ) {
     return GestureDetector(
       onTap: () => _onLevelTap(levelNumber),
       child: Container(
