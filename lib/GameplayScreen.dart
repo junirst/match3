@@ -279,57 +279,63 @@ class _GameplayScreenState extends State<GameplayScreen> {
                     ),
                     child: Column(
                       children: [
-                        // Enemy image and health bar (moved up)
-                        if (widget.chapter == 1 &&
-                            (widget.level == 1 || widget.level == 2))
-                          _buildEnemyWidget(
-                            'assets/Mobs/Goblin.png',
-                            Colors.green,
-                            'GOBLIN',
-                            screenWidth,
-                            screenHeight,
-                          ),
-                        if (widget.chapter == 1 &&
-                            (widget.level == 3 || widget.level == 4))
-                          _buildEnemyWidget(
-                            'assets/Mobs/Ghost.png',
-                            Colors.grey,
-                            'GHOST',
-                            screenWidth,
-                            screenHeight,
-                          ),
-                        if (widget.chapter == 1 && widget.level == 5)
-                          _buildEnemyWidget(
-                            'assets/Mobs/Dragon.png',
-                            Colors.red,
-                            'DRAGON',
-                            screenWidth,
-                            screenHeight,
-                            isDragon: true,
-                          ),
-
-                        // Minimal spacing after enemy
-                        SizedBox(
-                          height: screenHeight * 0.005,
-                        ), // Reduced from 0.02
-                        // Spacer to center the bars vertically
-                        SizedBox(height: screenHeight * 0.1),
-
-                        // Player health and power bars (positioned in middle)
-                        _buildPlayerBars(screenWidth, screenHeight),
-
-                        // Spacer between bars and game grid
-                        SizedBox(height: screenHeight * 0.05),
-
-                        // Game grid (positioned at bottom)
+                        // Enemy area with fixed height for consistency
                         Container(
                           height:
                               screenHeight *
-                              0.35, // Increased height to fit all tiles
+                              0.35, // Reduced from 0.4 to move bars up
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              // Enemy image and health bar
+                              if (widget.chapter == 1 &&
+                                  (widget.level == 1 || widget.level == 2))
+                                _buildEnemyWidget(
+                                  'assets/Mobs/Goblin.png',
+                                  Colors.green,
+                                  'GOBLIN',
+                                  screenWidth,
+                                  screenHeight,
+                                ),
+                              if (widget.chapter == 1 &&
+                                  (widget.level == 3 || widget.level == 4))
+                                _buildEnemyWidget(
+                                  'assets/Mobs/Ghost.png',
+                                  Colors.grey,
+                                  'GHOST',
+                                  screenWidth,
+                                  screenHeight,
+                                ),
+                              if (widget.chapter == 1 && widget.level == 5)
+                                _buildEnemyWidget(
+                                  'assets/Mobs/Dragon.png',
+                                  Colors.red,
+                                  'DRAGON',
+                                  screenWidth,
+                                  screenHeight,
+                                  isDragon: true,
+                                ),
+                            ],
+                          ),
+                        ),
+
+                        // Small spacing before wooden area
+                        SizedBox(height: screenHeight * 0.03),
+
+                        // Player health and power bars (positioned near wooden border)
+                        _buildPlayerBars(screenWidth, screenHeight),
+
+                        // Spacing between bars and game grid
+                        SizedBox(height: screenHeight * 0.03),
+
+                        // Game grid (positioned in wooden area)
+                        Container(
+                          height:
+                              screenHeight * 0.32, // Slightly increased height
                           child: _buildGameGrid(screenWidth, screenHeight),
                         ),
 
-                        // Small bottom padding
+                        // Bottom padding within wooden area
                         SizedBox(height: screenHeight * 0.02),
                       ],
                     ),
