@@ -147,25 +147,6 @@ class _GameplayScreenState extends State<GameplayScreen> {
     );
   }
 
-  Widget _buildGameGrid(double screenWidth, double screenHeight) {
-    // Use responsive sizing that fits available space
-    double gridSize = screenWidth * 0.85;
-
-    return Container(
-      width: gridSize,
-      height: gridSize,
-      decoration: BoxDecoration(
-        color: Colors.brown[700]!.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.brown[800]!, width: 3),
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(10),
-        child: GameWidget<Match3Game>.controlled(gameFactory: () => game),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
@@ -216,171 +197,6 @@ class _GameplayScreenState extends State<GameplayScreen> {
             ),
           ),
 
-          // Goblin image for level 1.1 and 1.2 (BEHIND sword hand)
-          if (widget.chapter == 1 && (widget.level == 1 || widget.level == 2))
-            Positioned(
-              left:
-                  screenWidth * 0.5 -
-                  (screenWidth * 0.15), // Center horizontally
-              top:
-                  screenHeight *
-                  0.1, // Position in the middle-upper area of the nature background
-              child: Image.asset(
-                'assets/Mobs/Goblin.png',
-                width: screenWidth * 0.3,
-                height: screenWidth * 0.3,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  print('Error loading Goblin image: $error');
-                  return Container(
-                    width: screenWidth * 0.3,
-                    height: screenWidth * 0.3,
-                    decoration: BoxDecoration(
-                      color: Colors.green[400],
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.green[700]!, width: 2),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.person,
-                          size: screenWidth * 0.1,
-                          color: Colors.green[700],
-                        ),
-                        Text(
-                          'GOBLIN',
-                          style: TextStyle(
-                            color: Colors.green[700],
-                            fontSize: screenWidth * 0.03,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-
-          // Ghost image for level 1.3 and 1.4 (BEHIND sword hand)
-          if (widget.chapter == 1 && (widget.level == 3 || widget.level == 4))
-            Positioned(
-              left:
-                  screenWidth * 0.5 -
-                  (screenWidth * 0.15), // Center horizontally (same as Goblin)
-              top: screenHeight * 0.1, // Same position as Goblin
-              child: Image.asset(
-                'assets/Mobs/Ghost.png',
-                width: screenWidth * 0.3,
-                height: screenWidth * 0.3,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  print('Error loading Ghost image: $error');
-                  return Container(
-                    width: screenWidth * 0.3,
-                    height: screenWidth * 0.3,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[400],
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.grey[700]!, width: 2),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.visibility_off,
-                          size: screenWidth * 0.1,
-                          color: Colors.grey[700],
-                        ),
-                        Text(
-                          'GHOST',
-                          style: TextStyle(
-                            color: Colors.grey[700],
-                            fontSize: screenWidth * 0.03,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-
-          // Dragon image for level 1.5 (BEHIND sword hand)
-          if (widget.chapter == 1 && widget.level == 5)
-            Positioned(
-              left:
-                  screenWidth * 0.5 -
-                  (screenWidth * 0.35), // Adjusted for much bigger size
-              top: screenHeight * 0.04, // Moved up more for bigger dragon
-              child: Image.asset(
-                'assets/Mobs/Dragon.png',
-                width: screenWidth * 0.7, // Much bigger - 70% of screen width
-                height: screenWidth * 0.7, // Much bigger - 70% of screen width
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  print('Error loading Dragon image: $error');
-                  return Container(
-                    width: screenWidth * 0.7, // Much bigger
-                    height: screenWidth * 0.7, // Much bigger
-                    decoration: BoxDecoration(
-                      color: Colors.red[400],
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border.all(color: Colors.red[700]!, width: 3),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.whatshot,
-                          size: screenWidth * 0.2, // Much bigger icon
-                          color: Colors.red[700],
-                        ),
-                        Text(
-                          'DRAGON',
-                          style: TextStyle(
-                            color: Colors.red[700],
-                            fontSize: screenWidth * 0.06, // Much bigger text
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-
-          // Sword hand image positioned ABOVE all mobs (in the foreground)
-          Positioned(
-            right: screenWidth * 0.02,
-            top: screenHeight * 0.15, // Moved higher up
-            bottom: screenHeight * 0.55, // Adjusted to be above wooden area
-            child: Image.asset(
-              'assets/SwordHand.png',
-              width: screenWidth * 0.2,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  width: screenWidth * 0.2,
-                  height: screenHeight * 0.3,
-                  decoration: BoxDecoration(
-                    color: Colors.brown[300],
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    Icons.sports_martial_arts,
-                    size: screenWidth * 0.1,
-                    color: Colors.brown[600],
-                  ),
-                );
-              },
-            ),
-          ),
-
-          // Main content using Column layout
           SafeArea(
             child: Column(
               children: [
@@ -388,12 +204,12 @@ class _GameplayScreenState extends State<GameplayScreen> {
                 Padding(
                   padding: EdgeInsets.symmetric(
                     horizontal: screenWidth * 0.05,
-                    vertical: screenHeight * 0.02,
+                    vertical: screenHeight * 0.01, // Reduced from 0.02
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Level indicator on the left
+                      // Level indicator
                       Container(
                         padding: EdgeInsets.symmetric(
                           horizontal: screenWidth * 0.04,
@@ -421,7 +237,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                         ),
                       ),
 
-                      // Pause button on the right
+                      // Pause button
                       GestureDetector(
                         onTap: _onPausePressed,
                         child: Container(
@@ -455,17 +271,286 @@ class _GameplayScreenState extends State<GameplayScreen> {
                   ),
                 ),
 
-                // Flexible space for the game grid
+                // Main content area
                 Expanded(
-                  child: Center(
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        left: screenWidth * 0.05,
-                        right: screenWidth * 0.05,
-                        top: screenWidth * 0.57,
-                        bottom: screenWidth * 0.02,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: screenWidth * 0.05,
+                    ),
+                    child: Column(
+                      children: [
+                        // Enemy image and health bar (moved up)
+                        if (widget.chapter == 1 &&
+                            (widget.level == 1 || widget.level == 2))
+                          _buildEnemyWidget(
+                            'assets/Mobs/Goblin.png',
+                            Colors.green,
+                            'GOBLIN',
+                            screenWidth,
+                            screenHeight,
+                          ),
+                        if (widget.chapter == 1 &&
+                            (widget.level == 3 || widget.level == 4))
+                          _buildEnemyWidget(
+                            'assets/Mobs/Ghost.png',
+                            Colors.grey,
+                            'GHOST',
+                            screenWidth,
+                            screenHeight,
+                          ),
+                        if (widget.chapter == 1 && widget.level == 5)
+                          _buildEnemyWidget(
+                            'assets/Mobs/Dragon.png',
+                            Colors.red,
+                            'DRAGON',
+                            screenWidth,
+                            screenHeight,
+                            isDragon: true,
+                          ),
+
+                        // Minimal spacing after enemy
+                        SizedBox(
+                          height: screenHeight * 0.005,
+                        ), // Reduced from 0.02
+                        // Spacer to center the bars vertically
+                        SizedBox(height: screenHeight * 0.1),
+
+                        // Player health and power bars (positioned in middle)
+                        _buildPlayerBars(screenWidth, screenHeight),
+
+                        // Spacer between bars and game grid
+                        SizedBox(height: screenHeight * 0.05),
+
+                        // Game grid (positioned at bottom)
+                        Container(
+                          height:
+                              screenHeight *
+                              0.35, // Increased height to fit all tiles
+                          child: _buildGameGrid(screenWidth, screenHeight),
+                        ),
+
+                        // Small bottom padding
+                        SizedBox(height: screenHeight * 0.02),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Sword hand image (positioned above all)
+          Positioned(
+            right: screenWidth * 0.02,
+            top: screenHeight * 0.15,
+            child: Image.asset(
+              'assets/SwordHand.png',
+              width: screenWidth * 0.2,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  width: screenWidth * 0.2,
+                  height: screenHeight * 0.3,
+                  decoration: BoxDecoration(
+                    color: Colors.brown[300],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.sports_martial_arts,
+                    size: screenWidth * 0.1,
+                    color: Colors.brown[600],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper method for enemy widget
+  Widget _buildEnemyWidget(
+    String assetPath,
+    Color baseColor,
+    String label,
+    double screenWidth,
+    double screenHeight, {
+    bool isDragon = false,
+  }) {
+    // Define approximate 400 and 700 shades manually
+    Color lightShade = baseColor == Colors.green
+        ? Color.fromRGBO(200, 230, 201, 1.0)
+        : // Green 400
+          baseColor == Colors.grey
+        ? Color.fromRGBO(189, 189, 189, 1.0)
+        : // Grey 400
+          Color.fromRGBO(255, 205, 210, 1.0); // Red 400
+    Color darkShade = baseColor == Colors.green
+        ? Color.fromRGBO(76, 175, 80, 1.0)
+        : // Green 700
+          baseColor == Colors.grey
+        ? Color.fromRGBO(117, 117, 117, 1.0)
+        : // Grey 700
+          Color.fromRGBO(229, 115, 115, 1.0); // Red 700
+
+    return Column(
+      children: [
+        Container(
+          width: isDragon ? screenWidth * 0.5 : screenWidth * 0.25,
+          height: screenHeight * 0.015,
+          decoration: BoxDecoration(
+            color: Colors.black54,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.black, width: 1),
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.red,
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        SizedBox(height: screenHeight * 0.005), // Reduced spacing
+        Image.asset(
+          assetPath,
+          width: isDragon
+              ? screenWidth * 0.6
+              : screenWidth * 0.3, // Slightly smaller dragon
+          height: isDragon
+              ? screenWidth * 0.4
+              : screenWidth * 0.3, // Slightly smaller dragon
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) {
+            print('Error loading $label image: $error');
+            return Container(
+              width: isDragon ? screenWidth * 0.6 : screenWidth * 0.3,
+              height: isDragon ? screenWidth * 0.4 : screenWidth * 0.3,
+              decoration: BoxDecoration(
+                color: lightShade,
+                borderRadius: BorderRadius.circular(isDragon ? 15 : 10),
+                border: Border.all(color: darkShade, width: isDragon ? 3 : 2),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    isDragon
+                        ? Icons.whatshot
+                        : (label == 'GHOST'
+                              ? Icons.visibility_off
+                              : Icons.person),
+                    size: isDragon
+                        ? screenWidth * 0.15
+                        : screenWidth * 0.1, // Slightly smaller
+                    color: darkShade,
+                  ),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: darkShade,
+                      fontSize: isDragon
+                          ? screenWidth *
+                                0.05 // Slightly smaller
+                          : screenWidth * 0.03,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGameGrid(double screenWidth, double screenHeight) {
+    double gridSize = screenWidth * 0.75; // Increased back to 75%
+    return Container(
+      width: gridSize,
+      height: gridSize, // Make it square to fit 5x5 properly
+      child: GameWidget<Match3Game>.controlled(gameFactory: () => game),
+    );
+  }
+
+  Widget _buildPlayerBars(double screenWidth, double screenHeight) {
+    return Container(
+      width: screenWidth * 0.75,
+      padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.02),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 1,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'HEALTH',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: screenWidth * 0.03,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black,
+                        offset: Offset(1, 1),
+                        blurRadius: 2,
                       ),
-                      child: _buildGameGrid(screenWidth, screenHeight),
+                    ],
+                  ),
+                ),
+                SizedBox(height: screenHeight * 0.005),
+                Container(
+                  height: screenHeight * 0.02,
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.black, width: 2),
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: screenWidth * 0.03),
+          Expanded(
+            flex: 1,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'POWER',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: screenWidth * 0.03,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black,
+                        offset: Offset(1, 1),
+                        blurRadius: 2,
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: screenHeight * 0.005),
+                Container(
+                  height: screenHeight * 0.02,
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.black, width: 2),
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.yellow[600],
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                 ),

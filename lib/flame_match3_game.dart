@@ -34,14 +34,20 @@ class Match3Game extends FlameGame {
 
   @override
   Future<void> onLoad() async {
-    // Calculate responsive sizing
-    final screenSize = size;
-    tileSize = screenSize.x * 0.14; // Slightly smaller for spacing
+    // Set transparent background
+    camera.backdrop.removeAll(camera.backdrop.children);
 
-    // Center the grid on screen
+    // Calculate responsive sizing for 5x5 grid
+    final screenSize = size;
+    tileSize = screenSize.x * 0.12; // Increase tile size back up
+
+    // Center the grid properly within the available space
+    final totalGridWidth = gridSize * tileSize + (gridSize - 1) * 4;
+    final totalGridHeight = gridSize * tileSize + (gridSize - 1) * 4;
+
     gridOffset = Vector2(
-      (screenSize.x - (gridSize * tileSize + (gridSize - 1) * 4)) / 2,
-      (screenSize.y - (gridSize * tileSize + (gridSize - 1) * 4)) / 2,
+      (screenSize.x - totalGridWidth) / 2,
+      (screenSize.y - totalGridHeight) / 2,
     );
 
     // Initialize grid
@@ -58,6 +64,15 @@ class Match3Game extends FlameGame {
     await _createInitialGrid();
   }
 
+  @override
+  Color backgroundColor() => const Color(0x00000000); // Transparent background
+
+  @override
+  void render(Canvas canvas) {
+    // Call super to avoid mustCallSuper warning
+    super.render(canvas);
+  }
+
   Future<void> _createInitialGrid() async {
     for (int row = 0; row < gridSize; row++) {
       for (int col = 0; col < gridSize; col++) {
@@ -70,7 +85,7 @@ class Match3Game extends FlameGame {
           game: this,
         );
 
-        // Position tile on screen with proper spacing
+        // Position tile on screen
         tile.position = Vector2(
           gridOffset.x + col * (tileSize + 4),
           gridOffset.y + row * (tileSize + 4),
@@ -257,16 +272,9 @@ class GameTile extends RectangleComponent with TapCallbacks {
 
   @override
   Future<void> onLoad() async {
-    // Create background with rounded corners
-    background = RectangleComponent(
-      size: size,
-      paint: Paint()
-        ..color =
-            const Color(0xFFF5DEB3) // Brown[100] equivalent
-        ..style = PaintingStyle.fill,
-    );
+    // Don't add any background at all - completely transparent tile
 
-    // Add border effect
+    // Keep only the border for tile definition
     final border = RectangleComponent(
       size: size,
       paint: Paint()
@@ -286,7 +294,7 @@ class GameTile extends RectangleComponent with TapCallbacks {
     );
     selectionBorder.opacity = 0;
 
-    add(background);
+    // Add border and selection border
     add(border);
     add(selectionBorder);
 
@@ -332,11 +340,15 @@ class GameTile extends RectangleComponent with TapCallbacks {
       text: icons[tileType],
       textRenderer: TextPaint(
         style: TextStyle(
-          fontSize: tileSize * 0.4,
+          fontSize: tileSize * 0.5, // Slightly larger icons
           color: game.tileColors[tileType],
+          backgroundColor: Colors.transparent, // Ensure transparent background
         ),
       ),
-      position: Vector2(tileSize * 0.3, tileSize * 0.3),
+      position: Vector2(
+        tileSize * 0.25,
+        tileSize * 0.25,
+      ), // Center the icon better
     );
     add(fallbackText!);
   }
