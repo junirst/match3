@@ -17,6 +17,9 @@ class Match3Game extends FlameGame {
   // Selection state for swapping tiles
   GameTile? selectedTile;
 
+  // Callback for when matches occur
+  Function(int tileType, int matchCount)? onMatchCallback;
+
   // Game assets - using your actual asset files
   final Map<int, String> tileSprites = {
     0: 'sword.png',
@@ -239,6 +242,7 @@ class Match3Game extends FlameGame {
   Future<void> checkForMatches() async {
     // Basic match detection - find 3 or more in a row/column
     Set<GameTile> matchedTiles = {};
+    Map<int, int> matchCounts = {}; // Track matches by tile type
 
     // Check horizontal matches
     for (int row = 0; row < gridSize; row++) {
@@ -251,7 +255,10 @@ class Match3Game extends FlameGame {
         } else {
           if (count >= 3) {
             for (int i = col - count; i < col; i++) {
-              if (grid[row][i] != null) matchedTiles.add(grid[row][i]!);
+              if (grid[row][i] != null) {
+                matchedTiles.add(grid[row][i]!);
+                matchCounts[currentType] = (matchCounts[currentType] ?? 0) + 1;
+              }
             }
           }
           currentType = grid[row][col]?.tileType ?? -1;
@@ -260,7 +267,10 @@ class Match3Game extends FlameGame {
       }
       if (count >= 3) {
         for (int i = gridSize - count; i < gridSize; i++) {
-          if (grid[row][i] != null) matchedTiles.add(grid[row][i]!);
+          if (grid[row][i] != null) {
+            matchedTiles.add(grid[row][i]!);
+            matchCounts[currentType] = (matchCounts[currentType] ?? 0) + 1;
+          }
         }
       }
     }
@@ -276,7 +286,10 @@ class Match3Game extends FlameGame {
         } else {
           if (count >= 3) {
             for (int i = row - count; i < row; i++) {
-              if (grid[i][col] != null) matchedTiles.add(grid[i][col]!);
+              if (grid[i][col] != null) {
+                matchedTiles.add(grid[i][col]!);
+                matchCounts[currentType] = (matchCounts[currentType] ?? 0) + 1;
+              }
             }
           }
           currentType = grid[row][col]?.tileType ?? -1;
@@ -285,13 +298,28 @@ class Match3Game extends FlameGame {
       }
       if (count >= 3) {
         for (int i = gridSize - count; i < gridSize; i++) {
-          if (grid[i][col] != null) matchedTiles.add(grid[i][col]!);
+          if (grid[i][col] != null) {
+            matchedTiles.add(grid[i][col]!);
+            matchCounts[currentType] = (matchCounts[currentType] ?? 0) + 1;
+          }
         }
       }
     }
 
     if (matchedTiles.isNotEmpty) {
       print('Found ${matchedTiles.length} matched tiles!');
+
+      // Call the callback for each tile type that was matched
+      if (onMatchCallback != null) {
+        for (final entry in matchCounts.entries) {
+          final tileType = entry.key;
+          final count = entry.value;
+          print(
+            'Calling match callback for tile type $tileType with count $count',
+          );
+          onMatchCallback!(tileType, count);
+        }
+      }
 
       // Animate matched tiles and remove them
       for (final tile in matchedTiles) {
