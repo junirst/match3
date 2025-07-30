@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'audio_manager.dart';
 import 'language_manager.dart';
 import 'LeaderboardScreen.dart';
+import 'TowerGameplayScreen.dart';
 
 class TowerModeScreen extends StatefulWidget {
   const TowerModeScreen({super.key});
@@ -67,7 +68,10 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
 
         // Save new season data
         await prefs.setInt('current_season', storedSeason);
-        await prefs.setString('season_end_time', seasonEndTime.toIso8601String());
+        await prefs.setString(
+          'season_end_time',
+          seasonEndTime.toIso8601String(),
+        );
       }
     } else {
       // First time setup - start from tomorrow 4 AM
@@ -146,20 +150,17 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
       final dayText = days == 1 ? 'DAY' : 'DAYS';
       final hourText = hours == 1 ? 'HOUR' : 'HOURS';
       return _getLocalizedText(
-          '$days $dayText $hours $hourText $minutes M',
-          '$days NGÀY $hours GIỜ $minutes PHÚT'
+        '$days $dayText $hours $hourText $minutes M',
+        '$days NGÀY $hours GIỜ $minutes PHÚT',
       );
     } else if (hours > 0) {
       final hourText = hours == 1 ? 'HOUR' : 'HOURS';
       return _getLocalizedText(
-          '$hours $hourText $minutes M',
-          '$hours GIỜ $minutes PHÚT'
+        '$hours $hourText $minutes M',
+        '$hours GIỜ $minutes PHÚT',
       );
     } else {
-      return _getLocalizedText(
-          '$minutes M',
-          '$minutes PHÚT'
-      );
+      return _getLocalizedText('$minutes M', '$minutes PHÚT');
     }
   }
 
@@ -193,7 +194,10 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
 
       if (buttonName == 'play') {
         // Navigate to tower game
-        Navigator.pushNamed(context, '/tower_game');
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => TowerGameplayScreen()),
+        );
       } else if (buttonName == 'back') {
         Navigator.pop(context);
       } else if (buttonName == 'achievement') {
@@ -225,7 +229,9 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
               ),
             ),
             child: Container(
-              color: Colors.black.withOpacity(0.3), // Dark overlay for better text visibility
+              color: Colors.black.withOpacity(
+                0.3,
+              ), // Dark overlay for better text visibility
             ),
           ),
 
@@ -269,7 +275,10 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
                         decoration: BoxDecoration(
                           color: Colors.brown[600],
                           borderRadius: BorderRadius.circular(15),
-                          border: Border.all(color: Colors.brown[800]!, width: 3),
+                          border: Border.all(
+                            color: Colors.brown[800]!,
+                            width: 3,
+                          ),
                         ),
                       );
                     },
@@ -286,7 +295,11 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
                         Shadow(offset: Offset(1, -1), color: Colors.black),
                         Shadow(offset: Offset(-1, 1), color: Colors.black),
                         Shadow(offset: Offset(1, 1), color: Colors.black),
-                        Shadow(offset: Offset(0, 0), color: Colors.black, blurRadius: 3),
+                        Shadow(
+                          offset: Offset(0, 0),
+                          color: Colors.black,
+                          blurRadius: 3,
+                        ),
                       ],
                     ),
                   ),
@@ -303,26 +316,45 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
             child: Column(
               children: [
                 Text(
-                  _getLocalizedText('SEASON $_currentSeason', 'MÙA $_currentSeason'),
+                  _getLocalizedText(
+                    'SEASON $_currentSeason',
+                    'MÙA $_currentSeason',
+                  ),
                   style: TextStyle(
                     fontFamily: 'Bungee',
                     fontSize: screenWidth * 0.08,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                     shadows: [
-                      Shadow(offset: Offset(2, 2), color: Colors.black, blurRadius: 4),
+                      Shadow(
+                        offset: Offset(2, 2),
+                        color: Colors.black,
+                        blurRadius: 4,
+                      ),
                     ],
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.01),
                 Text(
-                  _countdownText.isNotEmpty ? _getLocalizedText('RESETS IN: $_countdownText', 'RESET TRONG: $_countdownText') : _getLocalizedText('RESETS IN: 12 HOURS 4 HOURS', 'RESET TRONG: 12 GIỜ 4 GIỜ'),
+                  _countdownText.isNotEmpty
+                      ? _getLocalizedText(
+                          'RESETS IN: $_countdownText',
+                          'RESET TRONG: $_countdownText',
+                        )
+                      : _getLocalizedText(
+                          'RESETS IN: 12 HOURS 4 HOURS',
+                          'RESET TRONG: 12 GIỜ 4 GIỜ',
+                        ),
                   style: TextStyle(
                     fontFamily: 'Bungee',
                     fontSize: screenWidth * 0.035,
                     color: Colors.white,
                     shadows: [
-                      Shadow(offset: Offset(1, 1), color: Colors.black, blurRadius: 2),
+                      Shadow(
+                        offset: Offset(1, 1),
+                        color: Colors.black,
+                        blurRadius: 2,
+                      ),
                     ],
                   ),
                 ),
@@ -347,7 +379,8 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
                       Image.asset(
                         'assets/frame.png',
                         width: screenWidth * 0.6, // Increased from 0.5 to 0.6
-                        height: screenHeight * 0.10, // Increased from 0.08 to 0.10
+                        height:
+                            screenHeight * 0.10, // Increased from 0.08 to 0.10
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
                             width: screenWidth * 0.6,
@@ -355,7 +388,10 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
                             decoration: BoxDecoration(
                               color: Colors.brown[600],
                               borderRadius: BorderRadius.circular(15),
-                              border: Border.all(color: Colors.brown[800]!, width: 3),
+                              border: Border.all(
+                                color: Colors.brown[800]!,
+                                width: 3,
+                              ),
                             ),
                           );
                         },
@@ -372,7 +408,11 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
                             Shadow(offset: Offset(1, -1), color: Colors.black),
                             Shadow(offset: Offset(-1, 1), color: Colors.black),
                             Shadow(offset: Offset(1, 1), color: Colors.black),
-                            Shadow(offset: Offset(0, 0), color: Colors.black, blurRadius: 2),
+                            Shadow(
+                              offset: Offset(0, 0),
+                              color: Colors.black,
+                              blurRadius: 2,
+                            ),
                           ],
                         ),
                       ),
@@ -396,7 +436,11 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
                   fontSize: screenWidth * 0.04,
                   color: Colors.white,
                   shadows: [
-                    Shadow(offset: Offset(1, 1), color: Colors.black, blurRadius: 2),
+                    Shadow(
+                      offset: Offset(1, 1),
+                      color: Colors.black,
+                      blurRadius: 2,
+                    ),
                   ],
                 ),
               ),
@@ -422,7 +466,10 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
                         decoration: BoxDecoration(
                           color: Colors.brown[600],
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.brown[800]!, width: 3),
+                          border: Border.all(
+                            color: Colors.brown[800]!,
+                            width: 3,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.5),
@@ -452,7 +499,11 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
                           fontSize: screenWidth * 0.025,
                           color: Colors.white,
                           shadows: [
-                            Shadow(offset: Offset(1, 1), color: Colors.black, blurRadius: 2),
+                            Shadow(
+                              offset: Offset(1, 1),
+                              color: Colors.black,
+                              blurRadius: 2,
+                            ),
                           ],
                         ),
                       ),

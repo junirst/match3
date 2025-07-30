@@ -18,6 +18,7 @@ class Match3Game extends FlameGame
   // Game state
   bool isPlayerTurn = true;
   bool isProcessingTurn = false;
+  bool hasShieldProtection = false;
   GameTile? selectedTile;
   int score = 0;
 
@@ -27,7 +28,7 @@ class Match3Game extends FlameGame
   int playerHealth = 100;
   int maxPlayerHealth = 100;
   int playerPower = 0;
-  int maxPlayerPower = 100;
+  int maxPlayerPower = 50; // Sync with TowerGameplayScreen
   bool hasActiveMatches = false;
   bool canUsePower = false;
 
@@ -113,7 +114,9 @@ class Match3Game extends FlameGame
     }
     isProcessingTurn = false;
     hasActiveMatches = false;
-    print('Initial grid created');
+    print(
+      'Initial grid created: PlayerTurn=$isPlayerTurn, Processing=$isProcessingTurn',
+    );
   }
 
   bool _wouldCreateMatch(int row, int col, int tileType) {
@@ -137,6 +140,16 @@ class Match3Game extends FlameGame
       gridOffset.x + col * (tileSize + 4),
       gridOffset.y + row * (tileSize + 4),
     );
+  }
+
+  void setPlayerTurn(bool value) {
+    isPlayerTurn = value;
+    print('Set PlayerTurn=$isPlayerTurn');
+  }
+
+  void setProcessingTurn(bool value) {
+    isProcessingTurn = value;
+    print('Set Processing=$isProcessingTurn');
   }
 
   void onTileTapped(GameTile tile) {
@@ -173,7 +186,7 @@ class Match3Game extends FlameGame
   }
 
   Future<void> _swapTiles(GameTile tile1, GameTile tile2) async {
-    isProcessingTurn = true;
+    setProcessingTurn(true);
     final pos1 = tile1.position.clone();
     final pos2 = tile2.position.clone();
     final row1 = tile1.gridRow;
@@ -206,26 +219,27 @@ class Match3Game extends FlameGame
       tile1.add(MoveEffect.to(pos1, EffectController(duration: 0.2)));
       tile2.add(MoveEffect.to(pos2, EffectController(duration: 0.2)));
       _showInvalidMoveAnimation(tile1, tile2);
-      isProcessingTurn = false;
-      isPlayerTurn = true;
+      setProcessingTurn(false);
+      setPlayerTurn(true);
     } else {
       await _processMatches();
     }
   }
 
   void _showInvalidMoveAnimation(GameTile tile1, GameTile tile2) {
-    final shake1 = SequenceEffect([
+    final shake = SequenceEffect([
       MoveByEffect(Vector2(-8, 0), EffectController(duration: 0.05)),
       MoveByEffect(Vector2(16, 0), EffectController(duration: 0.1)),
       MoveByEffect(Vector2(-8, 0), EffectController(duration: 0.05)),
     ]);
-    final shake2 = SequenceEffect([
-      MoveByEffect(Vector2(-8, 0), EffectController(duration: 0.05)),
-      MoveByEffect(Vector2(16, 0), EffectController(duration: 0.1)),
-      MoveByEffect(Vector2(-8, 0), EffectController(duration: 0.05)),
-    ]);
-    tile1.add(shake1);
-    tile2.add(shake2);
+    tile1.add(shake);
+    tile2.add(
+      SequenceEffect([
+        MoveByEffect(Vector2(-8, 0), EffectController(duration: 0.05)),
+        MoveByEffect(Vector2(16, 0), EffectController(duration: 0.1)),
+        MoveByEffect(Vector2(-8, 0), EffectController(duration: 0.05)),
+      ]),
+    );
   }
 
   Future<void> _processMatches() async {
@@ -244,14 +258,12 @@ class Match3Game extends FlameGame
     }
 
     // End player turn and trigger enemy turn
-    print('Cascade complete! Total cascades: $_cascadeCount');
-    isProcessingTurn = false;
+    setProcessingTurn(false);
     hasActiveMatches = false;
-    isPlayerTurn = false;
     if (onAllMatchesCompleteCallback != null) {
       onAllMatchesCompleteCallback!();
     }
-    await _enemyTurn();
+    print('Cascade complete! Total cascades: $_cascadeCount');
   }
 
   List<List<GameTile>> _findMatches() {
@@ -314,38 +326,7 @@ class Match3Game extends FlameGame
       final points = matchCount * 100 * (_comboCount > 1 ? _comboCount : 1);
       score += points;
 
-      switch (tileType) {
-        case 0: // Sword - Damage enemy
-          final damage = 10 * matchCount * (_comboCount > 1 ? _comboCount : 1);
-          enemyHealth = (enemyHealth - damage).clamp(0, maxEnemyHealth);
-          print(
-            'Sword match: $damage damage, Enemy HP: $enemyHealth/$maxEnemyHealth',
-          );
-          break;
-        case 1: // Shield - No effect yet
-          print('Shield match: $matchCount tiles');
-          break;
-        case 2: // Heart - Heal player
-          final healing = 15 * matchCount * (_comboCount > 1 ? _comboCount : 1);
-          playerHealth = (playerHealth + healing).clamp(
-            0,
-            maxPlayerHealth * 2,
-          ); // Allow excess health
-          print(
-            'Heart match: $healing healing, Player HP: $playerHealth/$maxPlayerHealth',
-          );
-          break;
-        case 3: // Star - Fill power bar
-          final powerGain =
-              8 * matchCount * (_comboCount > 1 ? _comboCount : 1);
-          playerPower = (playerPower + powerGain).clamp(0, maxPlayerPower);
-          canUsePower = playerPower >= maxPlayerPower;
-          print(
-            'Star match: $powerGain power, Power: $playerPower/$maxPlayerPower',
-          );
-          break;
-      }
-
+      // Only notify via callback, do not modify health or power
       if (onMatchCallback != null) {
         onMatchCallback!(tileType, matchCount, points);
       }
@@ -411,39 +392,28 @@ class Match3Game extends FlameGame
     await Future.delayed(Duration(milliseconds: 500));
   }
 
-  Future<void> _enemyTurn() async {
+  Future<void> enemyTurn() async {
     if (enemyHealth <= 0) {
-      print('Enemy defeated!');
-      isPlayerTurn = true;
+      setPlayerTurn(true);
+      setProcessingTurn(false);
+      print(
+        'Enemy defeated, skipping enemy turn: PlayerTurn=$isPlayerTurn, Processing=$isProcessingTurn',
+      );
       return;
     }
 
-    // Simple mob attack: deal random damage
-    final damage = _random.nextInt(15) + 5; // 5-20 damage
-    playerHealth = (playerHealth - damage).clamp(0, maxPlayerHealth * 2);
+    setProcessingTurn(true);
+    setPlayerTurn(false);
     print(
-      'Enemy attacks: $damage damage, Player HP: $playerHealth/$maxPlayerHealth',
+      'Starting enemy turn: PlayerTurn=$isPlayerTurn, Processing=$isProcessingTurn',
     );
 
+    // Simple mob attack: deal random damage
+    final baseDamage = _random.nextInt(15) + 5; // 5-20 damage
     if (onMobAttackCallback != null) {
-      onMobAttackCallback!(damage);
+      onMobAttackCallback!(baseDamage);
     }
-
-    isPlayerTurn = true;
   }
-
-  void setPlayerTurn(bool playerTurn) {
-    isPlayerTurn = playerTurn;
-    print('Turn changed: ${playerTurn ? 'Player' : 'Enemy'} turn');
-  }
-
-  void setProcessingTurn(bool processing) {
-    isProcessingTurn = processing;
-    print('Processing turn: $processing');
-  }
-
-  bool get isPlayerTurnActive => isPlayerTurn;
-  bool get isProcessingTurnActive => isProcessingTurn;
 
   void usePower() {
     if (!canUsePower || isProcessingTurn || !isPlayerTurn) {
@@ -453,14 +423,16 @@ class Match3Game extends FlameGame
       return;
     }
 
-    final damage = 50; // Special power deals significant damage
-    enemyHealth = (enemyHealth - damage).clamp(0, maxEnemyHealth);
-    playerPower = 0;
-    canUsePower = false;
-    print('Power used: $damage damage, Enemy HP: $enemyHealth/$maxEnemyHealth');
-
-    isPlayerTurn = false;
-    _enemyTurn();
+    // Notify TowerGameplayScreen to handle power attack
+    if (onMatchCallback != null) {
+      onMatchCallback!(
+        0,
+        0,
+        0,
+      ); // Use tileType 0 with matchCount 0 to trigger power attack
+    }
+    setPlayerTurn(false);
+    setProcessingTurn(true);
   }
 
   bool _hasMatchesAfterSwap() {
@@ -598,6 +570,4 @@ class GameTile extends RectangleComponent
     _isSelected = selected;
     selectionBorder.opacity = selected ? 1.0 : 0.0;
   }
-
-  bool get isSelected => _isSelected;
 }
