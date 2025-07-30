@@ -12,17 +12,18 @@ class Match3Game extends FlameGame {
   late final double tileSize;
   late final Vector2 gridOffset;
   final Random _random = Random();
+  bool imagesLoaded = false; // Track if images are loaded
 
   // Selection state for swapping tiles
   GameTile? selectedTile;
 
-  // Game assets - same as your original
-  final List<String> tileSprites = [
-    'sword.png',
-    'shield.png',
-    'heart.png',
-    'star.png',
-  ];
+  // Game assets - using your actual asset files
+  final Map<int, String> tileSprites = {
+    0: 'sword.png',
+    1: 'shield.png',
+    2: 'heart.png',
+    3: 'star.png',
+  };
 
   // Fallback colors (same as your original)
   final List<Color> tileColors = [
@@ -53,14 +54,36 @@ class Match3Game extends FlameGame {
     // Initialize grid
     grid = List.generate(gridSize, (i) => List.generate(gridSize, (j) => null));
 
-    // Try to load sprites, but don't fail if they don't exist
+    // Load sprites first and wait for completion
     try {
-      await images.loadAll(tileSprites);
+      // Preload all sprite images
+      print('Loading sprite images...');
+      await images.load('sword.png');
+      await images.load('shield.png');
+      await images.load('heart.png');
+      await images.load('star.png');
+
+      // Verify all images are in cache and set flag
+      bool allImagesReady = true;
+      for (int i = 0; i < 4; i++) {
+        final imageName = tileSprites[i]!;
+        if (!images.containsKey(imageName)) {
+          allImagesReady = false;
+          break;
+        }
+      }
+
+      if (allImagesReady) {
+        imagesLoaded = true;
+        print('All sprite images successfully loaded');
+      } else {
+        print('Not all images loaded, using fallback rendering');
+      }
     } catch (e) {
-      print('Some images failed to load, will use fallback rendering');
+      print('Some images failed to load, will use fallback rendering: $e');
     }
 
-    // Create initial grid
+    // Create initial grid only after images are loaded
     await _createInitialGrid();
   }
 
@@ -260,7 +283,6 @@ class GameTile extends RectangleComponent with TapCallbacks {
   late final RectangleComponent selectionBorder;
   SpriteComponent? spriteComponent;
   TextComponent? fallbackText;
-  bool _isSelected = false;
 
   GameTile({
     required this.tileType,
@@ -298,6 +320,7 @@ class GameTile extends RectangleComponent with TapCallbacks {
     add(border);
     add(selectionBorder);
 
+    // Load content - this will now properly check if images are ready
     await _loadTileContent();
   }
 
@@ -318,43 +341,80 @@ class GameTile extends RectangleComponent with TapCallbacks {
       fallbackText = null;
     }
 
-    // Try to load sprite first
-    try {
-      final sprite = Sprite(game.images.fromCache(game.tileSprites[tileType]));
-      spriteComponent = SpriteComponent(
-        sprite: sprite,
-        size: Vector2(tileSize * 0.7, tileSize * 0.7),
-        position: Vector2(tileSize * 0.15, tileSize * 0.15),
-      );
-      add(spriteComponent!);
-    } catch (e) {
-      // Fallback to text/icon representation
-      _createFallbackContent();
+    // Remove any existing colored background from fallback
+    final componentsToRemove = children
+        .where(
+          (component) =>
+              component is RectangleComponent &&
+              component != selectionBorder &&
+              component.paint.style == PaintingStyle.fill,
+        )
+        .toList();
+
+    for (final component in componentsToRemove) {
+      component.removeFromParent();
     }
+
+    // Check if images are loaded and try to use sprites
+    if (game.imagesLoaded) {
+      try {
+        final imageName = game.tileSprites[tileType]!;
+
+        if (game.images.containsKey(imageName)) {
+          final sprite = Sprite(game.images.fromCache(imageName));
+          spriteComponent = SpriteComponent(
+            sprite: sprite,
+            size: Vector2(tileSize * 0.8, tileSize * 0.8),
+            position: Vector2(tileSize * 0.1, tileSize * 0.1),
+          );
+          add(spriteComponent!);
+          return; // Successfully loaded sprite, no need for fallback
+        }
+      } catch (e) {
+        print('Failed to load sprite for tile $tileType: $e');
+      }
+    }
+
+    // Use fallback content if images aren't loaded or failed to load
+    _createFallbackContent();
   }
 
   void _createFallbackContent() {
-    final icons = ['⚔️', '🛡️', '❤️', '⭐'];
+    // Colored circles with text as fallback if images don't load
+    final labels = ['SW', 'SH', 'HT', 'ST']; // Sword, Shield, Heart, Star
+    final colors = [
+      const Color(0xFFE0E0E0), // sword - silver
+      const Color(0xFF90CAF9), // shield - blue
+      const Color(0xFFEF9A9A), // heart - red
+      const Color(0xFFFFF59D), // star - yellow
+    ];
+
+    // Create a colored background circle
+    final coloredBackground = RectangleComponent(
+      size: Vector2(tileSize * 0.8, tileSize * 0.8),
+      position: Vector2(tileSize * 0.1, tileSize * 0.1),
+      paint: Paint()
+        ..color = colors[tileType]
+        ..style = PaintingStyle.fill,
+    );
+    add(coloredBackground);
 
     fallbackText = TextComponent(
-      text: icons[tileType],
+      text: labels[tileType],
       textRenderer: TextPaint(
         style: TextStyle(
-          fontSize: tileSize * 0.5, // Slightly larger icons
-          color: game.tileColors[tileType],
-          backgroundColor: Colors.transparent, // Ensure transparent background
+          fontSize: tileSize * 0.3,
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+          backgroundColor: Colors.transparent,
         ),
       ),
-      position: Vector2(
-        tileSize * 0.25,
-        tileSize * 0.25,
-      ), // Center the icon better
+      position: Vector2(tileSize * 0.3, tileSize * 0.35),
     );
     add(fallbackText!);
   }
 
   void setSelected(bool selected) {
-    _isSelected = selected;
     selectionBorder.opacity = selected ? 1.0 : 0.0;
   }
 
