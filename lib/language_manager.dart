@@ -213,5 +213,21 @@ class LanguageManager {
     'heart_upgrade': 'Điểm Sức Khỏe',
     'star_upgrade': 'Sức Mạnh Đặc Biệt',
     'shield_upgrade': 'Phòng Thủ',
+
+    // Add these to _englishTranslations in language_manager.dart
+    'confirmPurchase': 'Confirm Purchase',
+    'purchaseFor': 'Purchase for',
+    'notEnoughCoins': 'Not enough coins!',
+    'purchaseSuccess': 'Upgrade successful!',
+    'maxLevel': 'Max level reached!',
+    'refuse': 'REFUSE',
+
+// Add these to _vietnameseTranslations in language_manager.dart
+    'confirmPurchase': 'Xác Nhận Nâng Cấp',
+    'purchaseFor': 'Nâng cấp với giá',
+    'notEnoughCoins': 'Không đủ xu!',
+    'purchaseSuccess': 'Nâng cấp thành công!',
+    'maxLevel': 'Đã đạt cấp độ tối đa!',
+    'refuse': 'TỪ CHỐI',
   };
 }

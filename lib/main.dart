@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'opening_screen.dart';
 import 'main_menu_screen.dart';
-import 'ShopInside.dart';
-import 'OutfitInside.dart';
+import 'ShopInside.dart' as shop;
+import 'OutfitInside.dart' as outfit;
 import 'UpgradeInside.dart';
 import 'SettingInside.dart';
 import 'ChapterScreen.dart';
@@ -29,8 +29,8 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => const OpeningScreen(),
         '/main_menu': (context) => const MainMenuScreen(),
-        '/shop': (context) => const ShopScreen(),
-        '/outfit': (context) => const OutfitScreen(),
+        '/shop': (context) => const shop.ShopScreen(),
+        '/outfit': (context) => const outfit.OutfitScreen(),
         '/upgrade': (context) => const UpgradeScreen(),
         '/settings': (context) => const SettingScreen(),
         '/story': (context) => const Chapterscreen(),

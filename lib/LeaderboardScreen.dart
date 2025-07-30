@@ -46,25 +46,76 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 
   Future<void> _loadSeasonData() async {
-    // Mock season data (replace with actual API call if needed)
+    final prefs = await SharedPreferences.getInstance();
     final now = DateTime.now();
-    final endTime = now.add(Duration(hours: 12)); // Example: 12 hours from now
+
+    // Get stored season data or initialize
+    int storedSeason = prefs.getInt('current_season') ?? 0;
+    String? storedEndTimeString = prefs.getString('season_end_time');
+
+    DateTime seasonEndTime;
+
+    if (storedEndTimeString != null) {
+      // If we have stored data, use it
+      seasonEndTime = DateTime.parse(storedEndTimeString);
+
+      // Check if current season has ended
+      if (now.isAfter(seasonEndTime)) {
+        // Season has ended, start new season
+        storedSeason += 1;
+        seasonEndTime = _getNextSeasonEndTime(now);
+
+        // Save new season data
+        await prefs.setInt('current_season', storedSeason);
+        await prefs.setString('season_end_time', seasonEndTime.toIso8601String());
+      }
+    } else {
+      // First time setup - start from tomorrow 4 AM
+      seasonEndTime = _getNextSeasonEndTime(now);
+
+      // Save initial season data
+      await prefs.setInt('current_season', storedSeason);
+      await prefs.setString('season_end_time', seasonEndTime.toIso8601String());
+    }
+
     setState(() {
-      _currentSeason = 0;
-      _seasonEndTime = endTime;
+      _currentSeason = storedSeason;
+      _seasonEndTime = seasonEndTime;
     });
+
     _startCountdownTimer();
+  }
+
+  DateTime _getNextSeasonEndTime(DateTime currentTime) {
+    // Calculate next 4 AM (tomorrow if it's already past 4 AM today, or today if it's before 4 AM)
+    DateTime next4AM = DateTime(
+      currentTime.year,
+      currentTime.month,
+      currentTime.day,
+      4, // 4 AM
+      0, // 0 minutes
+      0, // 0 seconds
+    );
+
+    // If it's already past 4 AM today, move to tomorrow
+    if (currentTime.isAfter(next4AM)) {
+      next4AM = next4AM.add(Duration(days: 1));
+    }
+
+    // Add 21 days for season duration
+    return next4AM.add(Duration(days: 21));
   }
 
   void _startCountdownTimer() {
     _countdownTimer?.cancel();
-    _countdownTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+    _countdownTimer = Timer.periodic(Duration(seconds: 1), (timer) async {
       if (_seasonEndTime != null) {
         final now = DateTime.now();
         final difference = _seasonEndTime!.difference(now);
 
         if (difference.isNegative) {
-          _loadSeasonData();
+          // Season ended, reload season data to start new season
+          await _loadSeasonData();
           return;
         }
 
@@ -74,12 +125,15 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       }
     });
 
+    // Set initial countdown text
     if (_seasonEndTime != null) {
       final now = DateTime.now();
       final difference = _seasonEndTime!.difference(now);
-      setState(() {
-        _countdownText = _formatCountdown(difference);
-      });
+      if (!difference.isNegative) {
+        setState(() {
+          _countdownText = _formatCountdown(difference);
+        });
+      }
     }
   }
 
@@ -261,7 +315,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                 ),
                 SizedBox(height: screenHeight * 0.01),
                 Text(
-                  _countdownText.isNotEmpty ? _getLocalizedText('RESETS IN: $_countdownText', 'RESET TRONG: $_countdownText') : _getLocalizedText('RESETS IN: 12 HOURS 4 HOURS', 'RESET TRONG: 12 GIỜ 4 GIỜ'),
+                  _countdownText.isNotEmpty ? _getLocalizedText('RESETS IN: $_countdownText', 'RESET TRONG: $_countdownText') : _getLocalizedText('LOADING...', 'ĐANG TẢI...'),
                   style: TextStyle(
                     fontFamily: 'Bungee',
                     fontSize: screenWidth * 0.035,

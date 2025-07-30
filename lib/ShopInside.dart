@@ -1,9 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'language_manager.dart';
 
-class ShopScreen extends StatelessWidget {
+class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
 
-  Widget _buildShopButton(BuildContext context, String text, String route, double screenWidth, double screenHeight) {
+  @override
+  _ShopScreenState createState() => _ShopScreenState();
+}
+
+class _ShopScreenState extends State<ShopScreen> {
+  @override
+  void initState() {
+    super.initState();
+    LanguageManager.initializeLanguage();
+  }
+
+  Widget _buildShopButton(BuildContext context, String translationKey, String route, double screenWidth, double screenHeight) {
     return GestureDetector(
       onTap: () {
         Navigator.pushNamed(context, route);
@@ -24,7 +37,7 @@ class ShopScreen extends StatelessWidget {
             },
           ),
           Text(
-            text,
+            LanguageManager.getText(translationKey),
             style: TextStyle(
               fontFamily: 'Bungee',
               fontSize: screenWidth * 0.05,
@@ -62,51 +75,46 @@ class ShopScreen extends StatelessWidget {
             child: Image.asset('assets/backgroundshop.png', fit: BoxFit.cover),
           ),
 
-          // Shop button (Top-left) - Updated to use frame.png with "SHOP" text, made bigger
+          // Shop button (Top-left)
           Positioned(
-            top: 20, // Adjusted for larger size
+            top: 20,
             left: 20,
-            child: GestureDetector(
-              onTap: () {
-                // Add your shop button functionality here if needed
-              },
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Image.asset(
-                    'assets/frame.png',
-                    width: 160, // Increased from 120
-                    height: 80, // Increased from 60
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: 160,
-                        height: 80,
-                        color: Colors.grey,
-                      );
-                    },
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Image.asset(
+                  'assets/frame.png',
+                  width: 160,
+                  height: 80,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: 160,
+                      height: 80,
+                      color: Colors.grey,
+                    );
+                  },
+                ),
+                Text(
+                  LanguageManager.getText('shop'),
+                  style: TextStyle(
+                    fontFamily: 'Bungee',
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    shadows: [
+                      Shadow(offset: Offset(-1, -1), color: Colors.black),
+                      Shadow(offset: Offset(1, -1), color: Colors.black),
+                      Shadow(offset: Offset(-1, 1), color: Colors.black),
+                      Shadow(offset: Offset(1, 1), color: Colors.black),
+                      Shadow(
+                        offset: Offset(0, 0),
+                        color: Colors.black,
+                        blurRadius: 2,
+                      ),
+                    ],
                   ),
-                  Text(
-                    'SHOP',
-                    style: TextStyle(
-                      fontFamily: 'Bungee',
-                      fontSize: 24, // Increased for larger box
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(offset: Offset(-1, -1), color: Colors.black),
-                        Shadow(offset: Offset(1, -1), color: Colors.black),
-                        Shadow(offset: Offset(-1, 1), color: Colors.black),
-                        Shadow(offset: Offset(1, 1), color: Colors.black),
-                        Shadow(
-                          offset: Offset(0, 0),
-                          color: Colors.black,
-                          blurRadius: 2,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
 
@@ -136,9 +144,9 @@ class ShopScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildShopButton(context, 'OUTFIT', '/outfit', screenWidth, screenHeight),
+                _buildShopButton(context, 'weapons', '/outfit', screenWidth, screenHeight),
                 const SizedBox(height: 30),
-                _buildShopButton(context, 'UPGRADE', '/upgrade', screenWidth, screenHeight),
+                _buildShopButton(context, 'upgrade', '/upgrade', screenWidth, screenHeight),
               ],
             ),
           ),
