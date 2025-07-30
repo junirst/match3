@@ -154,8 +154,8 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               alignment: Alignment.topCenter,
               child: Image.asset(
                 'assets/logo.png',
-                width: screenWidth * 0.8,
-                height: screenHeight * 0.15,
+                width: screenWidth * 0.95, // Even larger
+                height: screenHeight * 0.25, // Even taller
               ),
             ),
           ),

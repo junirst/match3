@@ -56,7 +56,7 @@ class LanguageManager {
     'yes': 'Yes',
     'no': 'No',
     'cancel': 'Cancel',
-    'confirm': 'Confirm',
+    'confirm': 'CONFIRM',
     'ok': 'OK',
 
     // Main Menu
@@ -87,6 +87,15 @@ class LanguageManager {
     'buy': 'BUY',
     'purchase_not_implemented': 'Purchase functionality not implemented yet',
 
+    // Purchase System
+    'confirmPurchase': 'Confirm Purchase',
+    'purchaseFor': 'Purchase for',
+    'coins': 'coins',
+    'refuse': 'REFUSE',
+    'notEnoughCoins': 'Not enough coins!',
+    'purchaseSuccess': 'Upgrade successful!',
+    'maxLevel': 'Max level reached!',
+
     // Leaderboard
     'leaderboard_title': 'LEADERBOARD',
     'resets_in': 'RESETS IN:',
@@ -111,7 +120,6 @@ class LanguageManager {
     'climb_tower': 'CLIMB THE TOWER',
 
     // Game UI
-    'coins': 'Coins',
     'score': 'Score',
     'time': 'Time',
     'moves': 'Moves',
@@ -141,7 +149,7 @@ class LanguageManager {
     'yes': 'Có',
     'no': 'Không',
     'cancel': 'Hủy',
-    'confirm': 'Xác nhận',
+    'confirm': 'XÁC NHẬN',
     'ok': 'Đồng ý',
 
     // Main Menu
@@ -172,6 +180,15 @@ class LanguageManager {
     'buy': 'MUA',
     'purchase_not_implemented': 'Chức năng mua hàng chưa được triển khai',
 
+    // Purchase System
+    'confirmPurchase': 'Xác Nhận Nâng Cấp',
+    'purchaseFor': 'Nâng cấp với giá',
+    'coins': 'xu',
+    'refuse': 'TỪ CHỐI',
+    'notEnoughCoins': 'Không đủ xu!',
+    'purchaseSuccess': 'Nâng cấp thành công!',
+    'maxLevel': 'Đã đạt cấp độ tối đa!',
+
     // Leaderboard
     'leaderboard_title': 'BẢNG XẾP HẠNG',
     'resets_in': 'RESET TRONG:',
@@ -196,7 +213,6 @@ class LanguageManager {
     'climb_tower': 'LEO THÁP',
 
     // Game UI
-    'coins': 'Xu',
     'score': 'Điểm',
     'time': 'Thời gian',
     'moves': 'Nước đi',
@@ -213,21 +229,5 @@ class LanguageManager {
     'heart_upgrade': 'Điểm Sức Khỏe',
     'star_upgrade': 'Sức Mạnh Đặc Biệt',
     'shield_upgrade': 'Phòng Thủ',
-
-    // Add these to _englishTranslations in language_manager.dart
-    'confirmPurchase': 'Confirm Purchase',
-    'purchaseFor': 'Purchase for',
-    'notEnoughCoins': 'Not enough coins!',
-    'purchaseSuccess': 'Upgrade successful!',
-    'maxLevel': 'Max level reached!',
-    'refuse': 'REFUSE',
-
-// Add these to _vietnameseTranslations in language_manager.dart
-    'confirmPurchase': 'Xác Nhận Nâng Cấp',
-    'purchaseFor': 'Nâng cấp với giá',
-    'notEnoughCoins': 'Không đủ xu!',
-    'purchaseSuccess': 'Nâng cấp thành công!',
-    'maxLevel': 'Đã đạt cấp độ tối đa!',
-    'refuse': 'TỪ CHỐI',
   };
 }
