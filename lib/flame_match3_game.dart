@@ -6,21 +6,41 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 import 'audio_manager.dart';
 
-class Match3Game extends FlameGame {
-  late final int gridSize = 5;
-  late final List<List<GameTile?>> grid;
+class Match3Game extends FlameGame
+    with HasKeyboardHandlerComponents, HasCollisionDetection {
+  static const int gridSize = 5;
+  late List<List<GameTile?>> grid;
   late final double tileSize;
   late final Vector2 gridOffset;
   final Random _random = Random();
-  bool imagesLoaded = false; // Track if images are loaded
+  bool imagesLoaded = false;
 
-  // Selection state for swapping tiles
+  // Game state
+  bool isPlayerTurn = true;
+  bool isProcessingTurn = false;
   GameTile? selectedTile;
+  int score = 0;
 
-  // Callback for when matches occur
-  Function(int tileType, int matchCount)? onMatchCallback;
+  // Combat stats
+  int enemyHealth = 100;
+  int maxEnemyHealth = 100;
+  int playerHealth = 100;
+  int maxPlayerHealth = 100;
+  int playerPower = 0;
+  int maxPlayerPower = 100;
+  bool hasActiveMatches = false;
+  bool canUsePower = false;
 
-  // Game assets - using your actual asset files
+  // Callbacks
+  Function(int tileType, int matchCount, int score)? onMatchCallback;
+  Function()? onAllMatchesCompleteCallback;
+  Function(int damage)? onMobAttackCallback;
+
+  // Combo system
+  int _comboCount = 0;
+  int _cascadeCount = 0;
+
+  // Assets
   final Map<int, String> tileSprites = {
     0: 'sword.png',
     1: 'shield.png',
@@ -28,7 +48,6 @@ class Match3Game extends FlameGame {
     3: 'star.png',
   };
 
-  // Fallback colors (same as your original)
   final List<Color> tileColors = [
     const Color(0xFFE0E0E0), // sword - silver
     const Color(0xFF90CAF9), // shield - blue
@@ -38,17 +57,13 @@ class Match3Game extends FlameGame {
 
   @override
   Future<void> onLoad() async {
-    // Set transparent background
     camera.backdrop.removeAll(camera.backdrop.children);
 
-    // Calculate responsive sizing for 5x5 grid
+    // Calculate responsive sizing
     final screenSize = size;
-    tileSize = screenSize.x * 0.12; // Increase tile size back up
-
-    // Center the grid properly within the available space
+    tileSize = screenSize.x * 0.12;
     final totalGridWidth = gridSize * tileSize + (gridSize - 1) * 4;
     final totalGridHeight = gridSize * tileSize + (gridSize - 1) * 4;
-
     gridOffset = Vector2(
       (screenSize.x - totalGridWidth) / 2,
       (screenSize.y - totalGridHeight) / 2,
@@ -57,58 +72,33 @@ class Match3Game extends FlameGame {
     // Initialize grid
     grid = List.generate(gridSize, (i) => List.generate(gridSize, (j) => null));
 
-    // Load sprites first and wait for completion
+    // Load sprites
     try {
-      // Preload all sprite images
-      print('Loading sprite images...');
-      await images.load('sword.png');
-      await images.load('shield.png');
-      await images.load('heart.png');
-      await images.load('star.png');
-
-      // Verify all images are in cache and set flag
-      bool allImagesReady = true;
-      for (int i = 0; i < 4; i++) {
-        final imageName = tileSprites[i]!;
-        if (!images.containsKey(imageName)) {
-          allImagesReady = false;
-          break;
-        }
-      }
-
-      if (allImagesReady) {
-        imagesLoaded = true;
-        print('All sprite images successfully loaded');
-      } else {
-        print('Not all images loaded, using fallback rendering');
-      }
+      await Future.wait([
+        images.load('sword.png'),
+        images.load('shield.png'),
+        images.load('heart.png'),
+        images.load('star.png'),
+      ]);
+      imagesLoaded = tileSprites.values.every((img) => images.containsKey(img));
+      print(imagesLoaded ? 'All sprites loaded' : 'Using fallback rendering');
     } catch (e) {
-      print('Some images failed to load, will use fallback rendering: $e');
+      print('Failed to load sprites: $e');
     }
 
-    // Create initial grid only after images are loaded
     await _createInitialGrid();
   }
 
   @override
-  Color backgroundColor() => const Color(0x00000000); // Transparent background
-
-  @override
-  void render(Canvas canvas) {
-    // Call super to avoid mustCallSuper warning
-    super.render(canvas);
-  }
+  Color backgroundColor() => const Color(0x00000000);
 
   Future<void> _createInitialGrid() async {
     for (int row = 0; row < gridSize; row++) {
       for (int col = 0; col < gridSize; col++) {
         int tileType;
-
-        // Generate a tile type that doesn't create matches with existing tiles
         do {
           tileType = _random.nextInt(4);
         } while (_wouldCreateMatch(row, col, tileType));
-
         final tile = GameTile(
           tileType: tileType,
           gridRow: row,
@@ -116,87 +106,63 @@ class Match3Game extends FlameGame {
           tileSize: tileSize,
           game: this,
         );
-
-        // Position tile on screen
-        tile.position = Vector2(
-          gridOffset.x + col * (tileSize + 4),
-          gridOffset.y + row * (tileSize + 4),
-        );
-
+        tile.position = _calculateTilePosition(row, col);
         grid[row][col] = tile;
         add(tile);
       }
     }
+    isProcessingTurn = false;
+    hasActiveMatches = false;
+    print('Initial grid created');
   }
 
-  // Check if placing a tile type at the given position would create a match
   bool _wouldCreateMatch(int row, int col, int tileType) {
-    // Check horizontal match (3 in a row)
-    // Check if this tile would complete a horizontal line of 3
-    if (col >= 2) {
-      // Check if the two tiles to the left are the same type
-      if (grid[row][col - 1]?.tileType == tileType &&
-          grid[row][col - 2]?.tileType == tileType) {
-        return true;
-      }
+    // Check horizontal
+    if (col >= 2 &&
+        grid[row][col - 1]?.tileType == tileType &&
+        grid[row][col - 2]?.tileType == tileType) {
+      return true;
     }
-
-    if (col >= 1 && col < gridSize - 1) {
-      // Check if placing this tile between two same tiles would create a match
-      if (grid[row][col - 1]?.tileType == tileType &&
-          grid[row][col + 1]?.tileType == tileType) {
-        return true;
-      }
+    // Check vertical
+    if (row >= 2 &&
+        grid[row - 1][col]?.tileType == tileType &&
+        grid[row - 2][col]?.tileType == tileType) {
+      return true;
     }
+    return false;
+  }
 
-    // Check vertical match (3 in a column)
-    // Check if this tile would complete a vertical line of 3
-    if (row >= 2) {
-      // Check if the two tiles above are the same type
-      if (grid[row - 1][col]?.tileType == tileType &&
-          grid[row - 2][col]?.tileType == tileType) {
-        return true;
-      }
-    }
-
-    if (row >= 1 && row < gridSize - 1) {
-      // Check if placing this tile between two same tiles would create a match
-      if (grid[row - 1][col]?.tileType == tileType &&
-          grid[row + 1][col]?.tileType == tileType) {
-        return true;
-      }
-    }
-
-    return false; // No matches would be created
+  Vector2 _calculateTilePosition(int row, int col) {
+    return Vector2(
+      gridOffset.x + col * (tileSize + 4),
+      gridOffset.y + row * (tileSize + 4),
+    );
   }
 
   void onTileTapped(GameTile tile) {
+    if (!isPlayerTurn || isProcessingTurn) {
+      print(
+        'Cannot interact: PlayerTurn=$isPlayerTurn, Processing=$isProcessingTurn',
+      );
+      return;
+    }
+
     AudioManager().playSfx();
-    print('Tapped tile at ${tile.gridRow}, ${tile.gridCol}');
 
     if (selectedTile == null) {
-      // Select this tile
       selectedTile = tile;
       tile.setSelected(true);
-      print('Selected tile at ${tile.gridRow}, ${tile.gridCol}');
     } else if (selectedTile == tile) {
-      // Deselect if tapping the same tile
       selectedTile!.setSelected(false);
       selectedTile = null;
-      print('Deselected tile');
+    } else if (_areAdjacent(selectedTile!, tile)) {
+      _swapTiles(selectedTile!, tile);
+      selectedTile!.setSelected(false);
+      selectedTile = null;
     } else {
-      // Try to swap tiles if they are adjacent
-      if (_areAdjacent(selectedTile!, tile)) {
-        _swapTiles(selectedTile!, tile);
-        selectedTile!.setSelected(false);
-        selectedTile = null;
-      } else {
-        // Select new tile
-        selectedTile!.setSelected(false);
-        selectedTile = tile;
-        tile.setSelected(true);
-        print('Selected new tile at ${tile.gridRow}, ${tile.gridCol}');
-      }
+      selectedTile!.setSelected(false);
+      selectedTile = tile;
+      tile.setSelected(true);
     }
   }
 
@@ -207,154 +173,326 @@ class Match3Game extends FlameGame {
   }
 
   Future<void> _swapTiles(GameTile tile1, GameTile tile2) async {
-    print(
-      'Swapping tiles at (${tile1.gridRow}, ${tile1.gridCol}) and (${tile2.gridRow}, ${tile2.gridCol})',
-    );
+    isProcessingTurn = true;
+    final pos1 = tile1.position.clone();
+    final pos2 = tile2.position.clone();
+    final row1 = tile1.gridRow;
+    final col1 = tile1.gridCol;
+    final row2 = tile2.gridRow;
+    final col2 = tile2.gridCol;
 
-    // Swap tile types
-    final tempType = tile1.tileType;
-    tile1.tileType = tile2.tileType;
-    tile2.tileType = tempType;
+    // Update grid and tile properties
+    grid[row1][col1] = tile2;
+    grid[row2][col2] = tile1;
+    tile1.gridRow = row2;
+    tile1.gridCol = col2;
+    tile2.gridRow = row1;
+    tile2.gridCol = col1;
 
-    // Update visual content
-    await tile1._loadTileContent();
-    await tile2._loadTileContent();
+    // Animate swap
+    tile1.add(MoveEffect.to(pos2, EffectController(duration: 0.2)));
+    tile2.add(MoveEffect.to(pos1, EffectController(duration: 0.2)));
+    await Future.delayed(Duration(milliseconds: 250));
 
-    // Add swap animation
-    tile1.add(
-      ScaleEffect.to(
-        Vector2.all(1.1),
-        EffectController(duration: 0.1, reverseDuration: 0.1),
-      ),
-    );
-    tile2.add(
-      ScaleEffect.to(
-        Vector2.all(1.1),
-        EffectController(duration: 0.1, reverseDuration: 0.1),
-      ),
-    );
-
-    // Check for matches after swap
-    await checkForMatches();
+    // Check if swap creates matches
+    if (!_hasMatchesAfterSwap()) {
+      // Revert swap
+      grid[row1][col1] = tile1;
+      grid[row2][col2] = tile2;
+      tile1.gridRow = row1;
+      tile1.gridCol = col1;
+      tile2.gridRow = row2;
+      tile2.gridCol = col2;
+      tile1.add(MoveEffect.to(pos1, EffectController(duration: 0.2)));
+      tile2.add(MoveEffect.to(pos2, EffectController(duration: 0.2)));
+      _showInvalidMoveAnimation(tile1, tile2);
+      isProcessingTurn = false;
+      isPlayerTurn = true;
+    } else {
+      await _processMatches();
+    }
   }
 
-  // Match-3 logic: find and clear matches
-  Future<void> checkForMatches() async {
-    // Basic match detection - find 3 or more in a row/column
-    Set<GameTile> matchedTiles = {};
-    Map<int, int> matchCounts = {}; // Track matches by tile type
+  void _showInvalidMoveAnimation(GameTile tile1, GameTile tile2) {
+    final shake1 = SequenceEffect([
+      MoveByEffect(Vector2(-8, 0), EffectController(duration: 0.05)),
+      MoveByEffect(Vector2(16, 0), EffectController(duration: 0.1)),
+      MoveByEffect(Vector2(-8, 0), EffectController(duration: 0.05)),
+    ]);
+    final shake2 = SequenceEffect([
+      MoveByEffect(Vector2(-8, 0), EffectController(duration: 0.05)),
+      MoveByEffect(Vector2(16, 0), EffectController(duration: 0.1)),
+      MoveByEffect(Vector2(-8, 0), EffectController(duration: 0.05)),
+    ]);
+    tile1.add(shake1);
+    tile2.add(shake2);
+  }
 
-    // Check horizontal matches
+  Future<void> _processMatches() async {
+    _comboCount = 0;
+    _cascadeCount = 0;
+
+    while (true) {
+      final matches = _findMatches();
+      if (matches.isEmpty) break;
+
+      _comboCount++;
+      _cascadeCount++;
+      await _handleMatches(matches);
+      await _applyGravity();
+      await Future.delayed(Duration(milliseconds: 300));
+    }
+
+    // End player turn and trigger enemy turn
+    print('Cascade complete! Total cascades: $_cascadeCount');
+    isProcessingTurn = false;
+    hasActiveMatches = false;
+    isPlayerTurn = false;
+    if (onAllMatchesCompleteCallback != null) {
+      onAllMatchesCompleteCallback!();
+    }
+    await _enemyTurn();
+  }
+
+  List<List<GameTile>> _findMatches() {
+    final matches = <List<GameTile>>[];
+    final processed = <GameTile>{};
+
+    // Horizontal matches
     for (int row = 0; row < gridSize; row++) {
-      int count = 1;
-      int currentType = grid[row][0]?.tileType ?? -1;
+      for (int col = 0; col < gridSize - 2; col++) {
+        final tile = grid[row][col];
+        if (tile == null || processed.contains(tile)) continue;
 
-      for (int col = 1; col < gridSize; col++) {
-        if (grid[row][col]?.tileType == currentType && currentType != -1) {
-          count++;
-        } else {
-          if (count >= 3) {
-            for (int i = col - count; i < col; i++) {
-              if (grid[row][i] != null) {
-                matchedTiles.add(grid[row][i]!);
-                matchCounts[currentType] = (matchCounts[currentType] ?? 0) + 1;
-              }
-            }
+        final type = tile.tileType;
+        final match = [tile];
+        for (int c = col + 1; c < gridSize; c++) {
+          final nextTile = grid[row][c];
+          if (nextTile?.tileType == type && !processed.contains(nextTile)) {
+            match.add(nextTile!);
+          } else {
+            break;
           }
-          currentType = grid[row][col]?.tileType ?? -1;
-          count = 1;
         }
-      }
-      if (count >= 3) {
-        for (int i = gridSize - count; i < gridSize; i++) {
-          if (grid[row][i] != null) {
-            matchedTiles.add(grid[row][i]!);
-            matchCounts[currentType] = (matchCounts[currentType] ?? 0) + 1;
-          }
+        if (match.length >= 3) {
+          matches.add(match);
+          processed.addAll(match);
         }
       }
     }
 
-    // Check vertical matches
+    // Vertical matches
     for (int col = 0; col < gridSize; col++) {
-      int count = 1;
-      int currentType = grid[0][col]?.tileType ?? -1;
+      for (int row = 0; row < gridSize - 2; row++) {
+        final tile = grid[row][col];
+        if (tile == null || processed.contains(tile)) continue;
 
-      for (int row = 1; row < gridSize; row++) {
-        if (grid[row][col]?.tileType == currentType && currentType != -1) {
-          count++;
-        } else {
-          if (count >= 3) {
-            for (int i = row - count; i < row; i++) {
-              if (grid[i][col] != null) {
-                matchedTiles.add(grid[i][col]!);
-                matchCounts[currentType] = (matchCounts[currentType] ?? 0) + 1;
-              }
-            }
+        final type = tile.tileType;
+        final match = [tile];
+        for (int r = row + 1; r < gridSize; r++) {
+          final nextTile = grid[r][col];
+          if (nextTile?.tileType == type && !processed.contains(nextTile)) {
+            match.add(nextTile!);
+          } else {
+            break;
           }
-          currentType = grid[row][col]?.tileType ?? -1;
-          count = 1;
         }
-      }
-      if (count >= 3) {
-        for (int i = gridSize - count; i < gridSize; i++) {
-          if (grid[i][col] != null) {
-            matchedTiles.add(grid[i][col]!);
-            matchCounts[currentType] = (matchCounts[currentType] ?? 0) + 1;
-          }
+        if (match.length >= 3) {
+          matches.add(match);
+          processed.addAll(match);
         }
       }
     }
 
-    if (matchedTiles.isNotEmpty) {
-      print('Found ${matchedTiles.length} matched tiles!');
+    return matches;
+  }
 
-      // Call the callback for each tile type that was matched
-      if (onMatchCallback != null) {
-        for (final entry in matchCounts.entries) {
-          final tileType = entry.key;
-          final count = entry.value;
+  Future<void> _handleMatches(List<List<GameTile>> matches) async {
+    for (final match in matches) {
+      final tileType = match[0].tileType;
+      final matchCount = match.length;
+      final points = matchCount * 100 * (_comboCount > 1 ? _comboCount : 1);
+      score += points;
+
+      switch (tileType) {
+        case 0: // Sword - Damage enemy
+          final damage = 10 * matchCount * (_comboCount > 1 ? _comboCount : 1);
+          enemyHealth = (enemyHealth - damage).clamp(0, maxEnemyHealth);
           print(
-            'Calling match callback for tile type $tileType with count $count',
+            'Sword match: $damage damage, Enemy HP: $enemyHealth/$maxEnemyHealth',
           );
-          onMatchCallback!(tileType, count);
+          break;
+        case 1: // Shield - No effect yet
+          print('Shield match: $matchCount tiles');
+          break;
+        case 2: // Heart - Heal player
+          final healing = 15 * matchCount * (_comboCount > 1 ? _comboCount : 1);
+          playerHealth = (playerHealth + healing).clamp(
+            0,
+            maxPlayerHealth * 2,
+          ); // Allow excess health
+          print(
+            'Heart match: $healing healing, Player HP: $playerHealth/$maxPlayerHealth',
+          );
+          break;
+        case 3: // Star - Fill power bar
+          final powerGain =
+              8 * matchCount * (_comboCount > 1 ? _comboCount : 1);
+          playerPower = (playerPower + powerGain).clamp(0, maxPlayerPower);
+          canUsePower = playerPower >= maxPlayerPower;
+          print(
+            'Star match: $powerGain power, Power: $playerPower/$maxPlayerPower',
+          );
+          break;
+      }
+
+      if (onMatchCallback != null) {
+        onMatchCallback!(tileType, matchCount, points);
+      }
+
+      for (final tile in match) {
+        tile.add(
+          SequenceEffect([
+            ScaleEffect.to(Vector2.all(1.2), EffectController(duration: 0.1)),
+            ScaleEffect.to(Vector2.all(0.0), EffectController(duration: 0.2)),
+          ]),
+        );
+        await Future.delayed(Duration(milliseconds: 250));
+        tile.removeFromParent();
+        grid[tile.gridRow][tile.gridCol] = null;
+      }
+    }
+  }
+
+  Future<void> _applyGravity() async {
+    for (int col = 0; col < gridSize; col++) {
+      int emptyRow = gridSize - 1;
+      for (int row = gridSize - 1; row >= 0; row--) {
+        if (grid[row][col] != null) {
+          if (row != emptyRow) {
+            final tile = grid[row][col]!;
+            grid[emptyRow][col] = tile;
+            grid[row][col] = null;
+            tile.gridRow = emptyRow;
+            tile.add(
+              MoveEffect.to(
+                _calculateTilePosition(emptyRow, col),
+                EffectController(duration: 0.3),
+              ),
+            );
+          }
+          emptyRow--;
         }
       }
 
-      // Animate matched tiles and remove them
-      for (final tile in matchedTiles) {
-        tile.add(
-          ScaleEffect.to(Vector2.all(0.0), EffectController(duration: 0.3)),
+      // Fill empty spaces
+      for (int row = emptyRow; row >= 0; row--) {
+        final newTile = GameTile(
+          tileType: _random.nextInt(4),
+          gridRow: row,
+          gridCol: col,
+          tileSize: tileSize,
+          game: this,
+        );
+        newTile.position = Vector2(
+          gridOffset.x + col * (tileSize + 4),
+          gridOffset.y - (tileSize + 4) * (emptyRow - row + 1),
+        );
+        grid[row][col] = newTile;
+        add(newTile);
+        newTile.add(
+          MoveEffect.to(
+            _calculateTilePosition(row, col),
+            EffectController(duration: 0.5),
+          ),
         );
       }
-
-      // Wait for animation to complete
-      await Future.delayed(Duration(milliseconds: 350));
-
-      // Replace matched tiles with new random types
-      for (final tile in matchedTiles) {
-        tile.tileType = _random.nextInt(4);
-        await tile._loadTileContent();
-        tile.add(
-          ScaleEffect.to(Vector2.all(1.0), EffectController(duration: 0.2)),
-        );
-      }
-
-      // Check for cascade matches
-      await Future.delayed(Duration(milliseconds: 250));
-      await checkForMatches();
     }
+    await Future.delayed(Duration(milliseconds: 500));
+  }
+
+  Future<void> _enemyTurn() async {
+    if (enemyHealth <= 0) {
+      print('Enemy defeated!');
+      isPlayerTurn = true;
+      return;
+    }
+
+    // Simple mob attack: deal random damage
+    final damage = _random.nextInt(15) + 5; // 5-20 damage
+    playerHealth = (playerHealth - damage).clamp(0, maxPlayerHealth * 2);
+    print(
+      'Enemy attacks: $damage damage, Player HP: $playerHealth/$maxPlayerHealth',
+    );
+
+    if (onMobAttackCallback != null) {
+      onMobAttackCallback!(damage);
+    }
+
+    isPlayerTurn = true;
+  }
+
+  void setPlayerTurn(bool playerTurn) {
+    isPlayerTurn = playerTurn;
+    print('Turn changed: ${playerTurn ? 'Player' : 'Enemy'} turn');
+  }
+
+  void setProcessingTurn(bool processing) {
+    isProcessingTurn = processing;
+    print('Processing turn: $processing');
+  }
+
+  bool get isPlayerTurnActive => isPlayerTurn;
+  bool get isProcessingTurnActive => isProcessingTurn;
+
+  void usePower() {
+    if (!canUsePower || isProcessingTurn || !isPlayerTurn) {
+      print(
+        'Cannot use power: CanUse=$canUsePower, Processing=$isProcessingTurn, PlayerTurn=$isPlayerTurn',
+      );
+      return;
+    }
+
+    final damage = 50; // Special power deals significant damage
+    enemyHealth = (enemyHealth - damage).clamp(0, maxEnemyHealth);
+    playerPower = 0;
+    canUsePower = false;
+    print('Power used: $damage damage, Enemy HP: $enemyHealth/$maxEnemyHealth');
+
+    isPlayerTurn = false;
+    _enemyTurn();
+  }
+
+  bool _hasMatchesAfterSwap() {
+    for (int row = 0; row < gridSize; row++) {
+      for (int col = 0; col < gridSize - 2; col++) {
+        if (grid[row][col]?.tileType == grid[row][col + 1]?.tileType &&
+            grid[row][col]?.tileType == grid[row][col + 2]?.tileType) {
+          return true;
+        }
+      }
+    }
+    for (int col = 0; col < gridSize; col++) {
+      for (int row = 0; row < gridSize - 2; row++) {
+        if (grid[row][col]?.tileType == grid[row + 1][col]?.tileType &&
+            grid[row][col]?.tileType == grid[row + 2][col]?.tileType) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }
 
-class GameTile extends RectangleComponent with TapCallbacks {
+class GameTile extends RectangleComponent
+    with TapCallbacks, HasGameRef<Match3Game> {
   int tileType;
   int gridRow;
   int gridCol;
   final double tileSize;
   final Match3Game game;
-
-  late final RectangleComponent background;
+  bool _isSelected = false;
+  late final RectangleComponent border;
   late final RectangleComponent selectionBorder;
   SpriteComponent? spriteComponent;
   TextComponent? fallbackText;
@@ -369,19 +507,14 @@ class GameTile extends RectangleComponent with TapCallbacks {
 
   @override
   Future<void> onLoad() async {
-    // Don't add any background at all - completely transparent tile
-
-    // Keep only the border for tile definition
-    final border = RectangleComponent(
+    border = RectangleComponent(
       size: size,
       paint: Paint()
-        ..color =
-            const Color(0xFF8D6E63) // Brown[600] equivalent
+        ..color = const Color(0xFF8D6E63)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2,
     );
 
-    // Selection border (initially invisible)
     selectionBorder = RectangleComponent(
       size: size,
       paint: Paint()
@@ -391,22 +524,17 @@ class GameTile extends RectangleComponent with TapCallbacks {
     );
     selectionBorder.opacity = 0;
 
-    // Add border and selection border
     add(border);
     add(selectionBorder);
-
-    // Load content - this will now properly check if images are ready
     await _loadTileContent();
   }
 
   @override
-  void onTapDown(TapDownEvent event) {
-    // Pass the tap to the game's tile handling logic
+  void onTapUp(TapUpEvent event) {
     game.onTileTapped(this);
   }
 
   Future<void> _loadTileContent() async {
-    // Remove existing content
     if (spriteComponent != null) {
       spriteComponent!.removeFromParent();
       spriteComponent = null;
@@ -416,64 +544,42 @@ class GameTile extends RectangleComponent with TapCallbacks {
       fallbackText = null;
     }
 
-    // Remove any existing colored background from fallback
     final componentsToRemove = children
         .where(
-          (component) =>
-              component is RectangleComponent &&
-              component != selectionBorder &&
-              component.paint.style == PaintingStyle.fill,
+          (c) => c is RectangleComponent && c != border && c != selectionBorder,
         )
         .toList();
-
     for (final component in componentsToRemove) {
       component.removeFromParent();
     }
 
-    // Check if images are loaded and try to use sprites
-    if (game.imagesLoaded) {
+    if (game.imagesLoaded &&
+        game.images.containsKey(game.tileSprites[tileType]!)) {
       try {
-        final imageName = game.tileSprites[tileType]!;
-
-        if (game.images.containsKey(imageName)) {
-          final sprite = Sprite(game.images.fromCache(imageName));
-          spriteComponent = SpriteComponent(
-            sprite: sprite,
-            size: Vector2(tileSize * 0.8, tileSize * 0.8),
-            position: Vector2(tileSize * 0.1, tileSize * 0.1),
-          );
-          add(spriteComponent!);
-          return; // Successfully loaded sprite, no need for fallback
-        }
+        final sprite = Sprite(
+          game.images.fromCache(game.tileSprites[tileType]!),
+        );
+        spriteComponent = SpriteComponent(
+          sprite: sprite,
+          size: Vector2(tileSize * 0.8, tileSize * 0.8),
+          position: Vector2(tileSize * 0.1, tileSize * 0.1),
+        );
+        add(spriteComponent!);
+        return;
       } catch (e) {
         print('Failed to load sprite for tile $tileType: $e');
       }
     }
 
-    // Use fallback content if images aren't loaded or failed to load
-    _createFallbackContent();
-  }
-
-  void _createFallbackContent() {
-    // Colored circles with text as fallback if images don't load
-    final labels = ['SW', 'SH', 'HT', 'ST']; // Sword, Shield, Heart, Star
-    final colors = [
-      const Color(0xFFE0E0E0), // sword - silver
-      const Color(0xFF90CAF9), // shield - blue
-      const Color(0xFFEF9A9A), // heart - red
-      const Color(0xFFFFF59D), // star - yellow
-    ];
-
-    // Create a colored background circle
-    final coloredBackground = RectangleComponent(
-      size: Vector2(tileSize * 0.8, tileSize * 0.8),
-      position: Vector2(tileSize * 0.1, tileSize * 0.1),
-      paint: Paint()
-        ..color = colors[tileType]
-        ..style = PaintingStyle.fill,
+    // Fallback rendering
+    final labels = ['SW', 'SH', 'HT', 'ST'];
+    add(
+      RectangleComponent(
+        size: Vector2(tileSize * 0.8, tileSize * 0.8),
+        position: Vector2(tileSize * 0.1, tileSize * 0.1),
+        paint: Paint()..color = game.tileColors[tileType],
+      ),
     );
-    add(coloredBackground);
-
     fallbackText = TextComponent(
       text: labels[tileType],
       textRenderer: TextPaint(
@@ -481,7 +587,6 @@ class GameTile extends RectangleComponent with TapCallbacks {
           fontSize: tileSize * 0.3,
           color: Colors.black,
           fontWeight: FontWeight.bold,
-          backgroundColor: Colors.transparent,
         ),
       ),
       position: Vector2(tileSize * 0.3, tileSize * 0.35),
@@ -490,19 +595,9 @@ class GameTile extends RectangleComponent with TapCallbacks {
   }
 
   void setSelected(bool selected) {
+    _isSelected = selected;
     selectionBorder.opacity = selected ? 1.0 : 0.0;
   }
 
-  void changeTileType() {
-    tileType = (tileType + 1) % 4;
-    _loadTileContent();
-
-    // Add visual feedback with scale effect
-    add(
-      ScaleEffect.to(
-        Vector2.all(1.2),
-        EffectController(duration: 0.1, reverseDuration: 0.1),
-      ),
-    );
-  }
+  bool get isSelected => _isSelected;
 }

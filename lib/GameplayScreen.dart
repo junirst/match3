@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
+import 'dart:math';
 import 'audio_manager.dart';
 import 'flame_match3_game.dart'; // Add this import
 
@@ -21,6 +22,11 @@ class _GameplayScreenState extends State<GameplayScreen> {
   int maxEnemyHealth = 100;
   int currentEnemyHealth = 100;
 
+  // Player health system
+  int maxPlayerHealth = 100;
+  int currentPlayerHealth = 100;
+  int excessHealth = 0; // Store excess health beyond max
+
   // Power/Gold bar system
   int maxPowerPoints = 50;
   int currentPowerPoints = 0;
@@ -29,6 +35,11 @@ class _GameplayScreenState extends State<GameplayScreen> {
 
   // Damage values for different tile types
   static const int swordDamage = 10;
+  static const int heartHeal = 5;
+
+  // Turn-based system
+  bool isPlayerTurn = true;
+  bool isProcessingTurn = false;
 
   @override
   void initState() {
@@ -41,6 +52,13 @@ class _GameplayScreenState extends State<GameplayScreen> {
 
     // Set up callback for when matches occur
     game.onMatchCallback = _handleMatch;
+
+    // Set up callback for when all cascading matches are complete
+    game.onAllMatchesCompleteCallback = _onAllMatchesComplete;
+
+    // Initialize game turn state
+    game.setPlayerTurn(isPlayerTurn);
+    game.setProcessingTurn(isProcessingTurn);
   }
 
   void _initializeEnemyHealth() {
@@ -68,7 +86,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
     currentPowerPoints = 0;
   }
 
-  void _handleMatch(int tileType, int matchCount) {
+  void _handleMatch(int tileType, int matchCount, int score) {
     // Ensure widget is still mounted before updating state
     if (!mounted) return;
 
@@ -89,16 +107,38 @@ class _GameplayScreenState extends State<GameplayScreen> {
             'Sword match! Dealt $damage damage. Enemy health: $currentEnemyHealth/$maxEnemyHealth',
           );
 
-          // Check if enemy is defeated
+          // Check if enemy is defeated immediately (don't wait for turn end)
           if (currentEnemyHealth <= 0) {
-            _onEnemyDefeated();
+            Future.delayed(Duration(milliseconds: 500), () {
+              if (mounted) {
+                _onEnemyDefeated();
+              }
+            });
+            return;
           }
           break;
         case 1: // Shield - could add defense bonus later
           print('Shield match! (No effect yet)');
           break;
-        case 2: // Heart - could heal player later
-          print('Heart match! (No effect yet)');
+        case 2: // Heart - heals player
+          int healing =
+              heartHeal * (matchCount ~/ 3); // Base healing per set of 3
+          if (matchCount > 3) {
+            // Bonus healing for longer matches
+            healing += (matchCount - 3) * 2;
+          }
+
+          // Calculate actual healing and excess
+          int missingHealth = maxPlayerHealth - currentPlayerHealth;
+          int actualHealing = healing.clamp(0, missingHealth);
+          int excess = healing - actualHealing;
+
+          currentPlayerHealth += actualHealing;
+          excessHealth += excess;
+
+          print(
+            'Heart match! Healed $actualHealing HP (${excess > 0 ? '+$excess excess' : 'no excess'}). Player health: $currentPlayerHealth/$maxPlayerHealth${excessHealth > 0 ? ' (+$excessHealth)' : ''}',
+          );
           break;
         case 3: // Star - adds power points
           int powerGain =
@@ -117,10 +157,197 @@ class _GameplayScreenState extends State<GameplayScreen> {
           break;
       }
     });
+
+    // NOTE: Turn switching moved to _onAllMatchesComplete to wait for all cascades
+  }
+
+  // Called when all cascading matches are complete - this is when we should end the player's turn
+  void _onAllMatchesComplete() {
+    print('All matches complete! Checking if player turn should end...');
+
+    // Only end turn if enemy is still alive and it's still the player's turn
+    if (currentEnemyHealth > 0 && isPlayerTurn && !isProcessingTurn) {
+      _checkEndPlayerTurn();
+    }
+  }
+
+  // Check if player turn should end and trigger mob turn
+  void _checkEndPlayerTurn() {
+    if (!isPlayerTurn || isProcessingTurn) return;
+
+    print('Ending player turn after all matches completed...');
+
+    // Shorter delay since all matches are already complete
+    Future.delayed(Duration(milliseconds: 800), () {
+      if (mounted && isPlayerTurn && !isProcessingTurn) {
+        _endPlayerTurn();
+      }
+    });
+  }
+
+  void _endPlayerTurn() {
+    if (!isPlayerTurn || isProcessingTurn) return;
+
+    setState(() {
+      isPlayerTurn = false;
+      isProcessingTurn = true;
+    });
+
+    // Sync with game
+    game.setPlayerTurn(false);
+    game.setProcessingTurn(true);
+
+    print('Player turn ended, mob turn starting...');
+
+    // Mob attacks after a delay
+    Future.delayed(Duration(milliseconds: 1000), () {
+      if (mounted) {
+        _performMobAttack();
+      }
+    });
+  }
+
+  void _performMobAttack() {
+    if (!mounted) return;
+
+    // Calculate mob damage based on enemy type and level
+    int mobDamage = _calculateMobDamage();
+
+    setState(() {
+      // First check if excess health can absorb damage
+      if (excessHealth > 0) {
+        int excessUsed = mobDamage.clamp(0, excessHealth);
+        excessHealth -= excessUsed;
+        mobDamage -= excessUsed;
+
+        print(
+          'Excess health absorbed $excessUsed damage. Remaining excess: $excessHealth',
+        );
+      }
+
+      // Apply remaining damage to player health
+      if (mobDamage > 0) {
+        currentPlayerHealth = (currentPlayerHealth - mobDamage).clamp(
+          0,
+          maxPlayerHealth,
+        );
+        print(
+          'Mob dealt $mobDamage damage! Player health: $currentPlayerHealth/$maxPlayerHealth',
+        );
+      }
+
+      // Check if player is defeated
+      if (currentPlayerHealth <= 0) {
+        _onPlayerDefeated();
+        return;
+      }
+
+      // Start new player turn
+      isPlayerTurn = true;
+      isProcessingTurn = false;
+    });
+
+    // Sync with game
+    game.setPlayerTurn(true);
+    game.setProcessingTurn(false);
+
+    print('Mob turn ended, player turn starting...');
+  }
+
+  int _calculateMobDamage() {
+    // Base damage varies by enemy type
+    int baseDamage = 15; // Default damage
+
+    if (widget.chapter == 1) {
+      if (widget.level == 1 || widget.level == 2) {
+        // Goblin - weak damage
+        baseDamage = 10;
+      } else if (widget.level == 3 || widget.level == 4) {
+        // Ghost - medium damage
+        baseDamage = 15;
+      } else if (widget.level == 5) {
+        // Dragon - high damage
+        baseDamage = 25;
+      }
+    }
+
+    // Add some randomness (±25%)
+    int variance = (baseDamage * 0.25).round();
+    int finalDamage =
+        baseDamage + (Random().nextInt(variance * 2 + 1) - variance);
+
+    return finalDamage.clamp(1, baseDamage * 2); // Ensure at least 1 damage
+  }
+
+  void _onPlayerDefeated() {
+    print('Player defeated!');
+    AudioManager().playSfx();
+
+    // Show game over dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.8,
+            height: MediaQuery.of(context).size.height * 0.3,
+            decoration: BoxDecoration(
+              color: Colors.red[100],
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.red[800]!, width: 4),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'DEFEAT!',
+                  style: TextStyle(
+                    fontSize: MediaQuery.of(context).size.width * 0.08,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red[800],
+                  ),
+                ),
+                SizedBox(height: 20),
+                GestureDetector(
+                  onTap: () {
+                    AudioManager().playSfx();
+                    Navigator.pop(context); // Close dialog
+                    Navigator.pop(context); // Return to previous screen
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                    decoration: BoxDecoration(
+                      color: Colors.red[600],
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(color: Colors.red[800]!, width: 3),
+                    ),
+                    child: Text(
+                      'RETRY',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: MediaQuery.of(context).size.width * 0.04,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _onPowerBarClicked() {
-    // Only allow power attack if bar is full
+    // Only allow power attack during player turn and if bar is full
+    if (!isPlayerTurn || isProcessingTurn) {
+      print('Cannot use power during enemy turn!');
+      return;
+    }
+
     if (currentPowerPoints >= maxPowerPoints) {
       AudioManager().playSfx();
 
@@ -141,8 +368,12 @@ class _GameplayScreenState extends State<GameplayScreen> {
         // Check if enemy is defeated
         if (currentEnemyHealth <= 0) {
           _onEnemyDefeated();
+          return; // End turn immediately if enemy is defeated
         }
       });
+
+      // End player turn after power attack
+      _checkEndPlayerTurn();
     } else {
       print(
         'Power bar not full yet. Need ${maxPowerPoints - currentPowerPoints} more power.',
@@ -711,20 +942,42 @@ class _GameplayScreenState extends State<GameplayScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'HEALTH',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: screenWidth * 0.03,
-                    fontWeight: FontWeight.bold,
-                    shadows: [
-                      Shadow(
-                        color: Colors.black,
-                        offset: Offset(1, 1),
-                        blurRadius: 2,
+                Row(
+                  children: [
+                    Text(
+                      'HEALTH',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: screenWidth * 0.03,
+                        fontWeight: FontWeight.bold,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black,
+                            offset: Offset(1, 1),
+                            blurRadius: 2,
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (excessHealth > 0) ...[
+                      SizedBox(width: screenWidth * 0.01),
+                      Text(
+                        '(+$excessHealth)',
+                        style: TextStyle(
+                          color: Colors.lightGreen,
+                          fontSize: screenWidth * 0.025,
+                          fontWeight: FontWeight.bold,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black,
+                              offset: Offset(1, 1),
+                              blurRadius: 2,
+                            ),
+                          ],
+                        ),
                       ),
                     ],
-                  ),
+                  ],
                 ),
                 SizedBox(height: screenHeight * 0.005),
                 Container(
@@ -734,11 +987,45 @@ class _GameplayScreenState extends State<GameplayScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.black, width: 2),
                   ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                  child: Stack(
+                    children: [
+                      // Health bar fill
+                      Container(
+                        width:
+                            (screenWidth * 0.75 * 0.5 - screenWidth * 0.03) *
+                            (currentPlayerHealth / maxPlayerHealth),
+                        decoration: BoxDecoration(
+                          color: currentPlayerHealth >= maxPlayerHealth * 0.7
+                              ? Colors.green[600] // Healthy
+                              : currentPlayerHealth >= maxPlayerHealth * 0.3
+                              ? Colors.orange[600] // Warning
+                              : Colors.red[600], // Critical
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      // Health text overlay - show current turn status for player
+                      Center(
+                        child: Text(
+                          isPlayerTurn && !isProcessingTurn
+                              ? '$currentPlayerHealth/$maxPlayerHealth'
+                              : isProcessingTurn
+                              ? 'Enemy Turn...'
+                              : '$currentPlayerHealth/$maxPlayerHealth',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: screenWidth * 0.02,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black,
+                                offset: Offset(1, 1),
+                                blurRadius: 2,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
