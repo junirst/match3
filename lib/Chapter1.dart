@@ -65,9 +65,9 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
             width: screenWidth * 0.8,
             height: screenHeight * 0.5,
             decoration: BoxDecoration(
-              color: Colors.brown[100],
+              color: Colors.brown[800], // Changed from Colors.brown[100] to darker brown
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.brown[800]!, width: 4),
+              border: Border.all(color: Colors.brown[900]!, width: 4),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black54,
@@ -86,7 +86,7 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
                     fontFamily: 'Bungee',
                     fontSize: screenWidth * 0.08,
                     fontWeight: FontWeight.bold,
-                    color: Colors.brown[800],
+                    color: Colors.white,
                     shadows: [
                       Shadow(offset: Offset(-1, -1), color: Colors.black),
                       Shadow(offset: Offset(1, -1), color: Colors.black),
@@ -163,7 +163,7 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
                         fontFamily: 'Bungee',
                         fontSize: screenWidth * 0.05,
                         fontWeight: FontWeight.bold,
-                        color: Colors.brown[700],
+                        color: Colors.white,
                         shadows: [
                           Shadow(
                             offset: Offset(1, 1),
@@ -261,12 +261,12 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
         children: [
           Image.asset(
             'assets/roundframe.png',
-            width: screenWidth * 0.12,
-            height: screenWidth * 0.12,
+            width: screenWidth * 0.15,
+            height: screenWidth * 0.15,
             errorBuilder: (context, error, stackTrace) {
               return Container(
-                width: screenWidth * 0.12,
-                height: screenWidth * 0.12,
+                width: screenWidth * 0.15,
+                height: screenWidth * 0.15,
                 decoration: BoxDecoration(
                   color: Colors.orange[600],
                   shape: BoxShape.circle,
@@ -287,7 +287,7 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
             style: TextStyle(
               fontFamily: 'Bungee',
               color: Colors.white,
-              fontSize: screenWidth * 0.05,
+              fontSize: screenWidth * 0.06,
               fontWeight: FontWeight.bold,
               shadows: [
                 Shadow(offset: Offset(-1, -1), color: Colors.black),
