@@ -22,7 +22,7 @@ class _ChapterscreenState extends State<Chapterscreen> {
 
   void _onButtonTap(String buttonName) {
     // Play sound effect
-    AudioManager().playSfx();
+    AudioManager().playButtonSound();
 
     setState(() {
       switch (buttonName) {

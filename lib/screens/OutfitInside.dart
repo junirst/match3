@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../managers/audio_manager.dart';
 
 class OutfitScreen extends StatefulWidget {
   const OutfitScreen({super.key});
@@ -71,6 +72,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
   }
 
   void _showPurchaseDialog(int itemIndex) {
+    AudioManager().playButtonSound();
     final item = _items[itemIndex];
     final price = item['price'] as int;
 
@@ -189,6 +191,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
   }
 
   void _confirmPurchase(int itemIndex) {
+    AudioManager().playButtonSound();
     final item = _items[itemIndex];
     final price = item['price'] as int;
 
@@ -344,6 +347,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
             right: 20,
             child: GestureDetector(
               onTap: () {
+                AudioManager().playButtonSound();
                 if (Navigator.of(context).canPop()) {
                   Navigator.pop(context);
                 } else {

@@ -125,6 +125,12 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
             0,
             maxEnemyHealth,
           );
+          
+          // Play enemy hurt sound when damaged
+          if (damage > 0) {
+            AudioManager().playEnemyHurt();
+          }
+          
           game.enemyHealth = currentEnemyHealth; // Sync with game
           print(
             'Sword match: $damage damage, Enemy HP: $currentEnemyHealth/$maxEnemyHealth',
@@ -185,6 +191,9 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
         print('Excess health absorbed $excessUsed damage');
       }
       if (finalDamage > 0) {
+        // Play player damaged sound
+        AudioManager().playPlayerDamaged();
+        
         currentPlayerHealth = (currentPlayerHealth - finalDamage).clamp(
           0,
           maxPlayerHealth,
@@ -238,7 +247,7 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
   }
 
   void _onPlayerDefeated() {
-    AudioManager().playSfx();
+    AudioManager().playButtonSound();
     setState(() {
       isProcessingTurn = true;
       game.setProcessingTurn(true);
@@ -272,7 +281,7 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
                 SizedBox(height: 20),
                 GestureDetector(
                   onTap: () {
-                    AudioManager().playSfx();
+                    AudioManager().playButtonSound();
                     setState(() {
                       // Reset player stats
                       currentPlayerHealth = maxPlayerHealth;
@@ -315,7 +324,7 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
   }
 
   void _onEnemyDefeated() {
-    AudioManager().playSfx();
+    AudioManager().playButtonSound();
     setState(() {
       isProcessingTurn = true;
       game.setProcessingTurn(true);
@@ -349,7 +358,7 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
                 SizedBox(height: 20),
                 GestureDetector(
                   onTap: () {
-                    AudioManager().playSfx();
+                    AudioManager().playButtonSound();
                     setState(() {
                       currentFloor++;
                       _initializeEnemy();
@@ -388,7 +397,7 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
   }
 
   void _onPausePressed() {
-    AudioManager().playSfx();
+    AudioManager().playButtonSound();
     setState(() {
       _isPaused = !_isPaused;
     });
@@ -441,7 +450,7 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
                   children: [
                     GestureDetector(
                       onTap: () {
-                        AudioManager().playSfx();
+                        AudioManager().playButtonSound();
                         setState(() {
                           _isPaused = false;
                           isProcessingTurn = false;
@@ -480,7 +489,7 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
                     ),
                     GestureDetector(
                       onTap: () {
-                        AudioManager().playSfx();
+                        AudioManager().playButtonSound();
                         setState(() {
                           // Reset player stats on exit
                           currentPlayerHealth = maxPlayerHealth;
@@ -534,12 +543,15 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
       return;
     }
     if (currentPowerPoints >= maxPowerPoints) {
-      AudioManager().playSfx();
+      AudioManager().playButtonSound();
       setState(() {
         currentEnemyHealth = (currentEnemyHealth - powerAttackDamage).clamp(
           0,
           maxEnemyHealth,
         );
+        
+        // Play enemy hurt sound for power attack
+        AudioManager().playEnemyHurt();
         game.enemyHealth = currentEnemyHealth; // Sync with game
         currentPowerPoints = 0;
         game.playerPower = 0;

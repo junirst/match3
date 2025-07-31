@@ -46,7 +46,7 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
   }
 
   void _onButtonTap(String buttonName) {
-    AudioManager().playSfx();
+    AudioManager().playButtonSound();
     setState(() {
       _buttonScale = 1.1;
     });

@@ -41,7 +41,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
   }
 
   void _onButtonTap(String buttonName) {
-    AudioManager().playSfx();
+    AudioManager().playButtonSound();
 
     setState(() {
       switch (buttonName) {

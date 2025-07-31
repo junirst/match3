@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../managers/language_manager.dart';
+import '../managers/audio_manager.dart';
 
 class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
@@ -19,6 +20,7 @@ class _ShopScreenState extends State<ShopScreen> {
   Widget _buildShopButton(BuildContext context, String translationKey, String route, double screenWidth, double screenHeight) {
     return GestureDetector(
       onTap: () {
+        AudioManager().playButtonSound();
         Navigator.pushNamed(context, route);
       },
       child: Stack(
@@ -157,6 +159,7 @@ class _ShopScreenState extends State<ShopScreen> {
             right: 20,
             child: GestureDetector(
               onTap: () {
+                AudioManager().playButtonSound();
                 Navigator.pop(context);
               },
               child: Container(

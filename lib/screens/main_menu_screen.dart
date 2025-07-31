@@ -39,7 +39,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   }
 
   void _onButtonTap(String buttonName, Function setStateCallback) {
-    AudioManager().playSfx();
+    AudioManager().playButtonSound();
 
     setState(() {
       switch (buttonName) {

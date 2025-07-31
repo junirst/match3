@@ -8,7 +8,7 @@ import '../managers/audio_manager.dart';
 
 class Match3Game extends FlameGame
     with HasKeyboardHandlerComponents, HasCollisionDetection {
-  static const int gridSize = 5;
+  static const int gridSize = 8;
   late List<List<GameTile?>> grid;
   late final double tileSize;
   late final Vector2 gridOffset;
@@ -43,10 +43,10 @@ class Match3Game extends FlameGame
 
   // Assets
   final Map<int, String> tileSprites = {
-    0: 'sword.png',
-    1: 'shield.png',
-    2: 'heart.png',
-    3: 'star.png',
+    0: 'items/sword.png',
+    1: 'items/shield.png',
+    2: 'items/heart.png',
+    3: 'items/star.png',
   };
 
   final List<Color> tileColors = [
@@ -73,18 +73,40 @@ class Match3Game extends FlameGame
     // Initialize grid
     grid = List.generate(gridSize, (i) => List.generate(gridSize, (j) => null));
 
-    // Load sprites
+    // Load sprites with fallback handling
     try {
+      print('Loading sprites from assets/images/items/...');
       await Future.wait([
-        images.load('sword.png'),
-        images.load('shield.png'),
-        images.load('heart.png'),
-        images.load('star.png'),
+        images.load('items/sword.png'),
+        images.load('items/shield.png'),
+        images.load('items/heart.png'),
+        images.load('items/star.png'),
       ]);
-      imagesLoaded = tileSprites.values.every((img) => images.containsKey(img));
-      print(imagesLoaded ? 'All sprites loaded' : 'Using fallback rendering');
+      
+      // Check if all sprites are loaded correctly
+      bool allSpritesLoaded = true;
+      List<String> spriteNames = [
+        'items/sword.png',
+        'items/shield.png', 
+        'items/heart.png',
+        'items/star.png'
+      ];
+      
+      for (String spriteName in spriteNames) {
+        if (!images.containsKey(spriteName)) {
+          allSpritesLoaded = false;
+          print('Missing sprite: $spriteName');
+        } else {
+          print('✓ Loaded sprite: $spriteName');
+        }
+      }
+      
+      imagesLoaded = allSpritesLoaded;
+      print(imagesLoaded ? 'All sprites loaded successfully' : 'Using fallback rendering due to missing sprites');
     } catch (e) {
       print('Failed to load sprites: $e');
+      print('Will use fallback rendering for tiles');
+      imagesLoaded = false;
     }
 
     await _createInitialGrid();
@@ -92,6 +114,13 @@ class Match3Game extends FlameGame
 
   @override
   Color backgroundColor() => const Color(0x00000000);
+
+  Vector2 _calculateTilePosition(int row, int col) {
+    return Vector2(
+      gridOffset.x + col * (tileSize + 4),
+      gridOffset.y + row * (tileSize + 4),
+    );
+  }
 
   Future<void> _createInitialGrid() async {
     for (int row = 0; row < gridSize; row++) {
@@ -135,13 +164,6 @@ class Match3Game extends FlameGame
     return false;
   }
 
-  Vector2 _calculateTilePosition(int row, int col) {
-    return Vector2(
-      gridOffset.x + col * (tileSize + 4),
-      gridOffset.y + row * (tileSize + 4),
-    );
-  }
-
   void setPlayerTurn(bool value) {
     isPlayerTurn = value;
     print('Set PlayerTurn=$isPlayerTurn');
@@ -160,7 +182,7 @@ class Match3Game extends FlameGame
       return;
     }
 
-    AudioManager().playSfx();
+    AudioManager().playButtonSound();
 
     if (selectedTile == null) {
       selectedTile = tile;
@@ -326,6 +348,22 @@ class Match3Game extends FlameGame
       final points = matchCount * 100 * (_comboCount > 1 ? _comboCount : 1);
       score += points;
 
+      // Play specific sound effect based on tile type
+      switch (tileType) {
+        case 0: // Sword
+          AudioManager().playPlayerAttackSword();
+          break;
+        case 1: // Shield - no specific sound yet, use button sound
+          AudioManager().playButtonSound();
+          break;
+        case 2: // Heart - no specific sound yet, use button sound
+          AudioManager().playButtonSound();
+          break;
+        case 3: // Star - magical twinkle effect
+          AudioManager().playStarTwinkle();
+          break;
+      }
+
       // Only notify via callback, do not modify health or power
       if (onMatchCallback != null) {
         onMatchCallback!(tileType, matchCount, points);
@@ -410,6 +448,10 @@ class Match3Game extends FlameGame
 
     // Simple mob attack: deal random damage
     final baseDamage = _random.nextInt(15) + 5; // 5-20 damage
+    
+    // Play enemy attack sound
+    AudioManager().playEnemyAttack();
+    
     if (onMobAttackCallback != null) {
       onMobAttackCallback!(baseDamage);
     }
@@ -422,6 +464,9 @@ class Match3Game extends FlameGame
       );
       return;
     }
+
+    // Play magic spell sound for power attack
+    AudioManager().playPlayerMagicSpell();
 
     // Notify TowerGameplayScreen to handle power attack
     if (onMatchCallback != null) {

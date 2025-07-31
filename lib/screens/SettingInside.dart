@@ -37,7 +37,7 @@ class _SettingScreenState extends State<SettingScreen> {
   }
 
   void _onButtonTap(String buttonName) {
-    AudioManager().playSfx();
+    AudioManager().playButtonSound();
 
     setState(() {
       switch (buttonName) {

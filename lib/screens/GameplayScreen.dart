@@ -281,7 +281,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
 
   void _onPlayerDefeated() {
     print('Player defeated!');
-    AudioManager().playSfx();
+    AudioManager().playButtonSound();
 
     // Show game over dialog
     showDialog(
@@ -313,7 +313,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                 SizedBox(height: 20),
                 GestureDetector(
                   onTap: () {
-                    AudioManager().playSfx();
+                    AudioManager().playButtonSound();
                     Navigator.pop(context); // Close dialog
                     Navigator.pop(context); // Return to previous screen
                   },
@@ -351,7 +351,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
     }
 
     if (currentPowerPoints >= maxPowerPoints) {
-      AudioManager().playSfx();
+      AudioManager().playButtonSound();
 
       setState(() {
         // Deal power attack damage
@@ -386,7 +386,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
   void _onEnemyDefeated() {
     print('Enemy defeated!');
     // TODO: Add victory logic, move to next level, etc.
-    AudioManager().playSfx();
+    AudioManager().playButtonSound();
 
     // Show victory dialog or navigate to next level
     showDialog(
@@ -418,7 +418,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                 SizedBox(height: 20),
                 GestureDetector(
                   onTap: () {
-                    AudioManager().playSfx();
+                    AudioManager().playButtonSound();
                     Navigator.pop(context); // Close dialog
                     Navigator.pop(context); // Return to previous screen
                   },
@@ -449,7 +449,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
   }
 
   void _onPausePressed() {
-    AudioManager().playSfx();
+    AudioManager().playButtonSound();
     setState(() {
       _isPaused = !_isPaused;
     });
@@ -518,7 +518,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                     // Continue button using continue.png
                     GestureDetector(
                       onTap: () {
-                        AudioManager().playSfx();
+                        AudioManager().playButtonSound();
                         setState(() {
                           _isPaused = false;
                         });
@@ -569,7 +569,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                     // Back button using backbutton.png
                     GestureDetector(
                       onTap: () {
-                        AudioManager().playSfx();
+                        AudioManager().playButtonSound();
                         Navigator.pop(context); // Close dialog
                         Navigator.pop(context); // Exit to previous screen
                       },

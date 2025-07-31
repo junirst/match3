@@ -88,7 +88,7 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
   }
 
   void _onBackTap() {
-    AudioManager().playSfx();
+    AudioManager().playButtonSound();
     setState(() {
       _backScale = 1.1;
     });

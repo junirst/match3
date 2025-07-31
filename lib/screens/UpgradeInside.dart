@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../managers/language_manager.dart';
+import '../managers/audio_manager.dart';
 
 class UpgradeScreen extends StatefulWidget {
   const UpgradeScreen({super.key});
@@ -175,6 +176,7 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
   }
 
   void _confirmPurchase(String upgradeType) {
+    AudioManager().playButtonSound();
     final price = upgradePrices[upgradeType]!;
 
     Navigator.of(context).pop(); // Close dialog
@@ -210,6 +212,7 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
   }
 
   void _purchaseUpgrade(String upgradeType) {
+    AudioManager().playButtonSound();
     _showPurchaseDialog(upgradeType);
   }
 
@@ -417,6 +420,7 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
             right: screenWidth * 0.04,
             child: GestureDetector(
               onTap: () {
+                AudioManager().playButtonSound();
                 Navigator.pop(context);
               },
               child: Image.asset(

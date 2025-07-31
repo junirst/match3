@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../managers/audio_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../managers/language_manager.dart';
+import 'dart:async';
 
 class OpeningScreen extends StatefulWidget {
   const OpeningScreen({super.key});
@@ -17,6 +18,7 @@ class _OpeningScreenState extends State<OpeningScreen>
   String _currentLanguage = LanguageManager.currentLanguage;
   bool _showLoginPopup = false;
   bool _showRegisterForm = false;
+  Timer? _bgmCheckTimer;
 
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -28,8 +30,8 @@ class _OpeningScreenState extends State<OpeningScreen>
   void initState() {
     super.initState();
 
-    // Start background music
-    AudioManager().playBackgroundMusic();
+    // Initialize and start background music
+    _initAudio();
 
     _buttonController = AnimationController(
       vsync: this,
@@ -44,8 +46,24 @@ class _OpeningScreenState extends State<OpeningScreen>
     _checkFirstLaunch();
   }
 
+  Future<void> _initAudio() async {
+    try {
+      await AudioManager().init();
+      await AudioManager().playBackgroundMusic();
+      print('Audio initialized successfully in OpeningScreen');
+      
+      // Remove external BGM checking since AudioManager now has internal monitoring
+      // _bgmCheckTimer = Timer.periodic(Duration(seconds: 5), (timer) {
+      //   AudioManager().ensureBgmPlaying();
+      // });
+    } catch (e) {
+      print('Error initializing audio: $e');
+    }
+  }
+
   @override
   void dispose() {
+    // _bgmCheckTimer?.cancel(); // No longer needed
     _buttonController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
@@ -88,7 +106,7 @@ class _OpeningScreenState extends State<OpeningScreen>
     String password = _passwordController.text;
 
     if (username.isNotEmpty && password.isNotEmpty) {
-      AudioManager().playSfx();
+      AudioManager().playButtonSound();
       _setFirstLaunchComplete();
       setState(() {
         _showLoginPopup = false;
@@ -108,7 +126,7 @@ class _OpeningScreenState extends State<OpeningScreen>
         email.isNotEmpty &&
         password.isNotEmpty &&
         password == confirmPassword) {
-      AudioManager().playSfx();
+      AudioManager().playButtonSound();
       _setFirstLaunchComplete();
       setState(() {
         _showLoginPopup = false;
@@ -322,7 +340,7 @@ class _OpeningScreenState extends State<OpeningScreen>
                         ? _getLocalizedText('BACK', 'QUAY LẠI')
                         : _getLocalizedText('REGISTER', 'ĐĂNG KÝ'),
                     () {
-                      AudioManager().playSfx();
+                      AudioManager().playButtonSound();
                       setState(() {
                         _showRegisterForm = !_showRegisterForm;
                         // Clear form fields when switching
@@ -344,7 +362,7 @@ class _OpeningScreenState extends State<OpeningScreen>
               _buildFramedButton(
                 _getLocalizedText('PLAY AS GUEST', 'CHƠI VỚI TƯ CÁCH KHÁCH'),
                 () {
-                  AudioManager().playSfx();
+                  AudioManager().playButtonSound();
                   _setFirstLaunchComplete();
                   setState(() {
                     _showLoginPopup = false;
@@ -369,7 +387,7 @@ class _OpeningScreenState extends State<OpeningScreen>
           GestureDetector(
             onTap: () {
               if (!_showLoginPopup) {
-                AudioManager().playSfx();
+                AudioManager().playButtonSound();
                 Navigator.pushNamed(context, '/main_menu');
               }
             },

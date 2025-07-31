@@ -9,8 +9,14 @@ import 'screens/ChapterScreen.dart';
 import 'screens/Chapter1.dart';
 import 'screens/TowerMode.dart';
 import 'models/player_profile.dart';
+import 'managers/audio_manager.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize AudioManager
+  await AudioManager().init();
+  
   runApp(const MyApp());
 }
 

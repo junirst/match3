@@ -169,7 +169,7 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
   }
 
   void _onButtonTap(String buttonName) {
-    AudioManager().playSfx();
+    AudioManager().playButtonSound();
 
     setState(() {
       switch (buttonName) {

@@ -187,7 +187,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 
   void _onButtonTap(String buttonName) {
-    AudioManager().playSfx();
+    AudioManager().playButtonSound();
 
     setState(() {
       switch (buttonName) {

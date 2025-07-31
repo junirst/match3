@@ -21,7 +21,7 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
 
   void _onButtonTap(String buttonName) {
     // Play sound effect
-    AudioManager().playSfx();
+    AudioManager().playButtonSound();
 
     setState(() {
       switch (buttonName) {
@@ -44,7 +44,7 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
 
   void _onLevelTap(int levelNumber) {
     // Play sound effect
-    AudioManager().playSfx();
+    AudioManager().playButtonSound();
 
     // Show level popup dialog
     _showLevelDialog(levelNumber);
@@ -102,7 +102,7 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
                 // Play button - UPDATED TO NAVIGATE TO GAMEPLAYSCREEN
                 GestureDetector(
                   onTap: () {
-                    AudioManager().playSfx();
+                    AudioManager().playButtonSound();
                     Navigator.pop(context); // Close the dialog first
                     // Navigate to GameplayScreen
                     Navigator.push(
