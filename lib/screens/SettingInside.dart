@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'audio_manager.dart';
+import '../managers/audio_manager.dart';
 import 'audio_settings_screen.dart';
 import 'LanguageInside.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'language_manager.dart';
+import '../managers/language_manager.dart';
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({super.key});
@@ -79,7 +79,15 @@ class _SettingScreenState extends State<SettingScreen> {
     });
   }
 
-  Widget _buildSettingButton(String englishText, String vietnameseText, String buttonType, double scale, VoidCallback onTap, double screenWidth, double screenHeight) {
+  Widget _buildSettingButton(
+    String englishText,
+    String vietnameseText,
+    String buttonType,
+    double scale,
+    VoidCallback onTap,
+    double screenWidth,
+    double screenHeight,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedScale(
@@ -89,7 +97,7 @@ class _SettingScreenState extends State<SettingScreen> {
           alignment: Alignment.center,
           children: [
             Image.asset(
-              'assets/frame.png',
+              'assets/images/ui/frame.png',
               width: screenWidth * 0.8,
               height: screenHeight * 0.12,
               errorBuilder: (context, error, stackTrace) {
@@ -131,7 +139,7 @@ class _SettingScreenState extends State<SettingScreen> {
       alignment: Alignment.center,
       children: [
         Image.asset(
-          'assets/frame.png',
+          'assets/images/ui/frame.png',
           width: screenWidth * 0.4,
           height: screenHeight * 0.08,
           errorBuilder: (context, error, stackTrace) {
@@ -154,11 +162,7 @@ class _SettingScreenState extends State<SettingScreen> {
               Shadow(offset: Offset(1, -1), color: Colors.black),
               Shadow(offset: Offset(-1, 1), color: Colors.black),
               Shadow(offset: Offset(1, 1), color: Colors.black),
-              Shadow(
-                offset: Offset(0, 0),
-                color: Colors.black,
-                blurRadius: 2,
-              ),
+              Shadow(offset: Offset(0, 0), color: Colors.black, blurRadius: 2),
             ],
           ),
         ),
@@ -179,7 +183,7 @@ class _SettingScreenState extends State<SettingScreen> {
           Container(
             color: Colors.grey[800],
             child: Image.asset(
-              'assets/background.png',
+              'assets/images/backgrounds/background.png',
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return Container(color: Colors.grey[800]);
@@ -200,7 +204,7 @@ class _SettingScreenState extends State<SettingScreen> {
                   'ÂM THANH',
                   'audio',
                   _audioScale,
-                      () => _onButtonTap('audio'),
+                  () => _onButtonTap('audio'),
                   screenWidth,
                   screenHeight,
                 ),
@@ -210,7 +214,7 @@ class _SettingScreenState extends State<SettingScreen> {
                   'NGÔN NGỮ',
                   'language',
                   _languageScale,
-                      () => _onButtonTap('language'),
+                  () => _onButtonTap('language'),
                   screenWidth,
                   screenHeight,
                 ),
@@ -226,7 +230,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 scale: _backScale,
                 duration: const Duration(milliseconds: 100),
                 child: Image.asset(
-                  'assets/backbutton.png',
+                  'assets/images/ui/backbutton.png',
                   width: screenWidth * 0.18,
                   height: screenHeight * 0.18,
                   errorBuilder: (context, error, stackTrace) {

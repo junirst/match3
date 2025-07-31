@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'audio_manager.dart';
-import 'language_manager.dart';
+import '../managers/audio_manager.dart';
+import '../managers/language_manager.dart';
 import 'LeaderboardScreen.dart';
 import 'TowerGameplayScreen.dart';
 
@@ -224,7 +224,7 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/background.png'),
+                image: AssetImage('assets/images/backgrounds/background.png'),
                 fit: BoxFit.cover,
               ),
             ),
@@ -239,7 +239,7 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
           Container(
             color: Colors.grey[800],
             child: Image.asset(
-              'assets/background.png',
+              'assets/images/backgrounds/background.png',
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
@@ -265,7 +265,7 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
                 alignment: Alignment.center,
                 children: [
                   Image.asset(
-                    'assets/frame.png',
+                    'assets/images/ui/frame.png',
                     width: screenWidth * 0.8,
                     height: screenHeight * 0.10,
                     errorBuilder: (context, error, stackTrace) {
@@ -377,7 +377,7 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
                     alignment: Alignment.center,
                     children: [
                       Image.asset(
-                        'assets/frame.png',
+                        'assets/images/ui/frame.png',
                         width: screenWidth * 0.6, // Increased from 0.5 to 0.6
                         height:
                             screenHeight * 0.10, // Increased from 0.08 to 0.10
@@ -479,7 +479,7 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
                           ],
                         ),
                         child: Image.asset(
-                          'assets/trophy.png',
+                          'assets/images/items/trophy.png',
                           width: screenWidth * 0.08,
                           height: screenWidth * 0.08,
                           errorBuilder: (context, error, stackTrace) {
@@ -524,7 +524,7 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
                 scale: _backButtonScale,
                 duration: Duration(milliseconds: 100),
                 child: Image.asset(
-                  'assets/backbutton.png',
+                  'assets/images/ui/backbutton.png',
                   width: screenWidth * 0.18,
                   height: screenWidth * 0.18,
                   errorBuilder: (context, error, stackTrace) {

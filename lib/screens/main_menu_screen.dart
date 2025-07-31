@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'audio_manager.dart';
-import 'language_manager.dart';
+import '../managers/audio_manager.dart';
+import '../managers/language_manager.dart';
 
 class MainMenuScreen extends StatefulWidget {
   const MainMenuScreen({super.key});
@@ -107,7 +107,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           alignment: Alignment.center,
           children: [
             Image.asset(
-              'assets/frame.png',
+              'assets/images/ui/frame.png',
               width: screenWidth * 0.8,
               height: screenHeight * 0.12,
             ),
@@ -150,7 +150,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           Container(
             color: Colors.grey[800],
             child: Image.asset(
-              'assets/background.png',
+              'assets/images/backgrounds/background.png',
               fit: BoxFit.cover,
             ),
           ),
@@ -159,7 +159,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
             child: Align(
               alignment: Alignment.topCenter,
               child: Image.asset(
-                'assets/logo.png',
+                'assets/images/ui/logo.png',
                 width: screenWidth * 0.95,
                 height: screenHeight * 0.25,
               ),
@@ -233,7 +233,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                       scale: _playerScale,
                       duration: Duration(milliseconds: 100),
                       child: Image.asset(
-                        'assets/player.png',
+                        'assets/images/characters/player.png',
                         width: screenWidth * 0.25,
                         height: screenHeight * 0.08,
                       ),
@@ -246,7 +246,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                       scale: _settingsScale,
                       duration: Duration(milliseconds: 100),
                       child: Image.asset(
-                        'assets/settings_button.png',
+                        'assets/images/ui/settings_button.png',
                         width: screenWidth * 0.25,
                         height: screenHeight * 0.08,
                       ),
@@ -269,7 +269,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   scale: _backScale,
                   duration: Duration(milliseconds: 100),
                   child: Image.asset(
-                    'assets/back_button.png',
+                    'assets/images/ui/back_button.png',
                     width: screenWidth * 0.18,
                     height: screenHeight * 0.18,
                   ),

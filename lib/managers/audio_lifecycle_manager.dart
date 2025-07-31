@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'audio_manager.dart';
+import '../managers/audio_manager.dart';
 
 class AudioLifecycleManager extends StatefulWidget {
   final Widget child;

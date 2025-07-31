@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'language_manager.dart';
+import '../managers/language_manager.dart';
 
 class UpgradeScreen extends StatefulWidget {
   const UpgradeScreen({super.key});
@@ -113,7 +113,7 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
                     GestureDetector(
                       onTap: () => _confirmPurchase(upgradeType),
                       child: Image.asset(
-                        'assets/confirm.png',
+                        'assets/images/ui/confirm.png',
                         height: 60,
                         width: 100,
                         errorBuilder: (context, error, stackTrace) {
@@ -140,7 +140,7 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
                     GestureDetector(
                       onTap: () => Navigator.of(context).pop(),
                       child: Image.asset(
-                        'assets/refuse.png',
+                        'assets/images/ui/refuse.png',
                         height: 60,
                         width: 100,
                         errorBuilder: (context, error, stackTrace) {
@@ -268,7 +268,7 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
           // Background image
           Positioned.fill(
             child: Image.asset(
-              'assets/backgroundshop.png',
+              'assets/images/backgrounds/backgroundshop.png',
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
@@ -301,7 +301,7 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
                     alignment: Alignment.center,
                     children: [
                       Image.asset(
-                        'assets/frame.png',
+                        'assets/images/ui/frame.png',
                         width: screenWidth * 0.4,
                         height: screenHeight * 0.08,
                         errorBuilder: (context, error, stackTrace) {
@@ -420,7 +420,7 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
                 Navigator.pop(context);
               },
               child: Image.asset(
-                'assets/backbutton.png',
+                'assets/images/ui/backbutton.png',
                 height: screenWidth * 0.18,
                 width: screenWidth * 0.18,
                 errorBuilder: (context, error, stackTrace) {
@@ -487,12 +487,12 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
                     padding: EdgeInsets.all(screenWidth * 0.025),
                     child: Image.asset(
                       upgradeType == 'sword'
-                          ? 'assets/sword.png'
+                          ? 'assets/images/items/sword.png'
                           : upgradeType == 'heart'
-                          ? 'assets/heart.png'
+                          ? 'assets/images/items/heart.png'
                           : upgradeType == 'star'
-                          ? 'assets/star.png'
-                          : 'assets/shield.png',
+                          ? 'assets/images/items/star.png'
+                          : 'assets/images/items/shield.png',
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return Icon(
@@ -546,7 +546,7 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
                       shape: BoxShape.circle,
                     ),
                     child: Image.asset(
-                      'assets/plusbutton.png',
+                      'assets/images/ui/plusbutton.png',
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return Icon(

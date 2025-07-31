@@ -65,15 +65,14 @@ flutter:
         - asset: assets/fonts/Bungee-Regular.ttf
   assets:
     - assets/
+    - assets/audio/
     - assets/images/
-    - assets/bgm/
-    - assets/bgm/bgm.mp3
-    - assets/bgm/sfx.mp3
-    - assets/Mobs/
-    - assets/sword.png
-    - assets/shield.png  
-    - assets/heart.png
-    - assets/star.png
+    - assets/images/ui/
+    - assets/images/backgrounds/
+    - assets/images/characters/
+    - assets/images/items/
+    - assets/images/mobs/
+    - assets/fonts/
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:

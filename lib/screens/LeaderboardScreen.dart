@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'audio_manager.dart';
-import 'language_manager.dart';
+import '../managers/audio_manager.dart';
+import '../managers/language_manager.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
@@ -222,7 +222,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/background.png'),
+                image: AssetImage('assets/images/backgrounds/background.png'),
                 fit: BoxFit.cover,
               ),
             ),
@@ -235,7 +235,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           Container(
             color: Colors.grey[800],
             child: Image.asset(
-              'assets/background.png',
+              'assets/images/backgrounds/background.png',
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
@@ -259,7 +259,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               alignment: Alignment.center,
               children: [
                 Image.asset(
-                  'assets/frame.png',
+                  'assets/images/ui/frame.png',
                   width: screenWidth * 0.9, // Adjusted width to fit localization
                   height: screenHeight * 0.12,
                   errorBuilder: (context, error, stackTrace) {
@@ -348,7 +348,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Image.asset(
-                        isTopPlayer ? 'assets/topplayer.png' : 'assets/player.png',
+                        isTopPlayer ? 'assets/images/characters/topplayer.png' : 'assets/images/characters/player.png',
                         width: screenWidth * 0.12,
                         height: screenHeight * 0.08,
                         errorBuilder: (context, error, stackTrace) {
@@ -402,7 +402,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                 scale: _backButtonScale,
                 duration: Duration(milliseconds: 100),
                 child: Image.asset(
-                  'assets/backbutton.png',
+                  'assets/images/ui/backbutton.png',
                   width: screenWidth * 0.18,
                   height: screenWidth * 0.18,
                   errorBuilder: (context, error, stackTrace) {

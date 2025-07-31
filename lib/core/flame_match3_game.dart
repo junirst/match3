@@ -4,7 +4,7 @@ import 'package:flame/events.dart';
 import 'package:flame/effects.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
-import 'audio_manager.dart';
+import '../managers/audio_manager.dart';
 
 class Match3Game extends FlameGame
     with HasKeyboardHandlerComponents, HasCollisionDetection {

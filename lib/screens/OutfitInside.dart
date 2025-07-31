@@ -127,7 +127,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
                     GestureDetector(
                       onTap: () => _confirmPurchase(itemIndex),
                       child: Image.asset(
-                        'assets/confirm.png',
+                        'assets/images/ui/confirm.png',
                         height: 60,
                         width: 100,
                         errorBuilder: (context, error, stackTrace) {
@@ -154,7 +154,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
                     GestureDetector(
                       onTap: () => Navigator.of(context).pop(),
                       child: Image.asset(
-                        'assets/refuse.png',
+                        'assets/images/ui/refuse.png',
                         height: 60,
                         width: 100,
                         errorBuilder: (context, error, stackTrace) {
@@ -228,7 +228,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
           // Background image
           Positioned.fill(
             child: Image.asset(
-              'assets/backgroundshop.png',
+              'assets/images/backgrounds/backgroundshop.png',
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
@@ -257,7 +257,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
                   alignment: Alignment.center,
                   children: [
                     Image.asset(
-                      'assets/frame.png',
+                      'assets/images/ui/frame.png',
                       height: screenWidth * 0.25,
                       width: screenWidth * 0.5,
                       errorBuilder: (context, error, stackTrace) {
@@ -351,7 +351,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
                 }
               },
               child: Image.asset(
-                'assets/backbutton.png',
+                'assets/images/ui/backbutton.png',
                 height: screenWidth * 0.18,
                 width: screenWidth * 0.18,
                 errorBuilder: (context, error, stackTrace) {
@@ -398,7 +398,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
           alignment: Alignment.bottomRight,
           children: [
             Image.asset(
-              'assets/itemslot.png',
+              'assets/images/ui/itemslot.png',
               height: screenWidth * 0.25,
               width: screenWidth * 0.25,
               errorBuilder: (context, error, stackTrace) {
@@ -465,7 +465,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
           GestureDetector(
             onTap: () => _showPurchaseDialog(itemIndex),
             child: Image.asset(
-              'assets/buybutton.png',
+              'assets/images/ui/buybutton.png',
               height: screenWidth * 0.16,
               width: screenWidth * 0.16,
               errorBuilder: (context, error, stackTrace) {
@@ -487,7 +487,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
           )
         else
           Image.asset(
-            'assets/confirm.png',
+            'assets/images/ui/confirm.png',
             height: screenWidth * 0.16,
             width: screenWidth * 0.16,
             errorBuilder: (context, error, stackTrace) {

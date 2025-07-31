@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'audio_manager.dart';
-import 'language_manager.dart';
+import '../managers/audio_manager.dart';
+import '../managers/language_manager.dart';
 
 class LanguageScreen extends StatefulWidget {
   const LanguageScreen({super.key});
@@ -159,7 +159,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
           alignment: Alignment.center,
           children: [
             Image.asset(
-              'assets/frame.png',
+              'assets/images/ui/frame.png',
               width: screenWidth * 0.8,
               height: screenHeight * 0.12,
               errorBuilder: (context, error, stackTrace) {
@@ -216,7 +216,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
       alignment: Alignment.center,
       children: [
         Image.asset(
-          'assets/frame.png',
+          'assets/images/ui/frame.png',
           width: screenWidth * 0.4,
           height: screenHeight * 0.08,
           errorBuilder: (context, error, stackTrace) {
@@ -264,7 +264,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
           Container(
             color: Colors.grey[800],
             child: Image.asset(
-              'assets/background.png',
+              'assets/images/backgrounds/background.png',
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return Container(color: Colors.grey[800]);
@@ -311,7 +311,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
                 scale: _backScale,
                 duration: const Duration(milliseconds: 100),
                 child: Image.asset(
-                  'assets/backbutton.png',
+                  'assets/images/ui/backbutton.png',
                   width: screenWidth * 0.18,
                   height: screenHeight * 0.18,
                   errorBuilder: (context, error, stackTrace) {

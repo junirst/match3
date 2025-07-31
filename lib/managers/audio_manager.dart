@@ -70,7 +70,7 @@ class AudioManager {
   Future<void> playSfx() async {
     if (!_isSfxEnabled) return;
     try {
-      print('Attempting to play SFX from: assets/bgm/sfx.mp3');
+      print('Attempting to play SFX from: assets/audio/sfx.mp3');
       // Stop any currently playing SFX first
       await _sfxPlayer.stop();
       await _sfxPlayer.play(AssetSource('bgm/sfx.mp3'));
@@ -78,8 +78,8 @@ class AudioManager {
     } catch (e) {
       print('Error playing sound effect: $e');
       print('Troubleshooting steps:');
-      print('1. Check if assets/bgm/sfx.mp3 exists in your project');
-      print('2. Verify pubspec.yaml includes: assets: - assets/bgm/');
+      print('1. Check if assets/audio/sfx.mp3 exists in your project');
+      print('2. Verify pubspec.yaml includes: assets: - assets/audio/');
       print('3. Run "flutter clean" and "flutter pub get"');
       print('4. Ensure the audio file is not corrupted');
     }

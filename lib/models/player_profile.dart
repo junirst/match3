@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'audio_manager.dart';
-import 'language_manager.dart';
+import '../managers/audio_manager.dart';
+import '../managers/language_manager.dart';
 
 class PlayerProfileScreen extends StatefulWidget {
   const PlayerProfileScreen({super.key});
@@ -310,7 +310,7 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
           Container(
             color: Colors.grey[800],
             child: Image.asset(
-              'assets/background.png',
+              'assets/images/backgrounds/background.png',
               fit: BoxFit.cover,
             ),
           ),
@@ -338,7 +338,7 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
                 // Player Avatar
                 CircleAvatar(
                   radius: screenWidth * 0.15,
-                  backgroundImage: AssetImage('assets/player.png'),
+                  backgroundImage: AssetImage('assets/images/characters/player.png'),
                 ),
                 SizedBox(height: screenHeight * 0.02),
                 // Player Name - Keep DistilleryDisplay font
@@ -390,10 +390,10 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
                 ),
                 SizedBox(height: screenHeight * 0.02),
                 // Upgrade Levels
-                _buildUpgradeRow('sword', 'assets/sword.png', Colors.red, screenWidth),
-                _buildUpgradeRow('heart', 'assets/heart.png', Colors.green, screenWidth),
-                _buildUpgradeRow('star', 'assets/star.png', Colors.yellow, screenWidth),
-                _buildUpgradeRow('shield', 'assets/shield.png', Colors.blue, screenWidth),
+                _buildUpgradeRow('sword', 'assets/images/items/sword.png', Colors.red, screenWidth),
+                _buildUpgradeRow('heart', 'assets/images/items/heart.png', Colors.green, screenWidth),
+                _buildUpgradeRow('star', 'assets/images/items/star.png', Colors.yellow, screenWidth),
+                _buildUpgradeRow('shield', 'assets/images/items/shield.png', Colors.blue, screenWidth),
                 SizedBox(height: screenHeight * 0.15),
               ],
             ),
@@ -411,7 +411,7 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
                   scale: _backScale,
                   duration: Duration(milliseconds: 100),
                   child: Image.asset(
-                    'assets/back_button.png',
+                    'assets/images/ui/back_button.png',
                     width: screenWidth * 0.18,
                     height: screenHeight * 0.18,
                   ),

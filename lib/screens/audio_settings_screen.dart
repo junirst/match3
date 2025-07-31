@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'audio_manager.dart';
-import 'language_manager.dart';
+import '../managers/audio_manager.dart';
+import '../managers/language_manager.dart';
 
 class AudioSettingsScreen extends StatefulWidget {
   const AudioSettingsScreen({super.key});
@@ -84,7 +84,7 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
           Container(
             color: Colors.grey[800],
             child: Image.asset(
-              'assets/background.png',
+              'assets/images/backgrounds/background.png',
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return Container(color: Colors.grey[800]);
@@ -101,7 +101,7 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
                     GestureDetector(
                       onTap: () => _updateVolume('sfx', _sfxVolume - 10),
                       child: Image.asset(
-                        'assets/minusbutton.png',
+                        'assets/images/ui/minusbutton.png',
                         width: screenWidth * 0.1,
                         height: screenHeight * 0.06,
                       ),
@@ -131,7 +131,7 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
                     GestureDetector(
                       onTap: () => _updateVolume('sfx', _sfxVolume + 10),
                       child: Image.asset(
-                        'assets/plusbutton.png',
+                        'assets/images/ui/plusbutton.png',
                         width: screenWidth * 0.1,
                         height: screenHeight * 0.06,
                       ),
@@ -145,7 +145,7 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
                     GestureDetector(
                       onTap: () => _updateVolume('bgm', _musicVolume - 10),
                       child: Image.asset(
-                        'assets/minusbutton.png',
+                        'assets/images/ui/minusbutton.png',
                         width: screenWidth * 0.1,
                         height: screenHeight * 0.06,
                       ),
@@ -175,7 +175,7 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
                     GestureDetector(
                       onTap: () => _updateVolume('bgm', _musicVolume + 10),
                       child: Image.asset(
-                        'assets/plusbutton.png',
+                        'assets/images/ui/plusbutton.png',
                         width: screenWidth * 0.1,
                         height: screenHeight * 0.06,
                       ),
@@ -189,7 +189,7 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
                     scale: _buttonScale,
                     duration: const Duration(milliseconds: 100),
                     child: Image.asset(
-                      'assets/backbutton.png',
+                      'assets/images/ui/backbutton.png',
                       width: screenWidth * 0.12,
                       height: screenHeight * 0.08,
                       errorBuilder: (context, error, stackTrace) {

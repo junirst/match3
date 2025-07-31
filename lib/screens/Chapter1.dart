@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'audio_manager.dart';
+import '../managers/audio_manager.dart';
 import 'GameplayScreen.dart';
-import 'language_manager.dart';
+import '../managers/language_manager.dart';
 
 class Chapter1Screen extends StatefulWidget {
   const Chapter1Screen({super.key});
@@ -65,7 +65,8 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
             width: screenWidth * 0.8,
             height: screenHeight * 0.5,
             decoration: BoxDecoration(
-              color: Colors.brown[800], // Changed from Colors.brown[100] to darker brown
+              color: Colors
+                  .brown[800], // Changed from Colors.brown[100] to darker brown
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.brown[900]!, width: 4),
               boxShadow: [
@@ -113,7 +114,7 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
                     );
                   },
                   child: Image.asset(
-                    'assets/PlayButton.png',
+                    'assets/images/ui/PlayButton.png',
                     width: screenWidth * 0.3,
                     height: screenHeight * 0.12,
                     errorBuilder: (context, error, stackTrace) {
@@ -214,7 +215,7 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
       alignment: Alignment.center,
       children: [
         Image.asset(
-          'assets/frame.png',
+          'assets/images/ui/frame.png',
           width: screenWidth * 0.4,
           height: screenHeight * 0.08,
           errorBuilder: (context, error, stackTrace) {
@@ -237,11 +238,7 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
               Shadow(offset: Offset(1, -1), color: Colors.black),
               Shadow(offset: Offset(-1, 1), color: Colors.black),
               Shadow(offset: Offset(1, 1), color: Colors.black),
-              Shadow(
-                offset: Offset(0, 0),
-                color: Colors.black,
-                blurRadius: 2,
-              ),
+              Shadow(offset: Offset(0, 0), color: Colors.black, blurRadius: 2),
             ],
           ),
         ),
@@ -250,17 +247,17 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
   }
 
   Widget _buildLevelButton(
-      int levelNumber,
-      double screenWidth,
-      double screenHeight,
-      ) {
+    int levelNumber,
+    double screenWidth,
+    double screenHeight,
+  ) {
     return GestureDetector(
       onTap: () => _onLevelTap(levelNumber),
       child: Stack(
         alignment: Alignment.center,
         children: [
           Image.asset(
-            'assets/roundframe.png',
+            'assets/images/ui/roundframe.png',
             width: screenWidth * 0.15,
             height: screenWidth * 0.15,
             errorBuilder: (context, error, stackTrace) {
@@ -316,7 +313,7 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
           Container(
             color: Colors.brown[200],
             child: Image.asset(
-              'assets/Chapter1background.png',
+              'assets/images/backgrounds/Chapter1background.png',
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
@@ -397,7 +394,7 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
                 scale: _backScale,
                 duration: Duration(milliseconds: 100),
                 child: Image.asset(
-                  'assets/back_button.png',
+                  'assets/images/ui/back_button.png',
                   width: screenWidth * 0.18,
                   height: screenHeight * 0.18,
                   errorBuilder: (context, error, stackTrace) {

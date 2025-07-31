@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'language_manager.dart';
+import '../managers/language_manager.dart';
 
 class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
@@ -25,7 +25,7 @@ class _ShopScreenState extends State<ShopScreen> {
         alignment: Alignment.center,
         children: [
           Image.asset(
-            'assets/frame.png',
+            'assets/images/ui/frame.png',
             width: screenWidth * 0.8,
             height: screenHeight * 0.12,
             errorBuilder: (context, error, stackTrace) {
@@ -72,7 +72,7 @@ class _ShopScreenState extends State<ShopScreen> {
         children: [
           // Background image
           Positioned.fill(
-            child: Image.asset('assets/backgroundshop.png', fit: BoxFit.cover),
+            child: Image.asset('assets/images/backgrounds/backgroundshop.png', fit: BoxFit.cover),
           ),
 
           // Shop button (Top-left)
@@ -83,7 +83,7 @@ class _ShopScreenState extends State<ShopScreen> {
               alignment: Alignment.center,
               children: [
                 Image.asset(
-                  'assets/frame.png',
+                  'assets/images/ui/frame.png',
                   width: 160,
                   height: 80,
                   errorBuilder: (context, error, stackTrace) {
@@ -163,7 +163,7 @@ class _ShopScreenState extends State<ShopScreen> {
                 width: 50,
                 height: 50,
                 child: Image.asset(
-                  'assets/backbutton.png',
+                  'assets/images/ui/backbutton.png',
                   fit: BoxFit.contain,
                 ),
               ),

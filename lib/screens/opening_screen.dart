@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'main_menu_screen.dart';
-import 'ShopInside.dart';
-import 'audio_manager.dart';
+import '../managers/audio_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'language_manager.dart';
+import '../managers/language_manager.dart';
 
 class OpeningScreen extends StatefulWidget {
   const OpeningScreen({super.key});
@@ -23,7 +21,8 @@ class _OpeningScreenState extends State<OpeningScreen>
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   @override
   void initState() {
@@ -105,8 +104,10 @@ class _OpeningScreenState extends State<OpeningScreen>
     String password = _passwordController.text;
     String confirmPassword = _confirmPasswordController.text;
 
-    if (username.isNotEmpty && email.isNotEmpty &&
-        password.isNotEmpty && password == confirmPassword) {
+    if (username.isNotEmpty &&
+        email.isNotEmpty &&
+        password.isNotEmpty &&
+        password == confirmPassword) {
       AudioManager().playSfx();
       _setFirstLaunchComplete();
       setState(() {
@@ -117,14 +118,19 @@ class _OpeningScreenState extends State<OpeningScreen>
     }
   }
 
-  Widget _buildFramedButton(String text, VoidCallback onTap, double width, double height) {
+  Widget _buildFramedButton(
+    String text,
+    VoidCallback onTap,
+    double width,
+    double height,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Stack(
         alignment: Alignment.center,
         children: [
           Image.asset(
-            'assets/frame.png',
+            'assets/images/ui/frame.png',
             width: width,
             height: height,
             errorBuilder: (context, error, stackTrace) {
@@ -276,7 +282,10 @@ class _OpeningScreenState extends State<OpeningScreen>
                   obscureText: true,
                   style: TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    labelText: _getLocalizedText('Confirm Password', 'Xác nhận mật khẩu'),
+                    labelText: _getLocalizedText(
+                      'Confirm Password',
+                      'Xác nhận mật khẩu',
+                    ),
                     labelStyle: TextStyle(color: Colors.white70),
                     enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.brown[300]!),
@@ -312,7 +321,7 @@ class _OpeningScreenState extends State<OpeningScreen>
                     _showRegisterForm
                         ? _getLocalizedText('BACK', 'QUAY LẠI')
                         : _getLocalizedText('REGISTER', 'ĐĂNG KÝ'),
-                        () {
+                    () {
                       AudioManager().playSfx();
                       setState(() {
                         _showRegisterForm = !_showRegisterForm;
@@ -334,7 +343,7 @@ class _OpeningScreenState extends State<OpeningScreen>
               // Skip button
               _buildFramedButton(
                 _getLocalizedText('PLAY AS GUEST', 'CHƠI VỚI TƯ CÁCH KHÁCH'),
-                    () {
+                () {
                   AudioManager().playSfx();
                   _setFirstLaunchComplete();
                   setState(() {
@@ -370,7 +379,7 @@ class _OpeningScreenState extends State<OpeningScreen>
                 Container(
                   color: Colors.grey[800],
                   child: Image.asset(
-                    'assets/background.png',
+                    'assets/images/backgrounds/background.png',
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(color: Colors.grey[800]);
@@ -381,7 +390,7 @@ class _OpeningScreenState extends State<OpeningScreen>
                   padding: EdgeInsets.only(top: 50.0),
                   child: Center(
                     child: Image.asset(
-                      'assets/logo.png',
+                      'assets/images/ui/logo.png',
                       width: 650,
                       height: 485,
                       errorBuilder: (context, error, stackTrace) {
@@ -402,16 +411,28 @@ class _OpeningScreenState extends State<OpeningScreen>
                       child: ScaleTransition(
                         scale: _buttonAnimation,
                         child: Text(
-                          _getLocalizedText('PRESS TO CONTINUE', 'ẤN ĐỂ TIẾP TỤC'),
+                          _getLocalizedText(
+                            'PRESS TO CONTINUE',
+                            'ẤN ĐỂ TIẾP TỤC',
+                          ),
                           style: TextStyle(
                             fontFamily: 'Bungee',
                             fontSize: 30,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                             shadows: [
-                              Shadow(offset: Offset(-1, -1), color: Colors.black),
-                              Shadow(offset: Offset(1, -1), color: Colors.black),
-                              Shadow(offset: Offset(-1, 1), color: Colors.black),
+                              Shadow(
+                                offset: Offset(-1, -1),
+                                color: Colors.black,
+                              ),
+                              Shadow(
+                                offset: Offset(1, -1),
+                                color: Colors.black,
+                              ),
+                              Shadow(
+                                offset: Offset(-1, 1),
+                                color: Colors.black,
+                              ),
                               Shadow(offset: Offset(1, 1), color: Colors.black),
                               Shadow(
                                 offset: Offset(0, 0),
@@ -432,9 +453,7 @@ class _OpeningScreenState extends State<OpeningScreen>
           if (_showLoginPopup)
             Container(
               color: Colors.black54,
-              child: Center(
-                child: _buildLoginPopup(),
-              ),
+              child: Center(child: _buildLoginPopup()),
             ),
         ],
       ),

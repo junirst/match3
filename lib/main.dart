@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'opening_screen.dart';
-import 'main_menu_screen.dart';
-import 'ShopInside.dart' as shop;
-import 'OutfitInside.dart' as outfit;
-import 'UpgradeInside.dart';
-import 'SettingInside.dart';
-import 'ChapterScreen.dart';
-import 'Chapter1.dart';
-import 'TowerMode.dart';
-import 'player_profile.dart';
+import 'screens/opening_screen.dart';
+import 'screens/main_menu_screen.dart';
+import 'screens/ShopInside.dart' as shop;
+import 'screens/OutfitInside.dart' as outfit;
+import 'screens/UpgradeInside.dart';
+import 'screens/SettingInside.dart';
+import 'screens/ChapterScreen.dart';
+import 'screens/Chapter1.dart';
+import 'screens/TowerMode.dart';
+import 'models/player_profile.dart';
 
 void main() {
   runApp(const MyApp());

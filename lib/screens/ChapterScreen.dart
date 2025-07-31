@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'audio_manager.dart';
-import 'language_manager.dart';
+import '../managers/audio_manager.dart';
+import '../managers/language_manager.dart';
 
 class Chapterscreen extends StatefulWidget {
   const Chapterscreen({super.key});
@@ -71,7 +71,7 @@ class _ChapterscreenState extends State<Chapterscreen> {
           alignment: Alignment.center,
           children: [
             Image.asset(
-              'assets/frame.png',
+              'assets/images/ui/frame.png',
               width: screenWidth * 0.8,
               height: screenHeight * 0.12,
               errorBuilder: (context, error, stackTrace) {
@@ -113,7 +113,7 @@ class _ChapterscreenState extends State<Chapterscreen> {
       alignment: Alignment.center,
       children: [
         Image.asset(
-          'assets/frame.png',
+          'assets/images/ui/frame.png',
           width: screenWidth * 0.4,
           height: screenHeight * 0.08,
           errorBuilder: (context, error, stackTrace) {
@@ -162,7 +162,7 @@ class _ChapterscreenState extends State<Chapterscreen> {
           Container(
             color: Colors.grey[800],
             child: Image.asset(
-              'assets/background.png',
+              'assets/images/backgrounds/background.png',
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return Container(color: Colors.grey[800]);
@@ -217,7 +217,7 @@ class _ChapterscreenState extends State<Chapterscreen> {
                 scale: _backScale,
                 duration: Duration(milliseconds: 100),
                 child: Image.asset(
-                  'assets/backbutton.png',
+                  'assets/images/ui/backbutton.png',
                   width: screenWidth * 0.18,
                   height: screenHeight * 0.18,
                   errorBuilder: (context, error, stackTrace) {
