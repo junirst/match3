@@ -548,7 +548,10 @@ class _GameplayScreenState extends State<GameplayScreen> {
                               decoration: BoxDecoration(
                                 color: Colors.green[600],
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: Colors.green[800]!, width: 3),
+                                border: Border.all(
+                                  color: Colors.green[800]!,
+                                  width: 3,
+                                ),
                               ),
                               child: Center(
                                 child: Text(
@@ -596,7 +599,10 @@ class _GameplayScreenState extends State<GameplayScreen> {
                               decoration: BoxDecoration(
                                 color: Colors.red[600],
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: Colors.red[800]!, width: 3),
+                                border: Border.all(
+                                  color: Colors.red[800]!,
+                                  width: 3,
+                                ),
                               ),
                               child: Center(
                                 child: Icon(
@@ -757,7 +763,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                         // Enemy area with fixed height for consistency
                         Container(
                           height:
-                          screenHeight *
+                              screenHeight *
                               0.35, // Reduced from 0.4 to move bars up
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -804,9 +810,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                         SizedBox(height: screenHeight * 0.03),
 
                         // Game grid (positioned in wooden area)
-                        Container(
-                          height:
-                          screenHeight * 0.32, // Slightly increased height
+                        Expanded(
                           child: _buildGameGrid(screenWidth, screenHeight),
                         ),
 
@@ -852,28 +856,28 @@ class _GameplayScreenState extends State<GameplayScreen> {
 
   // Helper method for enemy widget
   Widget _buildEnemyWidget(
-      String assetPath,
-      Color baseColor,
-      String label,
-      double screenWidth,
-      double screenHeight, {
-        bool isDragon = false,
-      }) {
+    String assetPath,
+    Color baseColor,
+    String label,
+    double screenWidth,
+    double screenHeight, {
+    bool isDragon = false,
+  }) {
     // Define approximate 400 and 700 shades manually
     Color lightShade = baseColor == Colors.green
         ? Color.fromRGBO(200, 230, 201, 1.0)
         : // Green 400
-    baseColor == Colors.grey
+          baseColor == Colors.grey
         ? Color.fromRGBO(189, 189, 189, 1.0)
         : // Grey 400
-    Color.fromRGBO(255, 205, 210, 1.0); // Red 400
+          Color.fromRGBO(255, 205, 210, 1.0); // Red 400
     Color darkShade = baseColor == Colors.green
         ? Color.fromRGBO(76, 175, 80, 1.0)
         : // Green 700
-    baseColor == Colors.grey
+          baseColor == Colors.grey
         ? Color.fromRGBO(117, 117, 117, 1.0)
         : // Grey 700
-    Color.fromRGBO(229, 115, 115, 1.0); // Red 700
+          Color.fromRGBO(229, 115, 115, 1.0); // Red 700
 
     return Column(
       children: [
@@ -891,7 +895,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
               // Health bar fill
               Container(
                 width:
-                (isDragon ? screenWidth * 0.5 : screenWidth * 0.25) *
+                    (isDragon ? screenWidth * 0.5 : screenWidth * 0.25) *
                     (currentEnemyHealth / maxEnemyHealth),
                 decoration: BoxDecoration(
                   color: currentEnemyHealth > maxEnemyHealth * 0.5
@@ -951,8 +955,8 @@ class _GameplayScreenState extends State<GameplayScreen> {
                     isDragon
                         ? Icons.whatshot
                         : (label == 'GHOST'
-                        ? Icons.visibility_off
-                        : Icons.person),
+                              ? Icons.visibility_off
+                              : Icons.person),
                     size: isDragon
                         ? screenWidth * 0.15
                         : screenWidth * 0.1, // Slightly smaller
@@ -965,7 +969,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                       color: darkShade,
                       fontSize: isDragon
                           ? screenWidth *
-                          0.05 // Slightly smaller
+                                0.05 // Slightly smaller
                           : screenWidth * 0.03,
                       fontWeight: FontWeight.bold,
                     ),
@@ -980,11 +984,25 @@ class _GameplayScreenState extends State<GameplayScreen> {
   }
 
   Widget _buildGameGrid(double screenWidth, double screenHeight) {
-    double gridSize = screenWidth * 0.75; // Increased back to 75%
-    return Container(
-      width: gridSize,
-      height: gridSize, // Make it square to fit 5x5 properly
-      child: GameWidget<Match3Game>.controlled(gameFactory: () => game),
+    // Make the grid as large as possible horizontally, up to 90% of screen width, and only limit height if it would overflow
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        double gridWidth = screenWidth * 0.9;
+        double gridHeight = gridWidth;
+        // If grid would overflow vertically, shrink to fit
+        double maxAllowedHeight = constraints.maxHeight;
+        if (gridHeight > maxAllowedHeight) {
+          gridHeight = maxAllowedHeight;
+          gridWidth = gridHeight;
+        }
+        return Center(
+          child: SizedBox(
+            width: gridWidth,
+            height: gridHeight,
+            child: GameWidget<Match3Game>.controlled(gameFactory: () => game),
+          ),
+        );
+      },
     );
   }
 
@@ -1051,7 +1069,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                       // Health bar fill
                       Container(
                         width:
-                        (screenWidth * 0.75 * 0.5 - screenWidth * 0.03) *
+                            (screenWidth * 0.75 * 0.5 - screenWidth * 0.03) *
                             (currentPlayerHealth / maxPlayerHealth),
                         decoration: BoxDecoration(
                           color: currentPlayerHealth >= maxPlayerHealth * 0.7
@@ -1128,7 +1146,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                         // Power bar fill
                         Container(
                           width:
-                          (screenWidth * 0.75 * 0.5 - screenWidth * 0.03) *
+                              (screenWidth * 0.75 * 0.5 - screenWidth * 0.03) *
                               (currentPowerPoints / maxPowerPoints),
                           decoration: BoxDecoration(
                             color: currentPowerPoints >= maxPowerPoints
