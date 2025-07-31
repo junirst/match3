@@ -757,7 +757,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                               if (widget.chapter == 1 &&
                                   (widget.level == 1 || widget.level == 2))
                                 _buildEnemyWidget(
-                                  'assets/goblinnemy.png',
+                                  'assets/goblin.png',
                                   Colors.green,
                                   'GOBLIN',
                                   screenWidth,
