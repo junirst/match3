@@ -15,6 +15,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   double _towerScale = 1.0;
   double _shopScale = 1.0;
   double _settingsScale = 1.0;
+  double _playerScale = 1.0;
   double _backScale = 1.0;
 
   String _currentLanguage = LanguageManager.currentLanguage;
@@ -28,7 +29,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   Future<void> _loadLanguagePreference() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _currentLanguage = prefs.getString('language') ?? 'English'; // Default to English
+      _currentLanguage = prefs.getString('language') ?? 'English';
       LanguageManager.setLanguage(_currentLanguage);
     });
   }
@@ -54,6 +55,9 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
         case 'settings':
           _settingsScale = 1.1;
           break;
+        case 'player':
+          _playerScale = 1.1;
+          break;
         case 'back':
           _backScale = 1.1;
           break;
@@ -65,6 +69,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
         _towerScale = 1.0;
         _shopScale = 1.0;
         _settingsScale = 1.0;
+        _playerScale = 1.0;
         _backScale = 1.0;
       });
       if (buttonName == 'back') {
@@ -73,13 +78,14 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
         Navigator.pushNamed(context, '/shop');
       } else if (buttonName == 'settings') {
         Navigator.pushNamed(context, '/settings').then((_) {
-          // Refresh language when returning from settings
           _loadLanguagePreference();
         });
+      } else if (buttonName == 'player') {
+        Navigator.pushNamed(context, '/player_profile');
       } else if (buttonName == 'story') {
         Navigator.pushNamed(context, '/story');
       } else if (buttonName == 'tower') {
-        Navigator.pushNamed(context, '/tower_mode'); // Added navigation to TowerModeScreen
+        Navigator.pushNamed(context, '/tower_mode');
       }
     });
   }
@@ -154,8 +160,8 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               alignment: Alignment.topCenter,
               child: Image.asset(
                 'assets/logo.png',
-                width: screenWidth * 0.95, // Even larger
-                height: screenHeight * 0.25, // Even taller
+                width: screenWidth * 0.95,
+                height: screenHeight * 0.25,
               ),
             ),
           ),
@@ -218,17 +224,35 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
             alignment: Alignment.bottomCenter,
             child: Padding(
               padding: EdgeInsets.only(bottom: screenHeight * 0.18),
-              child: GestureDetector(
-                onTap: () => _onButtonTap('settings', setState),
-                child: AnimatedScale(
-                  scale: _settingsScale,
-                  duration: Duration(milliseconds: 100),
-                  child: Image.asset(
-                    'assets/settings_button.png',
-                    width: screenWidth * 0.25,
-                    height: screenHeight * 0.08,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onTap: () => _onButtonTap('player', setState),
+                    child: AnimatedScale(
+                      scale: _playerScale,
+                      duration: Duration(milliseconds: 100),
+                      child: Image.asset(
+                        'assets/player.png',
+                        width: screenWidth * 0.25,
+                        height: screenHeight * 0.08,
+                      ),
+                    ),
                   ),
-                ),
+                  SizedBox(width: screenWidth * 0.1),
+                  GestureDetector(
+                    onTap: () => _onButtonTap('settings', setState),
+                    child: AnimatedScale(
+                      scale: _settingsScale,
+                      duration: Duration(milliseconds: 100),
+                      child: Image.asset(
+                        'assets/settings_button.png',
+                        width: screenWidth * 0.25,
+                        height: screenHeight * 0.08,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
