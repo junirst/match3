@@ -136,6 +136,18 @@ class LanguageManager {
     'heart_upgrade': 'Health Points',
     'star_upgrade': 'Special Power',
     'shield_upgrade': 'Defense',
+
+    // Gameplay Screen
+    'defeat': 'DEFEAT!',
+    'victory': 'VICTORY!',
+    'retry': 'RETRY',
+    'continue': 'CONTINUE',
+    'game_paused': 'GAME PAUSED',
+    'what_would_you_like_to_do': 'What would you like to do?',
+    'resume': 'RESUME',
+    'quit': 'QUIT',
+    'health': 'HEALTH',
+    'power': 'POWER',
   };
 
   // Vietnamese translations
@@ -229,5 +241,17 @@ class LanguageManager {
     'heart_upgrade': 'Điểm Sức Khỏe',
     'star_upgrade': 'Sức Mạnh Đặc Biệt',
     'shield_upgrade': 'Phòng Thủ',
+
+    // Gameplay Screen
+    'defeat': 'THẤT BẠI!',
+    'victory': 'CHIẾN THẮNG!',
+    'retry': 'THỬ LẠI',
+    'continue': 'TIẾP TỤC',
+    'game_paused': 'TẠM DỪNG GAME',
+    'what_would_you_like_to_do': 'Bạn muốn làm gì?',
+    'resume': 'TIẾP TỤC',
+    'quit': 'THOÁT',
+    'health': 'SỨC KHỎE',
+    'power': 'SỨC MẠNH',
   };
 }

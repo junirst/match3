@@ -83,9 +83,16 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
                 Text(
                   '${LanguageManager.getText('level')} 1.$levelNumber',
                   style: TextStyle(
+                    fontFamily: 'Bungee',
                     fontSize: screenWidth * 0.08,
                     fontWeight: FontWeight.bold,
                     color: Colors.brown[800],
+                    shadows: [
+                      Shadow(offset: Offset(-1, -1), color: Colors.black),
+                      Shadow(offset: Offset(1, -1), color: Colors.black),
+                      Shadow(offset: Offset(-1, 1), color: Colors.black),
+                      Shadow(offset: Offset(1, 1), color: Colors.black),
+                    ],
                   ),
                 ),
 
@@ -125,9 +132,17 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
                           child: Text(
                             LanguageManager.getText('play'),
                             style: TextStyle(
+                              fontFamily: 'Bungee',
                               color: Colors.white,
                               fontSize: screenWidth * 0.06,
                               fontWeight: FontWeight.bold,
+                              shadows: [
+                                Shadow(
+                                  offset: Offset(1, 1),
+                                  color: Colors.black,
+                                  blurRadius: 2,
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -145,9 +160,17 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
                     Text(
                       '${LanguageManager.getText('reward')} ${levelNumber * 50}',
                       style: TextStyle(
+                        fontFamily: 'Bungee',
                         fontSize: screenWidth * 0.05,
                         fontWeight: FontWeight.bold,
                         color: Colors.brown[700],
+                        shadows: [
+                          Shadow(
+                            offset: Offset(1, 1),
+                            color: Colors.black,
+                            blurRadius: 2,
+                          ),
+                        ],
                       ),
                     ),
                     SizedBox(width: 8),
@@ -186,6 +209,99 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
     );
   }
 
+  Widget _buildChapter1Header(double screenWidth, double screenHeight) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Image.asset(
+          'assets/frame.png',
+          width: screenWidth * 0.4,
+          height: screenHeight * 0.08,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              width: screenWidth * 0.4,
+              height: screenHeight * 0.08,
+              color: Colors.grey,
+            );
+          },
+        ),
+        Text(
+          LanguageManager.getText('chapter_1'),
+          style: TextStyle(
+            fontFamily: 'Bungee',
+            fontSize: screenWidth * 0.04,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            shadows: [
+              Shadow(offset: Offset(-1, -1), color: Colors.black),
+              Shadow(offset: Offset(1, -1), color: Colors.black),
+              Shadow(offset: Offset(-1, 1), color: Colors.black),
+              Shadow(offset: Offset(1, 1), color: Colors.black),
+              Shadow(
+                offset: Offset(0, 0),
+                color: Colors.black,
+                blurRadius: 2,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLevelButton(
+      int levelNumber,
+      double screenWidth,
+      double screenHeight,
+      ) {
+    return GestureDetector(
+      onTap: () => _onLevelTap(levelNumber),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Image.asset(
+            'assets/roundframe.png',
+            width: screenWidth * 0.12,
+            height: screenWidth * 0.12,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                width: screenWidth * 0.12,
+                height: screenWidth * 0.12,
+                decoration: BoxDecoration(
+                  color: Colors.orange[600],
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.brown[800]!, width: 3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 4,
+                      offset: Offset(2, 2),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          Text(
+            levelNumber.toString(),
+            style: TextStyle(
+              fontFamily: 'Bungee',
+              color: Colors.white,
+              fontSize: screenWidth * 0.05,
+              fontWeight: FontWeight.bold,
+              shadows: [
+                Shadow(offset: Offset(-1, -1), color: Colors.black),
+                Shadow(offset: Offset(1, -1), color: Colors.black),
+                Shadow(offset: Offset(-1, 1), color: Colors.black),
+                Shadow(offset: Offset(1, 1), color: Colors.black),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
@@ -209,9 +325,17 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
                     child: Text(
                       '${LanguageManager.getText('chapter')} 1 Map',
                       style: TextStyle(
+                        fontFamily: 'Bungee',
                         color: Colors.brown[800],
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
+                        shadows: [
+                          Shadow(
+                            offset: Offset(1, 1),
+                            color: Colors.black,
+                            blurRadius: 2,
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -220,36 +344,11 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
             ),
           ),
 
-          // Chapter 1 title in top left - Localized
+          // Chapter 1 title in top left using frame - Localized
           Positioned(
             top: screenHeight * 0.05,
             left: screenWidth * 0.05,
-            child: Image.asset(
-              'assets/Chapter1.png',
-              width: screenWidth * 0.25,
-              height: screenHeight * 0.08,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  width: screenWidth * 0.25,
-                  height: screenHeight * 0.08,
-                  decoration: BoxDecoration(
-                    color: Colors.brown[600],
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.orange, width: 2),
-                  ),
-                  child: Center(
-                    child: Text(
-                      LanguageManager.getText('chapter_1'),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
+            child: _buildChapter1Header(screenWidth, screenHeight),
           ),
 
           // Level selection points (positioned across the map)
@@ -298,7 +397,7 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
                 scale: _backScale,
                 duration: Duration(milliseconds: 100),
                 child: Image.asset(
-                  'assets/backbutton.png',
+                  'assets/back_button.png',
                   width: screenWidth * 0.18,
                   height: screenHeight * 0.18,
                   errorBuilder: (context, error, stackTrace) {
@@ -321,42 +420,6 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildLevelButton(
-      int levelNumber,
-      double screenWidth,
-      double screenHeight,
-      ) {
-    return GestureDetector(
-      onTap: () => _onLevelTap(levelNumber),
-      child: Container(
-        width: screenWidth * 0.12,
-        height: screenWidth * 0.12,
-        decoration: BoxDecoration(
-          color: Colors.orange[600],
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.brown[800]!, width: 3),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 4,
-              offset: Offset(2, 2),
-            ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            levelNumber.toString(),
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: screenWidth * 0.05,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
       ),
     );
   }

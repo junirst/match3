@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
 import 'dart:math';
 import 'audio_manager.dart';
-import 'flame_match3_game.dart'; // Add this import
+import 'flame_match3_game.dart';
 
 class GameplayScreen extends StatefulWidget {
   final int chapter;
@@ -304,6 +304,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                 Text(
                   'DEFEAT!',
                   style: TextStyle(
+                    fontFamily: 'Bungee',
                     fontSize: MediaQuery.of(context).size.width * 0.08,
                     fontWeight: FontWeight.bold,
                     color: Colors.red[800],
@@ -326,6 +327,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                     child: Text(
                       'RETRY',
                       style: TextStyle(
+                        fontFamily: 'Bungee',
                         color: Colors.white,
                         fontSize: MediaQuery.of(context).size.width * 0.04,
                         fontWeight: FontWeight.bold,
@@ -407,6 +409,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                 Text(
                   'VICTORY!',
                   style: TextStyle(
+                    fontFamily: 'Bungee',
                     fontSize: MediaQuery.of(context).size.width * 0.08,
                     fontWeight: FontWeight.bold,
                     color: Colors.green[800],
@@ -429,6 +432,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                     child: Text(
                       'CONTINUE',
                       style: TextStyle(
+                        fontFamily: 'Bungee',
                         color: Colors.white,
                         fontSize: MediaQuery.of(context).size.width * 0.04,
                         fontWeight: FontWeight.bold,
@@ -484,6 +488,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                 Text(
                   'GAME PAUSED',
                   style: TextStyle(
+                    fontFamily: 'Bungee',
                     fontSize: MediaQuery.of(context).size.width * 0.06,
                     fontWeight: FontWeight.bold,
                     color: Colors.brown[800],
@@ -500,6 +505,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                 Text(
                   'What would you like to do?',
                   style: TextStyle(
+                    fontFamily: 'Bungee',
                     fontSize: MediaQuery.of(context).size.width * 0.04,
                     color: Colors.brown[700],
                     fontWeight: FontWeight.w500,
@@ -548,6 +554,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                                 child: Text(
                                   'CONTINUE',
                                   style: TextStyle(
+                                    fontFamily: 'Bungee',
                                     color: Colors.white,
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
@@ -652,6 +659,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                     child: Text(
                       'Gameplay Background',
                       style: TextStyle(
+                        fontFamily: 'Bungee',
                         color: Colors.white,
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -696,6 +704,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                         child: Text(
                           'Level ${widget.chapter}.${widget.level}',
                           style: TextStyle(
+                            fontFamily: 'Bungee',
                             color: Colors.white,
                             fontSize: screenWidth * 0.04,
                             fontWeight: FontWeight.bold,
@@ -757,7 +766,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                               if (widget.chapter == 1 &&
                                   (widget.level == 1 || widget.level == 2))
                                 _buildEnemyWidget(
-                                  'assets/goblin.png',
+                                  'assets/Mobs/Goblin.png',
                                   Colors.green,
                                   'GOBLIN',
                                   screenWidth,
@@ -766,7 +775,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                               if (widget.chapter == 1 &&
                                   (widget.level == 3 || widget.level == 4))
                                 _buildEnemyWidget(
-                                  'assets/ghostenemy.png',
+                                  'assets/Mobs/Ghost.png',
                                   Colors.grey,
                                   'GHOST',
                                   screenWidth,
@@ -774,7 +783,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                                 ),
                               if (widget.chapter == 1 && widget.level == 5)
                                 _buildEnemyWidget(
-                                  'assets/dragonenemy.png',
+                                  'assets/Mobs/Dragon.png',
                                   Colors.red,
                                   'DRAGON',
                                   screenWidth,
@@ -898,6 +907,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                 child: Text(
                   '$currentEnemyHealth/$maxEnemyHealth',
                   style: TextStyle(
+                    fontFamily: 'Bungee',
                     color: Colors.white,
                     fontSize: screenWidth * 0.02,
                     fontWeight: FontWeight.bold,
@@ -951,6 +961,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                   Text(
                     label,
                     style: TextStyle(
+                      fontFamily: 'Bungee',
                       color: darkShade,
                       fontSize: isDragon
                           ? screenWidth *
@@ -993,6 +1004,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                     Text(
                       'HEALTH',
                       style: TextStyle(
+                        fontFamily: 'Bungee',
                         color: Colors.white,
                         fontSize: screenWidth * 0.03,
                         fontWeight: FontWeight.bold,
@@ -1010,6 +1022,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                       Text(
                         '(+$excessHealth)',
                         style: TextStyle(
+                          fontFamily: 'Bungee',
                           color: Colors.lightGreen,
                           fontSize: screenWidth * 0.025,
                           fontWeight: FontWeight.bold,
@@ -1058,6 +1071,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                               ? 'Enemy Turn...'
                               : '$currentPlayerHealth/$maxPlayerHealth',
                           style: TextStyle(
+                            fontFamily: 'Bungee',
                             color: Colors.white,
                             fontSize: screenWidth * 0.02,
                             fontWeight: FontWeight.bold,
@@ -1086,6 +1100,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                 Text(
                   'POWER',
                   style: TextStyle(
+                    fontFamily: 'Bungee',
                     color: Colors.white,
                     fontSize: screenWidth * 0.03,
                     fontWeight: FontWeight.bold,
@@ -1127,6 +1142,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                           child: Text(
                             '$currentPowerPoints/$maxPowerPoints',
                             style: TextStyle(
+                              fontFamily: 'Bungee',
                               color: Colors.white,
                               fontSize: screenWidth * 0.02,
                               fontWeight: FontWeight.bold,
