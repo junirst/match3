@@ -333,7 +333,7 @@ class _OpeningScreenState extends State<OpeningScreen>
 
               // Skip button
               _buildFramedButton(
-                _getLocalizedText('SKIP', 'BỎ QUA'),
+                _getLocalizedText('PLAY AS GUEST', 'CHƠI VỚI TƯ CÁCH KHÁCH'),
                     () {
                   AudioManager().playSfx();
                   _setFirstLaunchComplete();
