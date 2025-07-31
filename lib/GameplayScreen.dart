@@ -461,22 +461,18 @@ class _GameplayScreenState extends State<GameplayScreen> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        final screenSize = MediaQuery.of(context).size;
-        final screenWidth = screenSize.width;
-        final screenHeight = screenSize.height;
-
         return Dialog(
           backgroundColor: Colors.transparent,
           child: Container(
-            width: screenWidth * 0.8,
-            height: screenHeight * 0.4,
+            width: MediaQuery.of(context).size.width * 0.8,
+            height: MediaQuery.of(context).size.height * 0.4,
             decoration: BoxDecoration(
               color: Colors.brown[100],
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.brown[800]!, width: 4),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black54,
+                  color: Colors.black26,
                   blurRadius: 10,
                   offset: Offset(0, 5),
                 ),
@@ -486,18 +482,34 @@ class _GameplayScreenState extends State<GameplayScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'PAUSED',
+                  'GAME PAUSED',
                   style: TextStyle(
-                    fontSize: screenWidth * 0.08,
+                    fontSize: MediaQuery.of(context).size.width * 0.06,
                     fontWeight: FontWeight.bold,
                     color: Colors.brown[800],
+                    shadows: [
+                      Shadow(
+                        color: Colors.black26,
+                        offset: Offset(1, 1),
+                        blurRadius: 2,
+                      ),
+                    ],
                   ),
                 ),
-                SizedBox(height: screenHeight * 0.03),
+                SizedBox(height: 30),
+                Text(
+                  'What would you like to do?',
+                  style: TextStyle(
+                    fontSize: MediaQuery.of(context).size.width * 0.04,
+                    color: Colors.brown[700],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 40),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    // Resume button
+                    // Continue button using continue.png
                     GestureDetector(
                       onTap: () {
                         AudioManager().playSfx();
@@ -508,29 +520,46 @@ class _GameplayScreenState extends State<GameplayScreen> {
                         Navigator.pop(context);
                       },
                       child: Container(
-                        width: screenWidth * 0.2,
-                        height: screenHeight * 0.08,
                         decoration: BoxDecoration(
-                          color: Colors.green[600],
-                          borderRadius: BorderRadius.circular(15),
-                          border: Border.all(
-                            color: Colors.green[800]!,
-                            width: 3,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'RESUME',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: screenWidth * 0.04,
-                              fontWeight: FontWeight.bold,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 4,
+                              offset: Offset(2, 2),
                             ),
-                          ),
+                          ],
+                        ),
+                        child: Image.asset(
+                          'assets/continue.png',
+                          height: 60,
+                          width: 120,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              height: 60,
+                              width: 120,
+                              decoration: BoxDecoration(
+                                color: Colors.green[600],
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: Colors.green[800]!, width: 3),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'CONTINUE',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ),
-                    // Exit button
+                    // Back button using backbutton.png
                     GestureDetector(
                       onTap: () {
                         AudioManager().playSfx();
@@ -538,22 +567,39 @@ class _GameplayScreenState extends State<GameplayScreen> {
                         Navigator.pop(context); // Exit to previous screen
                       },
                       child: Container(
-                        width: screenWidth * 0.2,
-                        height: screenHeight * 0.08,
                         decoration: BoxDecoration(
-                          color: Colors.red[600],
-                          borderRadius: BorderRadius.circular(15),
-                          border: Border.all(color: Colors.red[800]!, width: 3),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'EXIT',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: screenWidth * 0.04,
-                              fontWeight: FontWeight.bold,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 4,
+                              offset: Offset(2, 2),
                             ),
-                          ),
+                          ],
+                        ),
+                        child: Image.asset(
+                          'assets/backbutton.png',
+                          height: 60,
+                          width: 60,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              height: 60,
+                              width: 60,
+                              decoration: BoxDecoration(
+                                color: Colors.red[600],
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: Colors.red[800]!, width: 3),
+                              ),
+                              child: Center(
+                                child: Icon(
+                                  Icons.arrow_back,
+                                  color: Colors.white,
+                                  size: 30,
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -702,7 +748,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                         // Enemy area with fixed height for consistency
                         Container(
                           height:
-                              screenHeight *
+                          screenHeight *
                               0.35, // Reduced from 0.4 to move bars up
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -711,7 +757,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                               if (widget.chapter == 1 &&
                                   (widget.level == 1 || widget.level == 2))
                                 _buildEnemyWidget(
-                                  'assets/Mobs/Goblin.png',
+                                  'assets/goblinnemy.png',
                                   Colors.green,
                                   'GOBLIN',
                                   screenWidth,
@@ -720,7 +766,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                               if (widget.chapter == 1 &&
                                   (widget.level == 3 || widget.level == 4))
                                 _buildEnemyWidget(
-                                  'assets/Mobs/Ghost.png',
+                                  'assets/ghostenemy.png',
                                   Colors.grey,
                                   'GHOST',
                                   screenWidth,
@@ -728,7 +774,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                                 ),
                               if (widget.chapter == 1 && widget.level == 5)
                                 _buildEnemyWidget(
-                                  'assets/Mobs/Dragon.png',
+                                  'assets/dragonenemy.png',
                                   Colors.red,
                                   'DRAGON',
                                   screenWidth,
@@ -751,7 +797,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                         // Game grid (positioned in wooden area)
                         Container(
                           height:
-                              screenHeight * 0.32, // Slightly increased height
+                          screenHeight * 0.32, // Slightly increased height
                           child: _buildGameGrid(screenWidth, screenHeight),
                         ),
 
@@ -797,28 +843,28 @@ class _GameplayScreenState extends State<GameplayScreen> {
 
   // Helper method for enemy widget
   Widget _buildEnemyWidget(
-    String assetPath,
-    Color baseColor,
-    String label,
-    double screenWidth,
-    double screenHeight, {
-    bool isDragon = false,
-  }) {
+      String assetPath,
+      Color baseColor,
+      String label,
+      double screenWidth,
+      double screenHeight, {
+        bool isDragon = false,
+      }) {
     // Define approximate 400 and 700 shades manually
     Color lightShade = baseColor == Colors.green
         ? Color.fromRGBO(200, 230, 201, 1.0)
         : // Green 400
-          baseColor == Colors.grey
+    baseColor == Colors.grey
         ? Color.fromRGBO(189, 189, 189, 1.0)
         : // Grey 400
-          Color.fromRGBO(255, 205, 210, 1.0); // Red 400
+    Color.fromRGBO(255, 205, 210, 1.0); // Red 400
     Color darkShade = baseColor == Colors.green
         ? Color.fromRGBO(76, 175, 80, 1.0)
         : // Green 700
-          baseColor == Colors.grey
+    baseColor == Colors.grey
         ? Color.fromRGBO(117, 117, 117, 1.0)
         : // Grey 700
-          Color.fromRGBO(229, 115, 115, 1.0); // Red 700
+    Color.fromRGBO(229, 115, 115, 1.0); // Red 700
 
     return Column(
       children: [
@@ -836,7 +882,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
               // Health bar fill
               Container(
                 width:
-                    (isDragon ? screenWidth * 0.5 : screenWidth * 0.25) *
+                (isDragon ? screenWidth * 0.5 : screenWidth * 0.25) *
                     (currentEnemyHealth / maxEnemyHealth),
                 decoration: BoxDecoration(
                   color: currentEnemyHealth > maxEnemyHealth * 0.5
@@ -895,8 +941,8 @@ class _GameplayScreenState extends State<GameplayScreen> {
                     isDragon
                         ? Icons.whatshot
                         : (label == 'GHOST'
-                              ? Icons.visibility_off
-                              : Icons.person),
+                        ? Icons.visibility_off
+                        : Icons.person),
                     size: isDragon
                         ? screenWidth * 0.15
                         : screenWidth * 0.1, // Slightly smaller
@@ -908,7 +954,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                       color: darkShade,
                       fontSize: isDragon
                           ? screenWidth *
-                                0.05 // Slightly smaller
+                          0.05 // Slightly smaller
                           : screenWidth * 0.03,
                       fontWeight: FontWeight.bold,
                     ),
@@ -992,7 +1038,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                       // Health bar fill
                       Container(
                         width:
-                            (screenWidth * 0.75 * 0.5 - screenWidth * 0.03) *
+                        (screenWidth * 0.75 * 0.5 - screenWidth * 0.03) *
                             (currentPlayerHealth / maxPlayerHealth),
                         decoration: BoxDecoration(
                           color: currentPlayerHealth >= maxPlayerHealth * 0.7
@@ -1067,7 +1113,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                         // Power bar fill
                         Container(
                           width:
-                              (screenWidth * 0.75 * 0.5 - screenWidth * 0.03) *
+                          (screenWidth * 0.75 * 0.5 - screenWidth * 0.03) *
                               (currentPowerPoints / maxPowerPoints),
                           decoration: BoxDecoration(
                             color: currentPowerPoints >= maxPowerPoints
