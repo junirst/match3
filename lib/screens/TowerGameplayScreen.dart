@@ -757,7 +757,7 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
                 ? screenWidth *
                       0.01 // Closer to edge for smaller weapons
                 : screenWidth * 0.02, // Standard position for Sword
-            top: screenHeight * 0.15,
+            top: screenHeight * 0.25,
             child: Image.asset(
               _weaponAssets[_equippedWeapon] ??
                   'assets/images/items/SwordHand.png',

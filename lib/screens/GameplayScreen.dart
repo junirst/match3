@@ -849,7 +849,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                 ? screenWidth *
                       0.01 // Closer to edge for smaller weapons
                 : screenWidth * 0.02, // Standard position for Sword
-            top: screenHeight * 0.15,
+            top: screenHeight * 0.25,
             child: Image.asset(
               _weaponAssets[_equippedWeapon] ??
                   'assets/images/items/SwordHand.png',
@@ -865,7 +865,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                       ? screenWidth *
                             0.25 // Match larger size for smaller weapons
                       : screenWidth * 0.2, // Standard size for Sword
-                  height: screenHeight * 0.3,
+                  height: screenHeight * 0.25,
                   decoration: BoxDecoration(
                     color: Colors.brown[300],
                     borderRadius: BorderRadius.circular(10),
