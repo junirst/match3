@@ -5,10 +5,11 @@ import 'package:flame/effects.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 import '../managers/audio_manager.dart';
+import '../utils/debug_logger.dart';
+import '../utils/game_constants.dart';
 
 class Match3Game extends FlameGame
     with HasKeyboardHandlerComponents, HasCollisionDetection {
-  static const int gridSize = 8;
   late List<List<GameTile?>> grid;
   late final double tileSize;
   late final Vector2 gridOffset;
@@ -67,23 +68,28 @@ class Match3Game extends FlameGame
     // Calculate responsive sizing
     final screenSize = size;
     tileSize = screenSize.x * 0.12;
-    final totalGridWidth = gridSize * tileSize + (gridSize - 1) * 4;
-    final totalGridHeight = gridSize * tileSize + (gridSize - 1) * 4;
+    final totalGridWidth =
+        GameConstants.gridSize * tileSize + (GameConstants.gridSize - 1) * 4;
+    final totalGridHeight =
+        GameConstants.gridSize * tileSize + (GameConstants.gridSize - 1) * 4;
     gridOffset = Vector2(
       (screenSize.x - totalGridWidth) / 2,
       (screenSize.y - totalGridHeight) / 2,
     );
 
     // Initialize grid
-    grid = List.generate(gridSize, (i) => List.generate(gridSize, (j) => null));
+    grid = List.generate(
+      GameConstants.gridSize,
+      (i) => List.generate(GameConstants.gridSize, (j) => null),
+    );
 
     // Ensure enemy turn counter starts at 0
-    print('Game onLoad: Initializing enemy turn counter to 0');
+    DebugLogger.gameState('Game onLoad: Initializing enemy turn counter to 0');
     _enemyTurnCount = 0;
 
     // Load sprites with fallback handling
     try {
-      print('Loading sprites from assets/images/items/...');
+      DebugLogger.sprite('Loading sprites from assets/images/items/...');
       await Future.wait([
         images.load('items/sword.png'),
         images.load('items/shield.png'),
@@ -103,21 +109,21 @@ class Match3Game extends FlameGame
       for (String spriteName in spriteNames) {
         if (!images.containsKey(spriteName)) {
           allSpritesLoaded = false;
-          print('Missing sprite: $spriteName');
+          DebugLogger.sprite('Missing sprite: $spriteName');
         } else {
-          print('✓ Loaded sprite: $spriteName');
+          DebugLogger.sprite('✓ Loaded sprite: $spriteName');
         }
       }
 
       imagesLoaded = allSpritesLoaded;
-      print(
+      DebugLogger.sprite(
         imagesLoaded
             ? 'All sprites loaded successfully'
             : 'Using fallback rendering due to missing sprites',
       );
     } catch (e) {
-      print('Failed to load sprites: $e');
-      print('Will use fallback rendering for tiles');
+      DebugLogger.error('Failed to load sprites', e);
+      DebugLogger.sprite('Will use fallback rendering for tiles');
       imagesLoaded = false;
     }
 
@@ -141,8 +147,8 @@ class Match3Game extends FlameGame
     );
     _enemyTurnCount = 0;
 
-    for (int row = 0; row < gridSize; row++) {
-      for (int col = 0; col < gridSize; col++) {
+    for (int row = 0; row < GameConstants.gridSize; row++) {
+      for (int col = 0; col < GameConstants.gridSize; col++) {
         int tileType;
         do {
           tileType = _random.nextInt(4);
@@ -184,27 +190,29 @@ class Match3Game extends FlameGame
 
   void setPlayerTurn(bool value) {
     isPlayerTurn = value;
-    print('Set PlayerTurn=$isPlayerTurn');
+    DebugLogger.gameState('Set PlayerTurn=$isPlayerTurn');
   }
 
   void setProcessingTurn(bool value) {
     isProcessingTurn = value;
-    print('Set Processing=$isProcessingTurn');
+    DebugLogger.gameState('Set Processing=$isProcessingTurn');
   }
 
   void resetEnemyDamageScaling() {
-    print(
+    DebugLogger.combat(
       'RESETTING enemy turn counter from $_enemyTurnCount to 0 in resetEnemyDamageScaling',
     );
     _enemyTurnCount = 0;
-    print('Enemy damage scaling reset to turn 0');
+    DebugLogger.combat('Enemy damage scaling reset to turn 0');
   }
 
   // Method to start a new battle/enemy encounter
   void startNewBattle() {
-    print('Starting new battle - resetting enemy turn counter');
+    DebugLogger.combat('Starting new battle - resetting enemy turn counter');
     _enemyTurnCount = 0;
-    print('New battle started: enemy turn counter = $_enemyTurnCount');
+    DebugLogger.combat(
+      'New battle started: enemy turn counter = $_enemyTurnCount',
+    );
   }
 
   int get currentEnemyTurn => _enemyTurnCount;
@@ -335,14 +343,14 @@ class Match3Game extends FlameGame
     final processed = <GameTile>{};
 
     // Find all horizontal matches
-    for (int row = 0; row < gridSize; row++) {
-      for (int col = 0; col < gridSize - 2; col++) {
+    for (int row = 0; row < GameConstants.gridSize; row++) {
+      for (int col = 0; col < GameConstants.gridSize - 2; col++) {
         final tile = grid[row][col];
         if (tile == null || processed.contains(tile)) continue;
 
         final type = tile.tileType;
         final match = [tile];
-        for (int c = col + 1; c < gridSize; c++) {
+        for (int c = col + 1; c < GameConstants.gridSize; c++) {
           final nextTile = grid[row][c];
           if (nextTile?.tileType == type) {
             match.add(nextTile!);
@@ -357,14 +365,14 @@ class Match3Game extends FlameGame
     }
 
     // Find all vertical matches
-    for (int col = 0; col < gridSize; col++) {
-      for (int row = 0; row < gridSize - 2; row++) {
+    for (int col = 0; col < GameConstants.gridSize; col++) {
+      for (int row = 0; row < GameConstants.gridSize - 2; row++) {
         final tile = grid[row][col];
         if (tile == null) continue;
 
         final type = tile.tileType;
         final match = [tile];
-        for (int r = row + 1; r < gridSize; r++) {
+        for (int r = row + 1; r < GameConstants.gridSize; r++) {
           final nextTile = grid[r][col];
           if (nextTile?.tileType == type) {
             match.add(nextTile!);
@@ -479,9 +487,9 @@ class Match3Game extends FlameGame
   }
 
   Future<void> _applyGravity() async {
-    for (int col = 0; col < gridSize; col++) {
-      int emptyRow = gridSize - 1;
-      for (int row = gridSize - 1; row >= 0; row--) {
+    for (int col = 0; col < GameConstants.gridSize; col++) {
+      int emptyRow = GameConstants.gridSize - 1;
+      for (int row = GameConstants.gridSize - 1; row >= 0; row--) {
         if (grid[row][col] != null) {
           if (row != emptyRow) {
             final tile = grid[row][col]!;
@@ -585,16 +593,16 @@ class Match3Game extends FlameGame
   }
 
   bool _hasMatchesAfterSwap() {
-    for (int row = 0; row < gridSize; row++) {
-      for (int col = 0; col < gridSize - 2; col++) {
+    for (int row = 0; row < GameConstants.gridSize; row++) {
+      for (int col = 0; col < GameConstants.gridSize - 2; col++) {
         if (grid[row][col]?.tileType == grid[row][col + 1]?.tileType &&
             grid[row][col]?.tileType == grid[row][col + 2]?.tileType) {
           return true;
         }
       }
     }
-    for (int col = 0; col < gridSize; col++) {
-      for (int row = 0; row < gridSize - 2; row++) {
+    for (int col = 0; col < GameConstants.gridSize; col++) {
+      for (int row = 0; row < GameConstants.gridSize - 2; row++) {
         if (grid[row][col]?.tileType == grid[row + 1][col]?.tileType &&
             grid[row][col]?.tileType == grid[row + 2][col]?.tileType) {
           return true;
@@ -612,7 +620,6 @@ class GameTile extends RectangleComponent
   int gridCol;
   final double tileSize;
   final Match3Game game;
-  bool _isSelected = false;
   late final RectangleComponent border;
   late final RectangleComponent selectionBorder;
   SpriteComponent? spriteComponent;
@@ -716,7 +723,6 @@ class GameTile extends RectangleComponent
   }
 
   void setSelected(bool selected) {
-    _isSelected = selected;
     selectionBorder.opacity = selected ? 1.0 : 0.0;
   }
 }

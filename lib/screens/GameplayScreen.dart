@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../managers/audio_manager.dart';
 import '../managers/upgrade_manager.dart';
 import '../core/flame_match3_game.dart';
+import '../utils/game_constants.dart';
 
 class GameplayScreen extends StatefulWidget {
   final int chapter;
@@ -24,18 +25,18 @@ class _GameplayScreenState extends State<GameplayScreen> {
   int currentEnemyHealth = 100;
 
   // Player health system
-  int maxPlayerHealth = 100;
-  int currentPlayerHealth = 100;
+  int maxPlayerHealth = GameConstants.maxPlayerHealth;
+  int currentPlayerHealth = GameConstants.maxPlayerHealth;
   int excessHealth = 0; // Store excess health beyond max
 
   // Shield system
   int shieldPoints = 0;
-  static const int shieldBlockThreshold = 10;
+  static const int shieldBlockThreshold = GameConstants.shieldBlockThreshold;
 
   // Power/Gold bar system
-  int maxPowerPoints = 50;
+  int maxPowerPoints = GameConstants.maxPowerPoints;
   int currentPowerPoints = 0;
-  static const int starPowerGain = 5;
+  static const int starPowerGain = GameConstants.baseStarPowerGain;
   static const int powerAttackDamage = 50;
 
   // Damage values for different tile types

@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/game_constants.dart';
 
 class UpgradeManager {
   static UpgradeManager? _instance;
@@ -13,12 +14,12 @@ class UpgradeManager {
     'shield': 1,
   };
 
-  // Base values for tiles
+  // Base values for tiles using constants
   static const Map<String, int> _baseValues = {
-    'sword': 10, // swordDamage
-    'heart': 5, // heartHeal
-    'star': 5, // starPowerGain
-    'shield': 1, // shield points per tile
+    'sword': GameConstants.baseSwordDamage,
+    'heart': GameConstants.baseHeartHeal,
+    'star': GameConstants.baseStarPowerGain,
+    'shield': GameConstants.baseShieldPoints,
   };
 
   Future<void> loadUpgrades() async {

@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../managers/audio_manager.dart';
 import '../managers/upgrade_manager.dart';
 import '../core/flame_match3_game.dart';
+import '../utils/debug_logger.dart';
+import '../utils/game_constants.dart';
 
 class TowerGameplayScreen extends StatefulWidget {
   final int initialFloor;
@@ -31,18 +33,18 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
   int damageThresholdIncrease = 0;
 
   // Persistent player stats
-  static int maxPlayerHealth = 100;
-  static int currentPlayerHealth = 100;
+  static int maxPlayerHealth = GameConstants.maxPlayerHealth;
+  static int currentPlayerHealth = GameConstants.maxPlayerHealth;
   static int excessHealth = 0;
-  static int maxPowerPoints = 50;
+  static int maxPowerPoints = GameConstants.maxPowerPoints;
   static int currentPowerPoints = 0;
   static int shieldPoints = 0;
-  static const int shieldBlockThreshold = 10;
+  static const int shieldBlockThreshold = GameConstants.shieldBlockThreshold;
 
   // Damage and healing values
-  static const int swordDamage = 10;
-  static const int starPowerGain = 5;
-  static const int powerAttackDamage = 50;
+  static const int swordDamage = GameConstants.baseSwordDamage;
+  static const int starPowerGain = GameConstants.baseStarPowerGain;
+  static const int powerAttackDamage = GameConstants.basePowerAttackDamage;
 
   // Turn-based system
   bool isPlayerTurn = true;
@@ -193,10 +195,12 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
           int bonusHealing = 0;
           if (_equippedWeapon == 'Dagger') {
             _daggerHeartMatches++;
-            if (_daggerHeartMatches >= 5) {
-              bonusHealing = 10;
+            if (_daggerHeartMatches >= GameConstants.daggerHeartThreshold) {
+              bonusHealing = GameConstants.daggerBonusHealing;
               _daggerHeartMatches = 0; // Reset counter
-              print('Dagger passive triggered! Bonus +$bonusHealing HP');
+              DebugLogger.combat(
+                'Dagger passive triggered! Bonus +$bonusHealing HP',
+              );
             }
           }
 
@@ -625,7 +629,9 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
         // Calculate power attack damage with Hand weapon passive
         int actualPowerDamage = powerAttackDamage;
         if (_equippedWeapon == 'Hand') {
-          actualPowerDamage = powerAttackDamage * 2; // Double damage for Hand
+          actualPowerDamage =
+              (powerAttackDamage * GameConstants.handPowerMultiplier)
+                  .round(); // Double damage for Hand
         }
 
         currentEnemyHealth = (currentEnemyHealth - actualPowerDamage).clamp(
@@ -643,7 +649,7 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
         isProcessingTurn = true;
         game.setPlayerTurn(false);
         game.setProcessingTurn(true);
-        print(
+        DebugLogger.combat(
           'Power attack: $actualPowerDamage damage${_equippedWeapon == 'Hand' ? ' (Hand passive: double damage!)' : ''}, Enemy HP: $currentEnemyHealth/$maxEnemyHealth',
         );
       });
