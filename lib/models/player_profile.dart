@@ -65,7 +65,7 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
       upgradeLevels['shield'] = prefs.getInt('upgrade_shield_level') ?? 1;
 
       // Load shop item ownership status
-      shopItems['Sword'] = prefs.getBool('shop_item_sword') ?? false;
+      shopItems['Sword'] = true; // Sword is always owned
       shopItems['Dagger'] = prefs.getBool('shop_item_dagger') ?? false;
       shopItems['Hand'] = prefs.getBool('shop_item_hand') ?? false;
     });

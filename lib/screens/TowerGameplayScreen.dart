@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
 import 'dart:math';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../managers/audio_manager.dart';
 import '../core/flame_match3_game.dart';
 
@@ -45,6 +46,14 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
   bool isPlayerTurn = true;
   bool isProcessingTurn = false;
 
+  // Weapon system
+  String _equippedWeapon = 'Sword';
+  final Map<String, String> _weaponAssets = {
+    'Sword': 'assets/images/items/SwordHand.png',
+    'Dagger': 'assets/images/items/Dagger.png',
+    'Hand': 'assets/images/items/Hand.png',
+  };
+
   // Enemy types for randomization
   final List<Map<String, dynamic>> enemyTypes = [
     {
@@ -77,8 +86,16 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
   void initState() {
     super.initState();
     currentFloor = widget.initialFloor;
+    _loadEquippedWeapon();
     _initializeEnemy();
     _initializeGame();
+  }
+
+  Future<void> _loadEquippedWeapon() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _equippedWeapon = prefs.getString('equipped_weapon') ?? 'Sword';
+    });
   }
 
   void _initializeGame() {
@@ -125,12 +142,12 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
             0,
             maxEnemyHealth,
           );
-          
+
           // Play enemy hurt sound when damaged
           if (damage > 0) {
             AudioManager().playEnemyHurt();
           }
-          
+
           game.enemyHealth = currentEnemyHealth; // Sync with game
           print(
             'Sword match: $damage damage, Enemy HP: $currentEnemyHealth/$maxEnemyHealth',
@@ -193,7 +210,7 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
       if (finalDamage > 0) {
         // Play player damaged sound
         AudioManager().playPlayerDamaged();
-        
+
         currentPlayerHealth = (currentPlayerHealth - finalDamage).clamp(
           0,
           maxPlayerHealth,
@@ -549,7 +566,7 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
           0,
           maxEnemyHealth,
         );
-        
+
         // Play enemy hurt sound for power attack
         AudioManager().playEnemyHurt();
         game.enemyHealth = currentEnemyHealth; // Sync with game
@@ -718,11 +735,15 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
                         ),
                         SizedBox(height: screenHeight * 0.03),
                         _buildPlayerBars(screenWidth, screenHeight),
+                        // Spacing between bars and game grid
                         SizedBox(height: screenHeight * 0.03),
-                        Container(
-                          height: screenHeight * 0.32,
+
+                        // Game grid (positioned in wooden area)
+                        Expanded(
                           child: _buildGameGrid(screenWidth, screenHeight),
                         ),
+
+                        // Bottom padding within wooden area
                         SizedBox(height: screenHeight * 0.02),
                       ],
                     ),
@@ -732,15 +753,26 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
             ),
           ),
           Positioned(
-            right: screenWidth * 0.02,
+            right: _equippedWeapon == 'Hand' || _equippedWeapon == 'Dagger'
+                ? screenWidth *
+                      0.01 // Closer to edge for smaller weapons
+                : screenWidth * 0.02, // Standard position for Sword
             top: screenHeight * 0.15,
             child: Image.asset(
-              'assets/images/items/SwordHand.png',
-              width: screenWidth * 0.2,
+              _weaponAssets[_equippedWeapon] ??
+                  'assets/images/items/SwordHand.png',
+              width: _equippedWeapon == 'Hand' || _equippedWeapon == 'Dagger'
+                  ? screenWidth *
+                        0.25 // Larger size for smaller weapons
+                  : screenWidth * 0.2, // Standard size for Sword
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
-                  width: screenWidth * 0.2,
+                  width:
+                      _equippedWeapon == 'Hand' || _equippedWeapon == 'Dagger'
+                      ? screenWidth *
+                            0.25 // Match larger size for smaller weapons
+                      : screenWidth * 0.2, // Standard size for Sword
                   height: screenHeight * 0.3,
                   decoration: BoxDecoration(
                     color: Colors.brown[300],
@@ -872,11 +904,25 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
   }
 
   Widget _buildGameGrid(double screenWidth, double screenHeight) {
-    double gridSize = screenWidth * 0.75;
-    return Container(
-      width: gridSize,
-      height: gridSize,
-      child: GameWidget<Match3Game>.controlled(gameFactory: () => game),
+    // Make the grid as large as possible horizontally, up to 90% of screen width, and only limit height if it would overflow
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        double gridWidth = screenWidth * 0.9;
+        double gridHeight = gridWidth;
+        // If grid would overflow vertically, shrink to fit
+        double maxAllowedHeight = constraints.maxHeight;
+        if (gridHeight > maxAllowedHeight) {
+          gridHeight = maxAllowedHeight;
+          gridWidth = gridHeight;
+        }
+        return Center(
+          child: SizedBox(
+            width: gridWidth,
+            height: gridHeight,
+            child: GameWidget<Match3Game>.controlled(gameFactory: () => game),
+          ),
+        );
+      },
     );
   }
 

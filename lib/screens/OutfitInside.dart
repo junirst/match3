@@ -12,6 +12,7 @@ class OutfitScreen extends StatefulWidget {
 class _OutfitScreenState extends State<OutfitScreen> {
   String _currentLanguage = 'English';
   int _coins = 9999;
+  String _equippedWeapon = 'Sword'; // Default equipped weapon
 
   final Map<String, Map<String, String>> _translations = {
     'English': {
@@ -23,6 +24,9 @@ class _OutfitScreenState extends State<OutfitScreen> {
       'refuse': 'REFUSE',
       'notEnoughCoins': 'Not enough coins!',
       'purchaseSuccess': 'Purchase successful!',
+      'equip': 'EQUIP',
+      'unequip': 'UNEQUIP',
+      'equipped': 'EQUIPPED',
     },
     'Spanish': {
       'weapons': 'ARMAS',
@@ -33,6 +37,9 @@ class _OutfitScreenState extends State<OutfitScreen> {
       'refuse': 'RECHAZAR',
       'notEnoughCoins': '¡No tienes suficientes monedas!',
       'purchaseSuccess': '¡Compra exitosa!',
+      'equip': 'EQUIPAR',
+      'unequip': 'DESEQUIPAR',
+      'equipped': 'EQUIPADO',
     },
     'Vietnamese': {
       'weapons': 'VŨ KHÍ',
@@ -43,6 +50,9 @@ class _OutfitScreenState extends State<OutfitScreen> {
       'refuse': 'TỪ CHỐI',
       'notEnoughCoins': 'Không đủ xu!',
       'purchaseSuccess': 'Mua thành công!',
+      'equip': 'TRANG BỊ',
+      'unequip': 'HỦY TRANG BỊ',
+      'equipped': 'ĐÃ TRANG BỊ',
     },
   };
 
@@ -50,7 +60,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
     {
       'name': 'Sword',
       'price': 100,
-      'owned': false,
+      'owned': true, // Default weapon is owned
       'image': 'assets/images/items/SwordHand.png',
     },
     {
@@ -78,6 +88,18 @@ class _OutfitScreenState extends State<OutfitScreen> {
     final language = prefs.getString('language') ?? 'English';
     setState(() {
       _currentLanguage = language;
+      _equippedWeapon = prefs.getString('equipped_weapon') ?? 'Sword';
+
+      // Load weapon ownership status
+      for (int i = 0; i < _items.length; i++) {
+        final weaponName = _items[i]['name'].toString().toLowerCase();
+        if (weaponName == 'sword') {
+          // Sword is always owned
+          _items[i]['owned'] = true;
+        } else {
+          _items[i]['owned'] = prefs.getBool('shop_item_$weaponName') ?? false;
+        }
+      }
     });
   }
 
@@ -230,6 +252,9 @@ class _OutfitScreenState extends State<OutfitScreen> {
         _items[itemIndex]['owned'] = true;
       });
 
+      // Save to SharedPreferences
+      _saveWeaponOwnership(item['name'], true);
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(_translate('purchaseSuccess')),
@@ -245,6 +270,32 @@ class _OutfitScreenState extends State<OutfitScreen> {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  Future<void> _saveWeaponOwnership(String weaponName, bool owned) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('shop_item_${weaponName.toLowerCase()}', owned);
+  }
+
+  Future<void> _equipWeapon(String weaponName) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('equipped_weapon', weaponName);
+    setState(() {
+      _equippedWeapon = weaponName;
+    });
+  }
+
+  void _onEquipPressed(int itemIndex) {
+    AudioManager().playButtonSound();
+    final weaponName = _items[itemIndex]['name'] as String;
+
+    if (_equippedWeapon == weaponName) {
+      // Unequip current weapon (revert to default Sword)
+      _equipWeapon('Sword');
+    } else {
+      // Equip selected weapon
+      _equipWeapon(weaponName);
     }
   }
 
@@ -531,26 +582,50 @@ class _OutfitScreenState extends State<OutfitScreen> {
               },
             ),
           )
-        else
-          Image.asset(
-            'assets/images/ui/confirm.png',
+        else if (_equippedWeapon == item['name'])
+          // Show "EQUIPPED" status for currently equipped weapon
+          Container(
             height: screenWidth * 0.16,
             width: screenWidth * 0.16,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                height: screenWidth * 0.16,
-                width: screenWidth * 0.16,
-                decoration: BoxDecoration(
-                  color: Colors.green,
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                child: Icon(
-                  Icons.check,
+            decoration: BoxDecoration(
+              color: Colors.orange,
+              borderRadius: BorderRadius.circular(25),
+              border: Border.all(color: Colors.white, width: 2),
+            ),
+            child: Center(
+              child: Text(
+                _translate('equipped'),
+                style: TextStyle(
                   color: Colors.white,
-                  size: screenWidth * 0.09,
+                  fontSize: screenWidth * 0.025,
+                  fontWeight: FontWeight.bold,
                 ),
-              );
-            },
+              ),
+            ),
+          )
+        else
+          // Show equip button for owned but not equipped weapons
+          GestureDetector(
+            onTap: () => _onEquipPressed(itemIndex),
+            child: Container(
+              height: screenWidth * 0.16,
+              width: screenWidth * 0.16,
+              decoration: BoxDecoration(
+                color: Colors.blue,
+                borderRadius: BorderRadius.circular(25),
+                border: Border.all(color: Colors.white, width: 2),
+              ),
+              child: Center(
+                child: Text(
+                  _translate('equip'),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: screenWidth * 0.03,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
           ),
       ],
     );

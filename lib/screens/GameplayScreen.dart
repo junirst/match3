@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
 import 'dart:math';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../managers/audio_manager.dart';
 import '../core/flame_match3_game.dart';
 
@@ -41,9 +42,20 @@ class _GameplayScreenState extends State<GameplayScreen> {
   bool isPlayerTurn = true;
   bool isProcessingTurn = false;
 
+  // Weapon system
+  String _equippedWeapon = 'Sword';
+  final Map<String, String> _weaponAssets = {
+    'Sword': 'assets/images/items/SwordHand.png',
+    'Dagger': 'assets/images/items/Dagger.png',
+    'Hand': 'assets/images/items/Hand.png',
+  };
+
   @override
   void initState() {
     super.initState();
+
+    // Load equipped weapon
+    _loadEquippedWeapon();
 
     // Set enemy health based on enemy type
     _initializeEnemyHealth();
@@ -59,6 +71,13 @@ class _GameplayScreenState extends State<GameplayScreen> {
     // Initialize game turn state
     game.setPlayerTurn(isPlayerTurn);
     game.setProcessingTurn(isProcessingTurn);
+  }
+
+  Future<void> _loadEquippedWeapon() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _equippedWeapon = prefs.getString('equipped_weapon') ?? 'Sword';
+    });
   }
 
   void _initializeEnemyHealth() {
@@ -824,17 +843,28 @@ class _GameplayScreenState extends State<GameplayScreen> {
             ),
           ),
 
-          // Sword hand image (positioned above all)
+          // Weapon image (positioned above all)
           Positioned(
-            right: screenWidth * 0.02,
+            right: _equippedWeapon == 'Hand' || _equippedWeapon == 'Dagger'
+                ? screenWidth *
+                      0.01 // Closer to edge for smaller weapons
+                : screenWidth * 0.02, // Standard position for Sword
             top: screenHeight * 0.15,
             child: Image.asset(
-              'assets/images/items/SwordHand.png',
-              width: screenWidth * 0.2,
+              _weaponAssets[_equippedWeapon] ??
+                  'assets/images/items/SwordHand.png',
+              width: _equippedWeapon == 'Hand' || _equippedWeapon == 'Dagger'
+                  ? screenWidth *
+                        0.25 // Larger size for smaller weapons
+                  : screenWidth * 0.2, // Standard size for Sword
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
-                  width: screenWidth * 0.2,
+                  width:
+                      _equippedWeapon == 'Hand' || _equippedWeapon == 'Dagger'
+                      ? screenWidth *
+                            0.25 // Match larger size for smaller weapons
+                      : screenWidth * 0.2, // Standard size for Sword
                   height: screenHeight * 0.3,
                   decoration: BoxDecoration(
                     color: Colors.brown[300],
