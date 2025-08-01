@@ -12,6 +12,7 @@ class PlayerProfileScreen extends StatefulWidget {
 
 class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
   double _backScale = 1.0;
+  double _logoutScale = 1.0;
   String _currentLanguage = LanguageManager.currentLanguage;
   String _playerName = 'PLAYER NAME';
   String _playerId = 'PL123456';
@@ -79,6 +80,20 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
     });
   }
 
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    // Reset first launch to show login popup again
+    await prefs.setBool('first_launch', true);
+
+    AudioManager().playButtonSound();
+
+    // Navigate back to opening screen and clear all previous routes
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      '/',
+          (Route<dynamic> route) => false,
+    );
+  }
+
   String _getLocalizedText(String englishText, String vietnameseText) {
     return _currentLanguage == 'Vietnamese' ? vietnameseText : englishText;
   }
@@ -109,6 +124,18 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
         _backScale = 1.0;
       });
       Navigator.pop(context);
+    });
+  }
+
+  void _onLogoutTap() {
+    setState(() {
+      _logoutScale = 1.1;
+    });
+    Future.delayed(Duration(milliseconds: 100), () {
+      setState(() {
+        _logoutScale = 1.0;
+      });
+      _logout();
     });
   }
 
@@ -233,11 +260,11 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
   }
 
   Widget _buildUpgradeRow(
-    String upgradeType,
-    String iconPath,
-    Color color,
-    double screenWidth,
-  ) {
+      String upgradeType,
+      String iconPath,
+      Color color,
+      double screenWidth,
+      ) {
     return Container(
       width: screenWidth * 0.85,
       padding: EdgeInsets.symmetric(
@@ -315,11 +342,11 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
   }
 
   Widget _buildItemRow(
-    String itemName,
-    String iconPath,
-    Color color,
-    double screenWidth,
-  ) {
+      String itemName,
+      String iconPath,
+      Color color,
+      double screenWidth,
+      ) {
     bool isOwned = shopItems[itemName] ?? false;
     return Container(
       width: screenWidth * 0.85,
@@ -559,6 +586,7 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
               ],
             ),
           ),
+          // Back Button
           Align(
             alignment: Alignment.bottomRight,
             child: Padding(
@@ -575,6 +603,58 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
                     'assets/images/ui/back_button.png',
                     width: screenWidth * 0.18,
                     height: screenHeight * 0.18,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: screenWidth * 0.18,
+                        height: screenHeight * 0.18,
+                        decoration: BoxDecoration(
+                          color: Colors.brown[600],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          Icons.arrow_back,
+                          color: Colors.white,
+                          size: screenWidth * 0.08,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Logout Button
+          Align(
+            alignment: Alignment.bottomLeft,
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: screenHeight * 0.03,
+                left: screenWidth * 0.02,
+              ),
+              child: GestureDetector(
+                onTap: _onLogoutTap,
+                child: AnimatedScale(
+                  scale: _logoutScale,
+                  duration: Duration(milliseconds: 100),
+                  child: Image.asset(
+                    'assets/images/ui/logout.png',
+                    width: screenWidth * 0.18,
+                    height: screenHeight * 0.18,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: screenWidth * 0.18,
+                        height: screenHeight * 0.18,
+                        decoration: BoxDecoration(
+                          color: Colors.red[600],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          Icons.logout,
+                          color: Colors.white,
+                          size: screenWidth * 0.08,
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
