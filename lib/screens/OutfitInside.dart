@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:provider/provider.dart';
 import '../managers/audio_manager.dart';
-import '../managers/game_manager.dart';
 
 class OutfitScreen extends StatefulWidget {
   const OutfitScreen({super.key});
@@ -13,6 +11,7 @@ class OutfitScreen extends StatefulWidget {
 
 class _OutfitScreenState extends State<OutfitScreen> {
   String _currentLanguage = 'English';
+  int _coins = 9999;
   String _equippedWeapon = 'Sword'; // Default equipped weapon
 
   final Map<String, Map<String, String>> _translations = {
@@ -243,18 +242,16 @@ class _OutfitScreenState extends State<OutfitScreen> {
     );
   }
 
-  void _confirmPurchase(int itemIndex) async {
+  void _confirmPurchase(int itemIndex) {
     AudioManager().playButtonSound();
     final item = _items[itemIndex];
     final price = item['price'] as int;
 
     Navigator.of(context).pop(); // Close dialog
 
-    final gameManager = context.read<GameManager>();
-    final success = await gameManager.spendCoins(price, 'Purchase ${item['name']}');
-    
-    if (success) {
+    if (_coins >= price) {
       setState(() {
+        _coins -= price;
         _items[itemIndex]['owned'] = true;
       });
 
@@ -385,7 +382,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
                 Row(
                   children: [
                     Text(
-                      '${context.watch<GameManager>().currentCoins}',
+                      '$_coins',
                       style: TextStyle(
                         fontSize: screenWidth * 0.06,
                         color: Colors.white,

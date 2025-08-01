@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:provider/provider.dart';
 import '../managers/language_manager.dart';
 import '../managers/audio_manager.dart';
-import '../managers/game_manager.dart';
 
 class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
@@ -19,13 +17,7 @@ class _ShopScreenState extends State<ShopScreen> {
     LanguageManager.initializeLanguage();
   }
 
-  Widget _buildShopButton(
-    BuildContext context,
-    String translationKey,
-    String route,
-    double screenWidth,
-    double screenHeight,
-  ) {
+  Widget _buildShopButton(BuildContext context, String translationKey, String route, double screenWidth, double screenHeight) {
     return GestureDetector(
       onTap: () {
         AudioManager().playButtonSound();
@@ -82,10 +74,7 @@ class _ShopScreenState extends State<ShopScreen> {
         children: [
           // Background image
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/backgrounds/backgroundshop.png',
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/images/backgrounds/backgroundshop.png', fit: BoxFit.cover),
           ),
 
           // Shop button (Top-left)
@@ -135,28 +124,20 @@ class _ShopScreenState extends State<ShopScreen> {
           Positioned(
             top: 40,
             right: 20,
-            child: Consumer<GameManager>(
-              builder: (context, gameManager, child) {
-                return Row(
-                  children: [
-                    Text(
-                      '${gameManager.currentCoins}',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        shadows: [Shadow(blurRadius: 2, color: Colors.black)],
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.monetization_on,
-                      color: Colors.amber,
-                      size: 22,
-                    ),
-                  ],
-                );
-              },
+            child: Row(
+              children: const [
+                Text(
+                  '9999',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    shadows: [Shadow(blurRadius: 2, color: Colors.black)],
+                  ),
+                ),
+                SizedBox(width: 4),
+                Icon(Icons.monetization_on, color: Colors.amber, size: 22),
+              ],
             ),
           ),
 
@@ -165,21 +146,9 @@ class _ShopScreenState extends State<ShopScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildShopButton(
-                  context,
-                  'weapons',
-                  '/outfit',
-                  screenWidth,
-                  screenHeight,
-                ),
+                _buildShopButton(context, 'weapons', '/outfit', screenWidth, screenHeight),
                 const SizedBox(height: 30),
-                _buildShopButton(
-                  context,
-                  'upgrade',
-                  '/upgrade',
-                  screenWidth,
-                  screenHeight,
-                ),
+                _buildShopButton(context, 'upgrade', '/upgrade', screenWidth, screenHeight),
               ],
             ),
           ),

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:provider/provider.dart';
 import '../managers/audio_manager.dart';
 import '../managers/language_manager.dart';
-import '../managers/game_manager.dart';
 
 class PlayerProfileScreen extends StatefulWidget {
   const PlayerProfileScreen({super.key});
@@ -20,6 +18,14 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
   String _playerId = 'PL123456';
   String _selectedGender = 'Male';
   int _towerRecord = 42;
+
+  // Upgrade levels from UpgradeInside
+  Map<String, int> upgradeLevels = {
+    'sword': 1,
+    'heart': 1,
+    'star': 1,
+    'shield': 1,
+  };
 
   // Shop items from OutfitInside
   Map<String, bool> shopItems = {
@@ -53,6 +59,12 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
       _selectedGender = prefs.getString('player_gender') ?? 'Male';
       _towerRecord = prefs.getInt('tower_record') ?? 42;
 
+      // Load upgrade levels
+      upgradeLevels['sword'] = prefs.getInt('upgrade_sword_level') ?? 1;
+      upgradeLevels['heart'] = prefs.getInt('upgrade_heart_level') ?? 1;
+      upgradeLevels['star'] = prefs.getInt('upgrade_star_level') ?? 1;
+      upgradeLevels['shield'] = prefs.getInt('upgrade_shield_level') ?? 1;
+
       // Load shop item ownership status
       shopItems['Sword'] = true; // Sword is always owned
       shopItems['Dagger'] = prefs.getBool('shop_item_dagger') ?? false;
@@ -69,10 +81,6 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
   }
 
   Future<void> _logout() async {
-    // Clear game data first
-    final gameManager = Provider.of<GameManager>(context, listen: false);
-    await gameManager.logout();
-    
     final prefs = await SharedPreferences.getInstance();
     // Reset first launch to show login popup again
     await prefs.setBool('first_launch', true);
@@ -313,7 +321,7 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
             ),
           ),
           Text(
-            'LVL ${gameManager.upgradeLevels[upgradeType]}',
+            'LVL ${upgradeLevels[upgradeType]}',
             style: TextStyle(
               fontFamily: 'Bungee',
               fontSize: screenWidth * 0.04,
@@ -424,9 +432,7 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
     final screenWidth = screenSize.width;
     final screenHeight = screenSize.height;
 
-    return Consumer<GameManager>(
-      builder: (context, gameManager, child) {
-        return Scaffold(
+    return Scaffold(
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -657,7 +663,5 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
         ],
       ),
     );
-      }, // Consumer builder closing bracket
-    ); // Consumer closing bracket
   }
 }

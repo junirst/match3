@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../managers/audio_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../managers/language_manager.dart';
-import '../managers/game_manager.dart';
 import 'dart:async';
 
 class OpeningScreen extends StatefulWidget {
@@ -19,6 +17,14 @@ class _OpeningScreenState extends State<OpeningScreen>
   late Animation<double> _buttonAnimation;
   String _currentLanguage = LanguageManager.currentLanguage;
   bool _showLoginPopup = false;
+  bool _showRegisterForm = false;
+  Timer? _bgmCheckTimer;
+
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   @override
   void initState() {
@@ -45,7 +51,7 @@ class _OpeningScreenState extends State<OpeningScreen>
       await AudioManager().init();
       await AudioManager().playBackgroundMusic();
       print('Audio initialized successfully in OpeningScreen');
-
+      
       // Remove external BGM checking since AudioManager now has internal monitoring
       // _bgmCheckTimer = Timer.periodic(Duration(seconds: 5), (timer) {
       //   AudioManager().ensureBgmPlaying();
@@ -57,7 +63,12 @@ class _OpeningScreenState extends State<OpeningScreen>
 
   @override
   void dispose() {
+    // _bgmCheckTimer?.cancel(); // No longer needed
     _buttonController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
+    _emailController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -90,15 +101,39 @@ class _OpeningScreenState extends State<OpeningScreen>
   }
 
   void _handleLogin() {
-    // Navigate to dedicated login screen for database authentication
-    AudioManager().playButtonSound();
-    Navigator.pushNamed(context, '/login');
+    // Handle login logic here
+    String username = _usernameController.text;
+    String password = _passwordController.text;
+
+    if (username.isNotEmpty && password.isNotEmpty) {
+      AudioManager().playButtonSound();
+      _setFirstLaunchComplete();
+      setState(() {
+        _showLoginPopup = false;
+      });
+      // You can add actual authentication logic here
+    }
   }
 
   void _handleRegister() {
-    // Navigate to dedicated login screen in register mode
-    AudioManager().playButtonSound();
-    Navigator.pushNamed(context, '/login');
+    // Handle registration logic here
+    String username = _usernameController.text;
+    String email = _emailController.text;
+    String password = _passwordController.text;
+    String confirmPassword = _confirmPasswordController.text;
+
+    if (username.isNotEmpty &&
+        email.isNotEmpty &&
+        password.isNotEmpty &&
+        password == confirmPassword) {
+      AudioManager().playButtonSound();
+      _setFirstLaunchComplete();
+      setState(() {
+        _showLoginPopup = false;
+        _showRegisterForm = false;
+      });
+      // You can add actual registration logic here
+    }
   }
 
   Widget _buildFramedButton(
@@ -177,7 +212,9 @@ class _OpeningScreenState extends State<OpeningScreen>
             children: [
               // Title
               Text(
-                _getLocalizedText('WELCOME', 'CHÀO MỪNG'),
+                _showRegisterForm
+                    ? _getLocalizedText('REGISTER', 'ĐĂNG KÝ')
+                    : _getLocalizedText('LOGIN', 'ĐĂNG NHẬP'),
                 style: TextStyle(
                   fontFamily: 'Bungee',
                   fontSize: screenWidth * 0.08,
@@ -195,20 +232,91 @@ class _OpeningScreenState extends State<OpeningScreen>
               SizedBox(height: 30),
 
               // Username field
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                child: Text(
-                  _getLocalizedText(
-                    'Login to save your progress and compete with friends!',
-                    'Đăng nhập để lưu tiến trình và thi đấu với bạn bè!',
+              TextField(
+                controller: _usernameController,
+                style: TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: _getLocalizedText('Username', 'Tên đăng nhập'),
+                  labelStyle: TextStyle(color: Colors.white70),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.brown[300]!),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: screenWidth * 0.04,
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
               ),
+
+              SizedBox(height: 15),
+
+              // Email field (only for register)
+              if (_showRegisterForm) ...[
+                TextField(
+                  controller: _emailController,
+                  style: TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: _getLocalizedText('Email', 'Email'),
+                    labelStyle: TextStyle(color: Colors.white70),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.brown[300]!),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 15),
+              ],
+
+              // Password field
+              TextField(
+                controller: _passwordController,
+                obscureText: true,
+                style: TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: _getLocalizedText('Password', 'Mật khẩu'),
+                  labelStyle: TextStyle(color: Colors.white70),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.brown[300]!),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 15),
+
+              // Confirm Password field (only for register)
+              if (_showRegisterForm) ...[
+                TextField(
+                  controller: _confirmPasswordController,
+                  obscureText: true,
+                  style: TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: _getLocalizedText(
+                      'Confirm Password',
+                      'Xác nhận mật khẩu',
+                    ),
+                    labelStyle: TextStyle(color: Colors.white70),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.brown[300]!),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 25),
+              ],
 
               SizedBox(height: 25),
 
@@ -216,18 +324,32 @@ class _OpeningScreenState extends State<OpeningScreen>
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  // Login button
+                  // Main action button (Login/Register)
                   _buildFramedButton(
-                    _getLocalizedText('LOGIN', 'ĐĂNG NHẬP'),
-                    _handleLogin,
+                    _showRegisterForm
+                        ? _getLocalizedText('REGISTER', 'ĐĂNG KÝ')
+                        : _getLocalizedText('LOGIN', 'ĐĂNG NHẬP'),
+                    _showRegisterForm ? _handleRegister : _handleLogin,
                     screenWidth * 0.3,
                     screenHeight * 0.08,
                   ),
 
-                  // Register button
+                  // Toggle button (Register/Back to Login)
                   _buildFramedButton(
-                    _getLocalizedText('REGISTER', 'ĐĂNG KÝ'),
-                    _handleRegister,
+                    _showRegisterForm
+                        ? _getLocalizedText('BACK', 'QUAY LẠI')
+                        : _getLocalizedText('REGISTER', 'ĐĂNG KÝ'),
+                    () {
+                      AudioManager().playButtonSound();
+                      setState(() {
+                        _showRegisterForm = !_showRegisterForm;
+                        // Clear form fields when switching
+                        _usernameController.clear();
+                        _passwordController.clear();
+                        _emailController.clear();
+                        _confirmPasswordController.clear();
+                      });
+                    },
                     screenWidth * 0.3,
                     screenHeight * 0.08,
                   ),
@@ -241,10 +363,6 @@ class _OpeningScreenState extends State<OpeningScreen>
                 _getLocalizedText('PLAY AS GUEST', 'CHƠI VỚI TƯ CÁCH KHÁCH'),
                 () {
                   AudioManager().playButtonSound();
-                  // Enable guest mode in GameManager
-                  final gameManager = Provider.of<GameManager>(context, listen: false);
-                  gameManager.enableGuestMode();
-                  
                   _setFirstLaunchComplete();
                   setState(() {
                     _showLoginPopup = false;

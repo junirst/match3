@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:provider/provider.dart';
 import '../managers/audio_manager.dart';
 import '../managers/language_manager.dart';
-import '../managers/game_manager.dart';
 
 class MainMenuScreen extends StatefulWidget {
   const MainMenuScreen({super.key});
@@ -18,6 +16,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   double _shopScale = 1.0;
   double _settingsScale = 1.0;
   double _playerScale = 1.0;
+  double _backScale = 1.0;
 
   String _currentLanguage = LanguageManager.currentLanguage;
 
@@ -59,6 +58,9 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
         case 'player':
           _playerScale = 1.1;
           break;
+        case 'back':
+          _backScale = 1.1;
+          break;
       }
     });
     Future.delayed(Duration(milliseconds: 100), () {
@@ -68,8 +70,11 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
         _shopScale = 1.0;
         _settingsScale = 1.0;
         _playerScale = 1.0;
+        _backScale = 1.0;
       });
-      if (buttonName == 'shop') {
+      if (buttonName == 'back') {
+        Navigator.pushNamed(context, '/');
+      } else if (buttonName == 'shop') {
         Navigator.pushNamed(context, '/shop');
       } else if (buttonName == 'settings') {
         Navigator.pushNamed(context, '/settings').then((_) {
@@ -139,14 +144,9 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     final screenHeight = screenSize.height;
 
     return Scaffold(
-      body: Consumer<GameManager>(
-        builder: (context, gameManager, child) {
-          final isGuest = gameManager.isGuestMode;
-          final playerName = isGuest ? 'GUEST' : (gameManager.currentPlayer?.playerName ?? 'PLAYER');
-          
-          return Stack(
-            fit: StackFit.expand,
-            children: [
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
           Container(
             color: Colors.grey[800],
             child: Image.asset(
@@ -171,9 +171,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               left: screenWidth * 0.05,
             ),
             child: Text(
-              isGuest 
-                ? _getLocalizedText('WELCOME, GUEST', 'CHÀO MỪNG, KHÁCH')
-                : _getLocalizedText('WELCOME BACK, $playerName', 'CHÀO MỪNG TRỞ LẠI, $playerName'),
+              _getLocalizedText('WELCOME BACK, PLAYER NAME', 'CHÀO MỪNG TRỞ LẠI, TÊN NGƯỜI CHƠI'),
               style: TextStyle(
                 fontFamily: 'DistilleryDisplay',
                 fontSize: screenWidth * 0.025,
@@ -189,7 +187,6 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               ),
             ),
           ),
-          
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -259,9 +256,28 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               ),
             ),
           ),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: screenHeight * 0.03,
+                right: screenWidth * 0.02,
+              ),
+              child: GestureDetector(
+                onTap: () => _onButtonTap('back', setState),
+                child: AnimatedScale(
+                  scale: _backScale,
+                  duration: Duration(milliseconds: 100),
+                  child: Image.asset(
+                    'assets/images/ui/back_button.png',
+                    width: screenWidth * 0.18,
+                    height: screenHeight * 0.18,
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
-      );
-        },
       ),
     );
   }
