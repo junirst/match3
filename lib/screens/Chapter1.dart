@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../managers/audio_manager.dart';
 import 'GameplayScreen.dart';
 import '../managers/language_manager.dart';
@@ -12,11 +13,37 @@ class Chapter1Screen extends StatefulWidget {
 
 class _Chapter1ScreenState extends State<Chapter1Screen> {
   double _backScale = 1.0;
+  Map<int, bool> _levelCompletionStatus = {
+    1: false,
+    2: false,
+    3: false,
+    4: false,
+    5: false,
+  };
 
   @override
   void initState() {
     super.initState();
     LanguageManager.initializeLanguage();
+    _loadLevelCompletionStatus();
+  }
+
+  Future<void> _loadLevelCompletionStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      for (int level = 1; level <= 5; level++) {
+        _levelCompletionStatus[level] =
+            prefs.getBool('chapter_1_level_${level}_completed') ?? false;
+      }
+    });
+  }
+
+  bool _isLevelUnlocked(int level) {
+    // Level 1 is always unlocked
+    if (level == 1) return true;
+
+    // Other levels require the previous level to be completed
+    return _levelCompletionStatus[level - 1] ?? false;
   }
 
   void _onButtonTap(String buttonName) {
@@ -43,6 +70,13 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
   }
 
   void _onLevelTap(int levelNumber) {
+    // Check if level is unlocked
+    if (!_isLevelUnlocked(levelNumber)) {
+      // Play sound but don't open level
+      AudioManager().playButtonSound();
+      return;
+    }
+
     // Play sound effect
     AudioManager().playButtonSound();
 
@@ -101,17 +135,19 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
 
                 // Play button - UPDATED TO NAVIGATE TO GAMEPLAYSCREEN
                 GestureDetector(
-                  onTap: () {
+                  onTap: () async {
                     AudioManager().playButtonSound();
                     Navigator.pop(context); // Close the dialog first
-                    // Navigate to GameplayScreen
-                    Navigator.push(
+                    // Navigate to GameplayScreen and wait for result
+                    await Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) =>
                             GameplayScreen(chapter: 1, level: levelNumber),
                       ),
                     );
+                    // Reload level completion status when returning
+                    _loadLevelCompletionStatus();
                   },
                   child: Image.asset(
                     'assets/images/ui/PlayButton.png',
@@ -251,11 +287,14 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
     double screenWidth,
     double screenHeight,
   ) {
+    final bool isUnlocked = _isLevelUnlocked(levelNumber);
+
     return GestureDetector(
       onTap: () => _onLevelTap(levelNumber),
       child: Stack(
         alignment: Alignment.center,
         children: [
+          // Background frame (always show)
           Image.asset(
             'assets/images/ui/roundframe.png',
             width: screenWidth * 0.15,
@@ -265,7 +304,7 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
                 width: screenWidth * 0.15,
                 height: screenWidth * 0.15,
                 decoration: BoxDecoration(
-                  color: Colors.orange[600],
+                  color: isUnlocked ? Colors.orange[600] : Colors.grey[600],
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.brown[800]!, width: 3),
                   boxShadow: [
@@ -279,21 +318,38 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
               );
             },
           ),
-          Text(
-            levelNumber.toString(),
-            style: TextStyle(
-              fontFamily: 'Bungee',
-              color: Colors.white,
-              fontSize: screenWidth * 0.06,
-              fontWeight: FontWeight.bold,
-              shadows: [
-                Shadow(offset: Offset(-1, -1), color: Colors.black),
-                Shadow(offset: Offset(1, -1), color: Colors.black),
-                Shadow(offset: Offset(-1, 1), color: Colors.black),
-                Shadow(offset: Offset(1, 1), color: Colors.black),
-              ],
+
+          // Show locked image if level is locked
+          if (!isUnlocked)
+            Image.asset(
+              'assets/images/ui/locked.png',
+              width: screenWidth * 0.10,
+              height: screenWidth * 0.10,
+              errorBuilder: (context, error, stackTrace) {
+                return Icon(
+                  Icons.lock,
+                  color: Colors.white,
+                  size: screenWidth * 0.08,
+                );
+              },
+            )
+          else
+            // Show level number if unlocked
+            Text(
+              levelNumber.toString(),
+              style: TextStyle(
+                fontFamily: 'Bungee',
+                color: Colors.white,
+                fontSize: screenWidth * 0.06,
+                fontWeight: FontWeight.bold,
+                shadows: [
+                  Shadow(offset: Offset(-1, -1), color: Colors.black),
+                  Shadow(offset: Offset(1, -1), color: Colors.black),
+                  Shadow(offset: Offset(-1, 1), color: Colors.black),
+                  Shadow(offset: Offset(1, 1), color: Colors.black),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );

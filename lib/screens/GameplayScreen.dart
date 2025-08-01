@@ -404,8 +404,10 @@ class _GameplayScreenState extends State<GameplayScreen> {
 
   void _onEnemyDefeated() {
     print('Enemy defeated!');
-    // TODO: Add victory logic, move to next level, etc.
     AudioManager().playButtonSound();
+
+    // Save level completion status
+    _saveLevelCompletion();
 
     // Show victory dialog or navigate to next level
     showDialog(
@@ -465,6 +467,13 @@ class _GameplayScreenState extends State<GameplayScreen> {
         );
       },
     );
+  }
+
+  Future<void> _saveLevelCompletion() async {
+    final prefs = await SharedPreferences.getInstance();
+    String key = 'chapter_${widget.chapter}_level_${widget.level}_completed';
+    await prefs.setBool(key, true);
+    print('Level completion saved: $key = true');
   }
 
   void _onPausePressed() {
