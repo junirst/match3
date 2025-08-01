@@ -36,10 +36,11 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
   static int excessHealth = 0;
   static int maxPowerPoints = 50;
   static int currentPowerPoints = 0;
+  static int shieldPoints = 0;
+  static const int shieldBlockThreshold = 10;
 
   // Damage and healing values
   static const int swordDamage = 10;
-  static const int heartHeal = 5;
   static const int starPowerGain = 5;
   static const int powerAttackDamage = 50;
 
@@ -54,6 +55,9 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
     'Dagger': 'assets/images/items/Dagger.png',
     'Hand': 'assets/images/items/Hand.png',
   };
+
+  // Weapon passive tracking
+  int _daggerHeartMatches = 0; // Track heart matches for dagger passive
 
   // Enemy types for randomization
   final List<Map<String, dynamic>> enemyTypes = [
@@ -91,6 +95,9 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
     _loadUpgrades();
     _initializeEnemy();
     _initializeGame();
+
+    // Reset weapon passive counters for new battle
+    _daggerHeartMatches = 0;
   }
 
   Future<void> _loadUpgrades() async {
@@ -167,21 +174,41 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
           }
           break;
         case 1: // Shield
-          game.hasShieldProtection = true;
-          print('Shield match: Protection activated for next enemy turn');
+          int effectiveShieldPoints =
+              UpgradeManager.instance.effectiveShieldPoints;
+          int gainedShieldPoints =
+              effectiveShieldPoints * (matchCount ~/ 3) +
+              effectiveShieldPoints; // Each shield tile contributes upgraded amount
+          shieldPoints += gainedShieldPoints;
+          print(
+            'Shield match! Gained $gainedShieldPoints shield points (upgraded from $matchCount to ${matchCount}x$effectiveShieldPoints). Shield: $shieldPoints/$shieldBlockThreshold',
+          );
           break;
         case 2: // Heart
           int effectiveHeartHeal = UpgradeManager.instance.effectiveHeartHeal;
           int healing = effectiveHeartHeal * (matchCount ~/ 3);
           if (matchCount > 3) healing += (matchCount - 3) * 2;
+
+          // Dagger passive: Track heart matches and provide bonus healing every 5 matches
+          int bonusHealing = 0;
+          if (_equippedWeapon == 'Dagger') {
+            _daggerHeartMatches++;
+            if (_daggerHeartMatches >= 5) {
+              bonusHealing = 10;
+              _daggerHeartMatches = 0; // Reset counter
+              print('Dagger passive triggered! Bonus +$bonusHealing HP');
+            }
+          }
+
+          int totalHealing = healing + bonusHealing;
           int missingHealth = maxPlayerHealth - currentPlayerHealth;
-          int actualHealing = healing.clamp(0, missingHealth);
-          int excess = healing - actualHealing;
+          int actualHealing = totalHealing.clamp(0, missingHealth);
+          int excess = totalHealing - actualHealing;
           currentPlayerHealth += actualHealing;
           excessHealth += excess;
           game.playerHealth = currentPlayerHealth; // Sync with game
           print(
-            'Heart match: $actualHealing HP (upgraded from $heartHeal to $effectiveHeartHeal) (+$excess excess), Player HP: $currentPlayerHealth/$maxPlayerHealth',
+            'Heart match: $actualHealing HP (base: $healing${bonusHealing > 0 ? ' + dagger bonus: $bonusHealing' : ''}) (+$excess excess), Player HP: $currentPlayerHealth/$maxPlayerHealth${_equippedWeapon == 'Dagger' ? ' [Dagger: $_daggerHeartMatches/5]' : ''}',
           );
           break;
         case 3: // Star
@@ -208,11 +235,14 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
     setState(() {
       // Use the scaling damage from Match3Game directly, no additional floor damage
       int finalDamage = damage;
-      if (game.hasShieldProtection) {
-        finalDamage = (finalDamage * 0.5).round();
-        game.hasShieldProtection = false;
-        print('Shield protection: Damage reduced to $finalDamage');
+
+      // Shield blocking system
+      if (shieldPoints >= shieldBlockThreshold) {
+        shieldPoints = 0; // Reset shield points after blocking
+        finalDamage = 0; // Block all damage
+        print('Shield blocked all damage! Shield points reset.');
       }
+
       if (excessHealth > 0) {
         int excessUsed = finalDamage.clamp(0, excessHealth);
         excessHealth -= excessUsed;
@@ -315,6 +345,7 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
                       // Reset player stats
                       currentPlayerHealth = maxPlayerHealth;
                       excessHealth = 0;
+                      shieldPoints = 0;
                       currentPowerPoints = 0;
                       currentFloor = 1;
                       _initializeEnemy();
@@ -391,7 +422,23 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
                     setState(() {
                       currentFloor++;
                       _initializeEnemy();
-                      _initializeGame();
+                      // Reset game state instead of creating new instance
+                      game.startNewBattle(); // Reset enemy damage scaling
+                      game.setPlayerTurn(true);
+                      game.setProcessingTurn(false);
+                      game.playerHealth = currentPlayerHealth;
+                      game.playerPower = currentPowerPoints;
+                      game.canUsePower = currentPowerPoints >= maxPowerPoints;
+                      // Sync enemy health
+                      game.enemyHealth = currentEnemyHealth;
+                      game.maxEnemyHealth = maxEnemyHealth;
+                      // Clear any selected tile
+                      if (game.selectedTile != null) {
+                        game.selectedTile!.setSelected(false);
+                        game.selectedTile = null;
+                      }
+                      // Reset weapon passive counters for new floor
+                      _daggerHeartMatches = 0;
                       isPlayerTurn = true;
                       isProcessingTurn = false;
                       print(
@@ -523,6 +570,7 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
                           // Reset player stats on exit
                           currentPlayerHealth = maxPlayerHealth;
                           excessHealth = 0;
+                          shieldPoints = 0;
                           currentPowerPoints = 0;
                           currentFloor = 1;
                           isProcessingTurn = false;
@@ -574,7 +622,13 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
     if (currentPowerPoints >= maxPowerPoints) {
       AudioManager().playButtonSound();
       setState(() {
-        currentEnemyHealth = (currentEnemyHealth - powerAttackDamage).clamp(
+        // Calculate power attack damage with Hand weapon passive
+        int actualPowerDamage = powerAttackDamage;
+        if (_equippedWeapon == 'Hand') {
+          actualPowerDamage = powerAttackDamage * 2; // Double damage for Hand
+        }
+
+        currentEnemyHealth = (currentEnemyHealth - actualPowerDamage).clamp(
           0,
           maxEnemyHealth,
         );
@@ -590,7 +644,7 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
         game.setPlayerTurn(false);
         game.setProcessingTurn(true);
         print(
-          'Power attack: $powerAttackDamage damage, Enemy HP: $currentEnemyHealth/$maxEnemyHealth',
+          'Power attack: $actualPowerDamage damage${_equippedWeapon == 'Hand' ? ' (Hand passive: double damage!)' : ''}, Enemy HP: $currentEnemyHealth/$maxEnemyHealth',
         );
       });
       if (currentEnemyHealth <= 0) {
@@ -972,6 +1026,24 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
                         '(+$excessHealth)',
                         style: TextStyle(
                           color: Colors.lightGreen,
+                          fontSize: screenWidth * 0.025,
+                          fontWeight: FontWeight.bold,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black,
+                              offset: Offset(1, 1),
+                              blurRadius: 2,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    if (shieldPoints > 0) ...[
+                      SizedBox(width: screenWidth * 0.01),
+                      Text(
+                        '🛡️$shieldPoints',
+                        style: TextStyle(
+                          color: Colors.cyan,
                           fontSize: screenWidth * 0.025,
                           fontWeight: FontWeight.bold,
                           shadows: [

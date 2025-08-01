@@ -62,18 +62,21 @@ class _OutfitScreenState extends State<OutfitScreen> {
       'price': 100,
       'owned': true, // Default weapon is owned
       'image': 'assets/images/items/SwordHand.png',
+      'description': 'Standard weapon with no special effects',
     },
     {
       'name': 'Dagger',
       'price': 150,
       'owned': false,
       'image': 'assets/images/items/Dagger.png',
+      'description': 'Passive: Gain +10 HP every 5 heart matches',
     },
     {
       'name': 'Hand',
       'price': 200,
       'owned': false,
       'image': 'assets/images/items/Hand.png',
+      'description': 'Passive: Power attacks deal double damage',
     },
   ];
 
@@ -627,6 +630,24 @@ class _OutfitScreenState extends State<OutfitScreen> {
               ),
             ),
           ),
+        const SizedBox(height: 8),
+        // Weapon description
+        Container(
+          width: screenWidth * 0.3,
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.white.withOpacity(0.3)),
+          ),
+          child: Text(
+            item['description'] ?? '',
+            style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.02),
+            textAlign: TextAlign.center,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
       ],
     );
   }

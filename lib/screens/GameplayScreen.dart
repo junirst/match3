@@ -40,7 +40,6 @@ class _GameplayScreenState extends State<GameplayScreen> {
 
   // Damage values for different tile types
   static const int swordDamage = 10;
-  static const int heartHeal = 5;
 
   // Turn-based system
   bool isPlayerTurn = true;
@@ -57,6 +56,9 @@ class _GameplayScreenState extends State<GameplayScreen> {
     'Hand': 'assets/images/items/Hand.png',
   };
 
+  // Weapon passive tracking
+  int _daggerHeartMatches = 0; // Track heart matches for dagger passive
+
   @override
   void initState() {
     super.initState();
@@ -67,6 +69,9 @@ class _GameplayScreenState extends State<GameplayScreen> {
 
     // Reset shield points for new battle
     shieldPoints = 0;
+
+    // Reset weapon passive counters for new battle
+    _daggerHeartMatches = 0;
 
     // Load equipped weapon and upgrades
     _loadEquippedWeapon();
@@ -179,16 +184,28 @@ class _GameplayScreenState extends State<GameplayScreen> {
             healing += (matchCount - 3) * 2;
           }
 
+          // Dagger passive: Track heart matches and provide bonus healing every 5 matches
+          int bonusHealing = 0;
+          if (_equippedWeapon == 'Dagger') {
+            _daggerHeartMatches++;
+            if (_daggerHeartMatches >= 5) {
+              bonusHealing = 10;
+              _daggerHeartMatches = 0; // Reset counter
+              print('Dagger passive triggered! Bonus +$bonusHealing HP');
+            }
+          }
+
           // Calculate actual healing and excess
+          int totalHealing = healing + bonusHealing;
           int missingHealth = maxPlayerHealth - currentPlayerHealth;
-          int actualHealing = healing.clamp(0, missingHealth);
-          int excess = healing - actualHealing;
+          int actualHealing = totalHealing.clamp(0, missingHealth);
+          int excess = totalHealing - actualHealing;
 
           currentPlayerHealth += actualHealing;
           excessHealth += excess;
 
           print(
-            'Heart match! Healed $actualHealing HP (upgraded from $heartHeal to $effectiveHeartHeal base healing) (${excess > 0 ? '+$excess excess' : 'no excess'}). Player health: $currentPlayerHealth/$maxPlayerHealth${excessHealth > 0 ? ' (+$excessHealth)' : ''}',
+            'Heart match! Healed $actualHealing HP (base: $healing${bonusHealing > 0 ? ' + dagger bonus: $bonusHealing' : ''}) (${excess > 0 ? '+$excess excess' : 'no excess'}). Player health: $currentPlayerHealth/$maxPlayerHealth${excessHealth > 0 ? ' (+$excessHealth)' : ''}${_equippedWeapon == 'Dagger' ? ' [Dagger: $_daggerHeartMatches/5]' : ''}',
           );
           break;
         case 3: // Star - adds power points
@@ -404,8 +421,14 @@ class _GameplayScreenState extends State<GameplayScreen> {
       AudioManager().playButtonSound();
 
       setState(() {
+        // Calculate power attack damage with Hand weapon passive
+        int actualPowerDamage = powerAttackDamage;
+        if (_equippedWeapon == 'Hand') {
+          actualPowerDamage = powerAttackDamage * 2; // Double damage for Hand
+        }
+
         // Deal power attack damage
-        currentEnemyHealth = (currentEnemyHealth - powerAttackDamage).clamp(
+        currentEnemyHealth = (currentEnemyHealth - actualPowerDamage).clamp(
           0,
           maxEnemyHealth,
         );
@@ -414,7 +437,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
         currentPowerPoints = 0;
 
         print(
-          'Power attack! Dealt $powerAttackDamage damage. Enemy health: $currentEnemyHealth/$maxEnemyHealth',
+          'Power attack! Dealt $actualPowerDamage damage${_equippedWeapon == 'Hand' ? ' (Hand passive: double damage!)' : ''}. Enemy health: $currentEnemyHealth/$maxEnemyHealth',
         );
 
         // Check if enemy is defeated
