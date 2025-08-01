@@ -374,6 +374,12 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
   }
 
   Widget _buildUpgradeRow(
+      BuildContext context,
+      String upgradeType,
+      String levelText,
+      Color color,
+      double screenWidth,
+      ) {
     BuildContext context,
     String upgradeType,
     String levelText,
@@ -397,53 +403,38 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Upgrade Icon with Level Text Below
+          // Upgrade Icon without Level Text
           Expanded(
             flex: 2,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Icon Container
-                Container(
-                  width: screenWidth * 0.18,
-                  height: screenWidth * 0.18,
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(screenWidth * 0.09),
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.all(screenWidth * 0.025),
-                    child: Image.asset(
-                      upgradeType == 'sword'
-                          ? 'assets/images/items/sword.png'
-                          : upgradeType == 'heart'
-                          ? 'assets/images/items/heart.png'
-                          : upgradeType == 'star'
-                          ? 'assets/images/items/star.png'
-                          : 'assets/images/items/shield.png',
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Icon(
-                          Icons.inventory,
-                          color: Colors.white,
-                          size: screenWidth * 0.08,
-                        );
-                      },
-                    ),
+            child: Center(
+              child: Container(
+                width: screenWidth * 0.18,
+                height: screenWidth * 0.18,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(screenWidth * 0.09),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(screenWidth * 0.025),
+                  child: Image.asset(
+                    upgradeType == 'sword'
+                        ? 'assets/images/items/sword.png'
+                        : upgradeType == 'heart'
+                        ? 'assets/images/items/heart.png'
+                        : upgradeType == 'star'
+                        ? 'assets/images/items/star.png'
+                        : 'assets/images/items/shield.png',
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(
+                        Icons.inventory,
+                        color: Colors.white,
+                        size: screenWidth * 0.08,
+                      );
+                    },
                   ),
                 ),
-                SizedBox(height: screenWidth * 0.015),
-                // Level Text Below Icon
-                Text(
-                  levelText,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: screenWidth * 0.035,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Bungee',
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
 
@@ -543,10 +534,24 @@ class _UpgradeQuantityDialogState extends State<_UpgradeQuantityDialog> {
   int _calculateTotalCost(int quantity) {
     int totalCost = 0;
     for (int i = 0; i < quantity; i++) {
-      // Each level costs more than the previous (basePrice * level)
       totalCost += widget.basePrice * (widget.currentLevel + i);
     }
     return totalCost;
+  }
+
+  String _getUpgradeTypeName() {
+    switch (widget.upgradeType) {
+      case 'sword':
+        return LanguageManager.getText('sword_upgrade');
+      case 'heart':
+        return LanguageManager.getText('heart_upgrade');
+      case 'star':
+        return LanguageManager.getText('star_upgrade');
+      case 'shield':
+        return LanguageManager.getText('shield_upgrade');
+      default:
+        return widget.upgradeType.toUpperCase();
+    }
   }
 
   @override
@@ -567,7 +572,7 @@ class _UpgradeQuantityDialogState extends State<_UpgradeQuantityDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Upgrade ${widget.upgradeType.toUpperCase()}',
+              '${LanguageManager.getText('upgrade')} ${_getUpgradeTypeName()}',
               style: const TextStyle(
                 fontFamily: 'Bungee',
                 fontSize: 24,
@@ -583,12 +588,12 @@ class _UpgradeQuantityDialogState extends State<_UpgradeQuantityDialog> {
             ),
             const SizedBox(height: 20),
             Text(
-              'Current Level: ${widget.currentLevel}',
+              '${LanguageManager.getText('current_level')}: ${widget.currentLevel}',
               style: const TextStyle(fontSize: 18, color: Colors.white),
             ),
             const SizedBox(height: 10),
             Text(
-              'Select upgrade quantity:',
+              LanguageManager.getText('select_upgrade_quantity'),
               style: const TextStyle(fontSize: 16, color: Colors.white),
             ),
             const SizedBox(height: 20),
@@ -643,7 +648,7 @@ class _UpgradeQuantityDialogState extends State<_UpgradeQuantityDialog> {
 
             const SizedBox(height: 20),
             Text(
-              'New Level: ${widget.currentLevel + _selectedQuantity}',
+              '${LanguageManager.getText('new_level')}: ${widget.currentLevel + _selectedQuantity}',
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.green,
@@ -651,12 +656,12 @@ class _UpgradeQuantityDialogState extends State<_UpgradeQuantityDialog> {
               ),
             ),
             Text(
-              'Bonus: +$_selectedQuantity to tile value',
+              '${LanguageManager.getText('bonus')}: +$_selectedQuantity ${LanguageManager.getText('to_tile_value')}',
               style: const TextStyle(fontSize: 14, color: Colors.yellow),
             ),
             const SizedBox(height: 20),
             Text(
-              'Total Cost: $totalCost coins',
+              '${LanguageManager.getText('total_cost')}: $totalCost ${LanguageManager.getText('coins')}',
               style: TextStyle(
                 fontSize: 18,
                 color: canAfford ? Colors.white : Colors.red,
@@ -670,10 +675,10 @@ class _UpgradeQuantityDialogState extends State<_UpgradeQuantityDialog> {
                 GestureDetector(
                   onTap: canAfford
                       ? () => widget.onConfirm(
-                          widget.upgradeType,
-                          _selectedQuantity,
-                          totalCost,
-                        )
+                    widget.upgradeType,
+                    _selectedQuantity,
+                    totalCost,
+                  )
                       : null,
                   child: Opacity(
                     opacity: canAfford ? 1.0 : 0.5,
@@ -689,10 +694,10 @@ class _UpgradeQuantityDialogState extends State<_UpgradeQuantityDialog> {
                             color: canAfford ? Colors.green : Colors.grey,
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Center(
+                          child: Center(
                             child: Text(
-                              'CONFIRM',
-                              style: TextStyle(
+                              LanguageManager.getText('confirm'),
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -717,10 +722,10 @@ class _UpgradeQuantityDialogState extends State<_UpgradeQuantityDialog> {
                           color: Colors.red,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Center(
+                        child: Center(
                           child: Text(
-                            'CANCEL',
-                            style: TextStyle(
+                            LanguageManager.getText('cancel'),
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                             ),
