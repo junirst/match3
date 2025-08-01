@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../managers/audio_manager.dart';
+import '../managers/upgrade_manager.dart';
 import '../core/flame_match3_game.dart';
 
 class GameplayScreen extends StatefulWidget {
@@ -67,8 +68,9 @@ class _GameplayScreenState extends State<GameplayScreen> {
     // Reset shield points for new battle
     shieldPoints = 0;
 
-    // Load equipped weapon
+    // Load equipped weapon and upgrades
     _loadEquippedWeapon();
+    _loadUpgrades();
 
     // Set enemy health based on enemy type
     _initializeEnemyHealth();
@@ -84,6 +86,10 @@ class _GameplayScreenState extends State<GameplayScreen> {
     // Initialize game turn state
     game.setPlayerTurn(isPlayerTurn);
     game.setProcessingTurn(isProcessingTurn);
+  }
+
+  Future<void> _loadUpgrades() async {
+    await UpgradeManager.instance.loadUpgrades();
   }
 
   Future<void> _loadEquippedWeapon() async {
@@ -125,8 +131,11 @@ class _GameplayScreenState extends State<GameplayScreen> {
     setState(() {
       switch (tileType) {
         case 0: // Sword - deals damage
+          int effectiveSwordDamage =
+              UpgradeManager.instance.effectiveSwordDamage;
           int damage =
-              swordDamage * (matchCount ~/ 3); // Base damage per set of 3
+              effectiveSwordDamage *
+              (matchCount ~/ 3); // Base damage per set of 3
           if (matchCount > 3) {
             // Bonus damage for longer matches
             damage += (matchCount - 3) * 2;
@@ -136,7 +145,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
             maxEnemyHealth,
           );
           print(
-            'Sword match! Dealt $damage damage. Enemy health: $currentEnemyHealth/$maxEnemyHealth',
+            'Sword match! Dealt $damage damage (upgraded from $swordDamage to $effectiveSwordDamage). Enemy health: $currentEnemyHealth/$maxEnemyHealth',
           );
 
           // Check if enemy is defeated immediately (don't wait for turn end)
@@ -150,14 +159,21 @@ class _GameplayScreenState extends State<GameplayScreen> {
           }
           break;
         case 1: // Shield - stores shield points
-          shieldPoints += matchCount; // Each shield tile contributes 1 point
+          int effectiveShieldPoints =
+              UpgradeManager.instance.effectiveShieldPoints;
+          int gainedShieldPoints =
+              matchCount *
+              effectiveShieldPoints; // Each shield tile contributes upgraded amount
+          shieldPoints += gainedShieldPoints;
           print(
-            'Shield match! Gained $matchCount shield points. Shield: $shieldPoints/$shieldBlockThreshold',
+            'Shield match! Gained $gainedShieldPoints shield points (upgraded from $matchCount to ${matchCount}x$effectiveShieldPoints). Shield: $shieldPoints/$shieldBlockThreshold',
           );
           break;
         case 2: // Heart - heals player
+          int effectiveHeartHeal = UpgradeManager.instance.effectiveHeartHeal;
           int healing =
-              heartHeal * (matchCount ~/ 3); // Base healing per set of 3
+              effectiveHeartHeal *
+              (matchCount ~/ 3); // Base healing per set of 3
           if (matchCount > 3) {
             // Bonus healing for longer matches
             healing += (matchCount - 3) * 2;
@@ -172,12 +188,15 @@ class _GameplayScreenState extends State<GameplayScreen> {
           excessHealth += excess;
 
           print(
-            'Heart match! Healed $actualHealing HP (${excess > 0 ? '+$excess excess' : 'no excess'}). Player health: $currentPlayerHealth/$maxPlayerHealth${excessHealth > 0 ? ' (+$excessHealth)' : ''}',
+            'Heart match! Healed $actualHealing HP (upgraded from $heartHeal to $effectiveHeartHeal base healing) (${excess > 0 ? '+$excess excess' : 'no excess'}). Player health: $currentPlayerHealth/$maxPlayerHealth${excessHealth > 0 ? ' (+$excessHealth)' : ''}',
           );
           break;
         case 3: // Star - adds power points
+          int effectiveStarPowerGain =
+              UpgradeManager.instance.effectiveStarPowerGain;
           int powerGain =
-              starPowerGain * (matchCount ~/ 3); // Base power per set of 3
+              effectiveStarPowerGain *
+              (matchCount ~/ 3); // Base power per set of 3
           if (matchCount > 3) {
             // Bonus power for longer matches
             powerGain += (matchCount - 3) * 2;
@@ -187,7 +206,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
             maxPowerPoints,
           );
           print(
-            'Star match! Gained $powerGain power. Power: $currentPowerPoints/$maxPowerPoints',
+            'Star match! Gained $powerGain power (upgraded from $starPowerGain to $effectiveStarPowerGain). Power: $currentPowerPoints/$maxPowerPoints',
           );
           break;
       }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../managers/language_manager.dart';
 import '../managers/audio_manager.dart';
+import '../managers/upgrade_manager.dart';
 
 class UpgradeScreen extends StatefulWidget {
   const UpgradeScreen({super.key});
@@ -13,20 +14,12 @@ class UpgradeScreen extends StatefulWidget {
 class _UpgradeScreenState extends State<UpgradeScreen> {
   int _coins = 9999;
 
-  // Track upgrade levels (initially set to 1)
+  // Track upgrade levels (initially set to 1, max 5 = 4 upgrades)
   Map<String, int> upgradeLevels = {
     'sword': 1,
     'heart': 1,
     'star': 1,
     'shield': 1,
-  };
-
-  // Track progress for each upgrade (0-4 steps)
-  Map<String, int> upgradeProgress = {
-    'sword': 0,
-    'heart': 0,
-    'star': 0,
-    'shield': 0,
   };
 
   // Upgrade prices
@@ -37,20 +30,45 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
     'shield': 180,
   };
 
-  // Maximum level for upgrades
-  static const int maxLevel = 4;
+  // Maximum level for upgrades (level 5 = +4 bonus)
+  static const int maxUpgradeLevel = 5;
 
   @override
   void initState() {
     super.initState();
     LanguageManager.initializeLanguage();
+    _loadUpgradeData();
   }
 
-  void _showPurchaseDialog(String upgradeType) {
-    final price = upgradePrices[upgradeType]!;
+  Future<void> _loadUpgradeData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      // Load coins
+      _coins = prefs.getInt('coins') ?? 9999;
+
+      // Load upgrade levels (default to 1)
+      upgradeLevels['sword'] = prefs.getInt('upgrade_sword') ?? 1;
+      upgradeLevels['heart'] = prefs.getInt('upgrade_heart') ?? 1;
+      upgradeLevels['star'] = prefs.getInt('upgrade_star') ?? 1;
+      upgradeLevels['shield'] = prefs.getInt('upgrade_shield') ?? 1;
+    });
+  }
+
+  Future<void> _saveUpgradeData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('coins', _coins);
+    await prefs.setInt('upgrade_sword', upgradeLevels['sword']!);
+    await prefs.setInt('upgrade_heart', upgradeLevels['heart']!);
+    await prefs.setInt('upgrade_star', upgradeLevels['star']!);
+    await prefs.setInt('upgrade_shield', upgradeLevels['shield']!);
+  }
+
+  void _showUpgradeDialog(String upgradeType) {
+    final currentLevel = upgradeLevels[upgradeType]!;
+    final maxPossibleLevel = maxUpgradeLevel;
 
     // Check if already at max level
-    if (upgradeProgress[upgradeType]! >= maxLevel && upgradeLevels[upgradeType]! >= 10) {
+    if (currentLevel >= maxPossibleLevel) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(LanguageManager.getText('maxLevel')),
@@ -61,141 +79,47 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
       return;
     }
 
+    // Calculate how many levels can be upgraded
+    final maxUpgradeSteps = maxPossibleLevel - currentLevel;
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.9),
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: Colors.white, width: 2),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  LanguageManager.getText('confirmPurchase'),
-                  style: const TextStyle(
-                    fontFamily: 'Bungee',
-                    fontSize: 24,
-                    color: Colors.white,
-                    shadows: [
-                      Shadow(
-                        blurRadius: 2,
-                        color: Colors.black,
-                        offset: Offset(1, 1),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  '${LanguageManager.getText('purchaseFor')} $price ${LanguageManager.getText('coins')}',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    color: Colors.white,
-                    shadows: [
-                      Shadow(
-                        blurRadius: 2,
-                        color: Colors.black,
-                        offset: Offset(1, 1),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 30),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    GestureDetector(
-                      onTap: () => _confirmPurchase(upgradeType),
-                      child: Image.asset(
-                        'assets/images/ui/confirm.png',
-                        height: 60,
-                        width: 100,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            height: 60,
-                            width: 100,
-                            decoration: BoxDecoration(
-                              color: Colors.green,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Center(
-                              child: Text(
-                                LanguageManager.getText('confirm'),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
-                      child: Image.asset(
-                        'assets/images/ui/refuse.png',
-                        height: 60,
-                        width: 100,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            height: 60,
-                            width: 100,
-                            decoration: BoxDecoration(
-                              color: Colors.red,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Center(
-                              child: Text(
-                                LanguageManager.getText('refuse'),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+        return _UpgradeQuantityDialog(
+          upgradeType: upgradeType,
+          currentLevel: currentLevel,
+          maxUpgradeSteps: maxUpgradeSteps,
+          basePrice: upgradePrices[upgradeType]!,
+          coins: _coins,
+          onConfirm: _confirmUpgrade,
         );
       },
     );
   }
 
-  void _confirmPurchase(String upgradeType) {
+  void _confirmUpgrade(String upgradeType, int quantity, int totalCost) {
     AudioManager().playButtonSound();
-    final price = upgradePrices[upgradeType]!;
-
     Navigator.of(context).pop(); // Close dialog
 
-    if (_coins >= price) {
+    if (_coins >= totalCost) {
       setState(() {
-        _coins -= price;
-        if (upgradeProgress[upgradeType]! < maxLevel && upgradeLevels[upgradeType]! < 10) {
-          upgradeProgress[upgradeType] = (upgradeProgress[upgradeType]! + 1);
-          if (upgradeProgress[upgradeType] == maxLevel) {
-            upgradeLevels[upgradeType] = (upgradeLevels[upgradeType]! + 1);
-            upgradeProgress[upgradeType] = 0; // Reset progress after reaching max level
-          }
-        }
+        _coins -= totalCost;
+        upgradeLevels[upgradeType] = upgradeLevels[upgradeType]! + quantity;
       });
+
+      // Sync with UpgradeManager
+      UpgradeManager.instance.updateUpgradeLevel(
+        upgradeType,
+        upgradeLevels[upgradeType]!,
+      );
+      _saveUpgradeData(); // Save upgrade data
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(LanguageManager.getText('purchaseSuccess')),
+          content: Text(
+            '${LanguageManager.getText('purchaseSuccess')} - Upgraded $quantity levels!',
+          ),
           duration: const Duration(seconds: 2),
           backgroundColor: Colors.green,
         ),
@@ -213,49 +137,64 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
 
   void _purchaseUpgrade(String upgradeType) {
     AudioManager().playButtonSound();
-    _showPurchaseDialog(upgradeType);
+    _showUpgradeDialog(upgradeType);
   }
 
-  Widget _buildProgressBar(int progress, double screenWidth) {
-    double dotSize = screenWidth * 0.06;
+  Widget _buildLevelIndicator(int currentLevel, double screenWidth) {
     return Row(
       mainAxisSize: MainAxisSize.min,
-      children: List.generate(4, (index) {
-        return Padding(
-          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.008),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            width: dotSize,
-            height: dotSize,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: index < progress
-                  ? Colors.greenAccent.withOpacity(0.9)
-                  : Colors.grey[700]!.withOpacity(0.5),
-              border: Border.all(
-                color: index < progress ? Colors.green : Colors.grey[400]!,
-                width: 2.0,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: index < progress
-                      ? Colors.green.withOpacity(0.4)
-                      : Colors.black.withOpacity(0.2),
-                  blurRadius: 3,
-                  spreadRadius: 1.0,
-                ),
-              ],
+      children: [
+        Text(
+          'Level $currentLevel',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: screenWidth * 0.035,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Bungee',
+          ),
+        ),
+        SizedBox(width: screenWidth * 0.02),
+        if (currentLevel < maxUpgradeLevel)
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: screenWidth * 0.02,
+              vertical: screenWidth * 0.005,
             ),
-            child: Center(
-              child: Icon(
-                index < progress ? Icons.circle : Icons.circle_outlined,
-                size: dotSize * 0.6,
-                color: index < progress ? Colors.white : Colors.grey[300],
+            decoration: BoxDecoration(
+              color: Colors.green.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.green, width: 1),
+            ),
+            child: Text(
+              '+${currentLevel - 1}',
+              style: TextStyle(
+                color: Colors.green,
+                fontSize: screenWidth * 0.025,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          )
+        else
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: screenWidth * 0.02,
+              vertical: screenWidth * 0.005,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.orange, width: 1),
+            ),
+            child: Text(
+              'MAX',
+              style: TextStyle(
+                color: Colors.orange,
+                fontSize: screenWidth * 0.025,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),
-        );
-      }),
+      ],
     );
   }
 
@@ -451,12 +390,12 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
   }
 
   Widget _buildUpgradeRow(
-      BuildContext context,
-      String upgradeType,
-      String levelText,
-      Color color,
-      double screenWidth,
-      ) {
+    BuildContext context,
+    String upgradeType,
+    String levelText,
+    Color color,
+    double screenWidth,
+  ) {
     return Container(
       width: double.infinity,
       height: screenWidth * 0.3,
@@ -523,12 +462,12 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
             ),
           ),
 
-          // Progress Bar
+          // Level Indicator
           Expanded(
             flex: 3,
             child: Center(
-              child: _buildProgressBar(
-                upgradeProgress[upgradeType]!,
+              child: _buildLevelIndicator(
+                upgradeLevels[upgradeType]!,
                 screenWidth,
               ),
             ),
@@ -590,6 +529,229 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _UpgradeQuantityDialog extends StatefulWidget {
+  final String upgradeType;
+  final int currentLevel;
+  final int maxUpgradeSteps;
+  final int basePrice;
+  final int coins;
+  final Function(String, int, int) onConfirm;
+
+  const _UpgradeQuantityDialog({
+    required this.upgradeType,
+    required this.currentLevel,
+    required this.maxUpgradeSteps,
+    required this.basePrice,
+    required this.coins,
+    required this.onConfirm,
+  });
+
+  @override
+  _UpgradeQuantityDialogState createState() => _UpgradeQuantityDialogState();
+}
+
+class _UpgradeQuantityDialogState extends State<_UpgradeQuantityDialog> {
+  int _selectedQuantity = 1;
+
+  int _calculateTotalCost(int quantity) {
+    int totalCost = 0;
+    for (int i = 0; i < quantity; i++) {
+      // Each level costs more than the previous (basePrice * level)
+      totalCost += widget.basePrice * (widget.currentLevel + i);
+    }
+    return totalCost;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final totalCost = _calculateTotalCost(_selectedQuantity);
+    final canAfford = widget.coins >= totalCost;
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: Colors.white, width: 2),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Upgrade ${widget.upgradeType.toUpperCase()}',
+              style: const TextStyle(
+                fontFamily: 'Bungee',
+                fontSize: 24,
+                color: Colors.white,
+                shadows: [
+                  Shadow(
+                    blurRadius: 2,
+                    color: Colors.black,
+                    offset: Offset(1, 1),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Current Level: ${widget.currentLevel}',
+              style: const TextStyle(fontSize: 18, color: Colors.white),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Select upgrade quantity:',
+              style: const TextStyle(fontSize: 16, color: Colors.white),
+            ),
+            const SizedBox(height: 20),
+
+            // Quantity Selector
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  onPressed: _selectedQuantity > 1
+                      ? () => setState(() => _selectedQuantity--)
+                      : null,
+                  icon: Icon(
+                    Icons.remove_circle,
+                    color: _selectedQuantity > 1 ? Colors.white : Colors.grey,
+                    size: 30,
+                  ),
+                ),
+                Container(
+                  width: 60,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.white, width: 1),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '$_selectedQuantity',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: _selectedQuantity < widget.maxUpgradeSteps
+                      ? () => setState(() => _selectedQuantity++)
+                      : null,
+                  icon: Icon(
+                    Icons.add_circle,
+                    color: _selectedQuantity < widget.maxUpgradeSteps
+                        ? Colors.white
+                        : Colors.grey,
+                    size: 30,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+            Text(
+              'New Level: ${widget.currentLevel + _selectedQuantity}',
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.green,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              'Bonus: +$_selectedQuantity to tile value',
+              style: const TextStyle(fontSize: 14, color: Colors.yellow),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Total Cost: $totalCost coins',
+              style: TextStyle(
+                fontSize: 18,
+                color: canAfford ? Colors.white : Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 30),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                GestureDetector(
+                  onTap: canAfford
+                      ? () => widget.onConfirm(
+                          widget.upgradeType,
+                          _selectedQuantity,
+                          totalCost,
+                        )
+                      : null,
+                  child: Opacity(
+                    opacity: canAfford ? 1.0 : 0.5,
+                    child: Image.asset(
+                      'assets/images/ui/confirm.png',
+                      height: 60,
+                      width: 100,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 60,
+                          width: 100,
+                          decoration: BoxDecoration(
+                            color: canAfford ? Colors.green : Colors.grey,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              'CONFIRM',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Image.asset(
+                    'assets/images/ui/refuse.png',
+                    height: 60,
+                    width: 100,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 60,
+                        width: 100,
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'CANCEL',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

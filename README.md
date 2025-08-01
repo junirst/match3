@@ -20,19 +20,39 @@
 ## Tile Types and Their Effects
 - There are four tile types:
   - **Sword** (tileType 0):
-    - Plays a sword attack sound.
-    - Notifies the game logic for a sword match (actual damage or effect handled externally).
+    - **Effect**: Deals damage to enemies
+    - **Base damage**: 10 per set of 3 tiles
+    - **Bonus**: +2 damage for each tile beyond 3 (e.g., 4-match = 12 damage, 5-match = 14 damage)
+    - Plays a sword attack sound
   - **Shield** (tileType 1):
-    - Plays a button sound.
-    - Notifies the game logic for a shield match (actual effect handled externally).
+    - **Effect**: Stores shield points for damage blocking
+    - **Shield points**: Each tile contributes 1 point (3-match = 3 points, 4-match = 4 points, etc.)
+    - **Blocking**: When you have 10+ shield points, the next enemy attack is completely blocked
+    - **Reset**: Shield points reset to 0 after blocking an attack
+    - Displays as blue 🛡️X counter in UI
   - **Heart** (tileType 2):
-    - Plays a button sound.
-    - Notifies the game logic for a heart match (actual effect handled externally).
+    - **Effect**: Heals the player
+    - **Base healing**: 5 HP per set of 3 tiles
+    - **Bonus**: +2 HP for each tile beyond 3 (e.g., 4-match = 7 HP, 5-match = 9 HP)
+    - **Excess health**: Any healing beyond max HP (100) becomes excess health that absorbs damage
+    - **Excess priority**: Excess health absorbs damage before main HP (but after shield blocking)
+    - Displays as green (+X) counter next to health bar
   - **Star** (tileType 3):
-    - Plays a magical twinkle sound.
-    - Notifies the game logic for a star match (actual effect handled externally).
+    - **Effect**: Generates power points for special attacks
+    - **Base power**: 5 points per set of 3 tiles
+    - **Bonus**: +2 points for each tile beyond 3
+    - **Power attack**: When power bar is full (50 points), can unleash a devastating attack
+    - Plays a magical twinkle sound
 - **Matching 3 or more tiles** of the same type in a row or column triggers their effect and awards points.
 - L and T shaped matches are merged and counted as a single match.
+
+## Damage Priority System
+When the player takes damage, it is absorbed in the following order:
+1. **Shield Protection**: If player has 10+ shield points, ALL damage is blocked and shield resets to 0
+2. **Excess Health**: Any remaining damage is absorbed by excess health first
+3. **Main Health**: Finally, any remaining damage affects the main health bar
+
+This creates a strategic layering system where players can build up multiple forms of protection.
 
 ## Scoring
 - Each tile in a match is worth 100 points.

@@ -3,6 +3,7 @@ import 'package:flame/game.dart';
 import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../managers/audio_manager.dart';
+import '../managers/upgrade_manager.dart';
 import '../core/flame_match3_game.dart';
 
 class TowerGameplayScreen extends StatefulWidget {
@@ -87,8 +88,13 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
     super.initState();
     currentFloor = widget.initialFloor;
     _loadEquippedWeapon();
+    _loadUpgrades();
     _initializeEnemy();
     _initializeGame();
+  }
+
+  Future<void> _loadUpgrades() async {
+    await UpgradeManager.instance.loadUpgrades();
   }
 
   Future<void> _loadEquippedWeapon() async {
@@ -136,7 +142,9 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
     setState(() {
       switch (tileType) {
         case 0: // Sword
-          int damage = swordDamage * (matchCount ~/ 3);
+          int effectiveSwordDamage =
+              UpgradeManager.instance.effectiveSwordDamage;
+          int damage = effectiveSwordDamage * (matchCount ~/ 3);
           if (matchCount > 3) damage += (matchCount - 3) * 2;
           currentEnemyHealth = (currentEnemyHealth - damage).clamp(
             0,
@@ -150,7 +158,7 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
 
           game.enemyHealth = currentEnemyHealth; // Sync with game
           print(
-            'Sword match: $damage damage, Enemy HP: $currentEnemyHealth/$maxEnemyHealth',
+            'Sword match: $damage damage (upgraded from $swordDamage to $effectiveSwordDamage), Enemy HP: $currentEnemyHealth/$maxEnemyHealth',
           );
           if (currentEnemyHealth <= 0) {
             Future.delayed(Duration(milliseconds: 500), () {
@@ -163,7 +171,8 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
           print('Shield match: Protection activated for next enemy turn');
           break;
         case 2: // Heart
-          int healing = heartHeal * (matchCount ~/ 3);
+          int effectiveHeartHeal = UpgradeManager.instance.effectiveHeartHeal;
+          int healing = effectiveHeartHeal * (matchCount ~/ 3);
           if (matchCount > 3) healing += (matchCount - 3) * 2;
           int missingHealth = maxPlayerHealth - currentPlayerHealth;
           int actualHealing = healing.clamp(0, missingHealth);
@@ -172,11 +181,13 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
           excessHealth += excess;
           game.playerHealth = currentPlayerHealth; // Sync with game
           print(
-            'Heart match: $actualHealing HP (+$excess excess), Player HP: $currentPlayerHealth/$maxPlayerHealth',
+            'Heart match: $actualHealing HP (upgraded from $heartHeal to $effectiveHeartHeal) (+$excess excess), Player HP: $currentPlayerHealth/$maxPlayerHealth',
           );
           break;
         case 3: // Star
-          int powerGain = starPowerGain * (matchCount ~/ 3);
+          int effectiveStarPowerGain =
+              UpgradeManager.instance.effectiveStarPowerGain;
+          int powerGain = effectiveStarPowerGain * (matchCount ~/ 3);
           if (matchCount > 3) powerGain += (matchCount - 3) * 2;
           currentPowerPoints = (currentPowerPoints + powerGain).clamp(
             0,
@@ -185,7 +196,7 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
           game.playerPower = currentPowerPoints; // Sync with game
           game.canUsePower = currentPowerPoints >= maxPowerPoints;
           print(
-            'Star match: $powerGain power, Power: $currentPowerPoints/$maxPowerPoints',
+            'Star match: $powerGain power (upgraded from $starPowerGain to $effectiveStarPowerGain), Power: $currentPowerPoints/$maxPowerPoints',
           );
           break;
       }
