@@ -586,48 +586,62 @@ class _OutfitScreenState extends State<OutfitScreen> {
             ),
           )
         else if (_equippedWeapon == item['name'])
-          // Show "EQUIPPED" status for currently equipped weapon
-          Container(
+        // Show "EQUIPPED" status for currently equipped weapon
+          Image.asset(
+            'assets/images/ui/equipped.png',
             height: screenWidth * 0.16,
             width: screenWidth * 0.16,
-            decoration: BoxDecoration(
-              color: Colors.orange,
-              borderRadius: BorderRadius.circular(25),
-              border: Border.all(color: Colors.white, width: 2),
-            ),
-            child: Center(
-              child: Text(
-                _translate('equipped'),
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: screenWidth * 0.025,
-                  fontWeight: FontWeight.bold,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                height: screenWidth * 0.16,
+                width: screenWidth * 0.16,
+                decoration: BoxDecoration(
+                  color: Colors.orange,
+                  borderRadius: BorderRadius.circular(25),
+                  border: Border.all(color: Colors.white, width: 2),
                 ),
-              ),
-            ),
-          )
-        else
-          // Show equip button for owned but not equipped weapons
-          GestureDetector(
-            onTap: () => _onEquipPressed(itemIndex),
-            child: Container(
-              height: screenWidth * 0.16,
-              width: screenWidth * 0.16,
-              decoration: BoxDecoration(
-                color: Colors.blue,
-                borderRadius: BorderRadius.circular(25),
-                border: Border.all(color: Colors.white, width: 2),
-              ),
-              child: Center(
-                child: Text(
-                  _translate('equip'),
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: screenWidth * 0.03,
-                    fontWeight: FontWeight.bold,
+                child: Center(
+                  child: Text(
+                    _translate('equipped'),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: screenWidth * 0.025,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-              ),
+              );
+            },
+          )
+        else
+        // Show equip button for owned but not equipped weapons
+          GestureDetector(
+            onTap: () => _onEquipPressed(itemIndex),
+            child: Image.asset(
+              'assets/images/ui/confirm.png',
+              height: screenWidth * 0.16,
+              width: screenWidth * 0.16,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  height: screenWidth * 0.16,
+                  width: screenWidth * 0.16,
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                    borderRadius: BorderRadius.circular(25),
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: Center(
+                    child: Text(
+                      _translate('equip'),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: screenWidth * 0.03,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         const SizedBox(height: 8),
