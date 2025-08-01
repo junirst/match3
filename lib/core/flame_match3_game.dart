@@ -41,6 +41,10 @@ class Match3Game extends FlameGame
   int _comboCount = 0;
   int _cascadeCount = 0;
 
+  // Enemy damage scaling
+  int _enemyBaseDamage = 5;
+  int _enemyTurnCount = 0;
+
   // Assets
   final Map<int, String> tileSprites = {
     0: 'items/sword.png',
@@ -72,6 +76,10 @@ class Match3Game extends FlameGame
 
     // Initialize grid
     grid = List.generate(gridSize, (i) => List.generate(gridSize, (j) => null));
+
+    // Ensure enemy turn counter starts at 0
+    print('Game onLoad: Initializing enemy turn counter to 0');
+    _enemyTurnCount = 0;
 
     // Load sprites with fallback handling
     try {
@@ -127,6 +135,12 @@ class Match3Game extends FlameGame
   }
 
   Future<void> _createInitialGrid() async {
+    // Reset enemy damage scaling for new game/battle
+    print(
+      'RESETTING enemy turn counter from $_enemyTurnCount to 0 in _createInitialGrid',
+    );
+    _enemyTurnCount = 0;
+
     for (int row = 0; row < gridSize; row++) {
       for (int col = 0; col < gridSize; col++) {
         int tileType;
@@ -176,6 +190,30 @@ class Match3Game extends FlameGame
   void setProcessingTurn(bool value) {
     isProcessingTurn = value;
     print('Set Processing=$isProcessingTurn');
+  }
+
+  void resetEnemyDamageScaling() {
+    print(
+      'RESETTING enemy turn counter from $_enemyTurnCount to 0 in resetEnemyDamageScaling',
+    );
+    _enemyTurnCount = 0;
+    print('Enemy damage scaling reset to turn 0');
+  }
+
+  // Method to start a new battle/enemy encounter
+  void startNewBattle() {
+    print('Starting new battle - resetting enemy turn counter');
+    _enemyTurnCount = 0;
+    print('New battle started: enemy turn counter = $_enemyTurnCount');
+  }
+
+  int get currentEnemyTurn => _enemyTurnCount;
+
+  int get currentEnemyDamage {
+    // Calculate damage for NEXT enemy turn (after _enemyTurnCount would be incremented)
+    final nextTurnCount = _enemyTurnCount + 1;
+    final scalingDamage = _enemyBaseDamage + ((nextTurnCount - 1) * 5);
+    return scalingDamage > 50 ? 50 : scalingDamage;
   }
 
   void onTileTapped(GameTile tile) {
@@ -503,8 +541,17 @@ class Match3Game extends FlameGame
       'Starting enemy turn: PlayerTurn=$isPlayerTurn, Processing=$isProcessingTurn',
     );
 
-    // Simple mob attack: deal random damage
-    final baseDamage = _random.nextInt(15) + 5; // 5-20 damage
+    // Scaling mob attack: starts at 5 damage, increases by 5 each turn, caps at 50
+    print('Before increment: _enemyTurnCount = $_enemyTurnCount');
+    _enemyTurnCount++;
+    print('After increment: _enemyTurnCount = $_enemyTurnCount');
+    final scalingDamage = _enemyBaseDamage + ((_enemyTurnCount - 1) * 5);
+    final baseDamage = scalingDamage > 50 ? 50 : scalingDamage;
+    print(
+      'Calculation: $_enemyBaseDamage + (($_enemyTurnCount - 1) * 5) = $scalingDamage, capped at $baseDamage',
+    );
+
+    print('Enemy turn $_enemyTurnCount: dealing $baseDamage damage');
 
     // Play enemy attack sound
     AudioManager().playEnemyAttack();

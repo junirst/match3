@@ -195,7 +195,8 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
   void _handleMobAttack(int damage) {
     if (!mounted) return;
     setState(() {
-      int finalDamage = damage + damageThresholdIncrease;
+      // Use the scaling damage from Match3Game directly, no additional floor damage
+      int finalDamage = damage;
       if (game.hasShieldProtection) {
         finalDamage = (finalDamage * 0.5).round();
         game.hasShieldProtection = false;

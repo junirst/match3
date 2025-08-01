@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
-import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../managers/audio_manager.dart';
 import '../core/flame_match3_game.dart';
@@ -28,6 +27,10 @@ class _GameplayScreenState extends State<GameplayScreen> {
   int currentPlayerHealth = 100;
   int excessHealth = 0; // Store excess health beyond max
 
+  // Shield system
+  int shieldPoints = 0;
+  static const int shieldBlockThreshold = 10;
+
   // Power/Gold bar system
   int maxPowerPoints = 50;
   int currentPowerPoints = 0;
@@ -42,6 +45,9 @@ class _GameplayScreenState extends State<GameplayScreen> {
   bool isPlayerTurn = true;
   bool isProcessingTurn = false;
 
+  // Enemy damage scaling
+  int _enemyTurnCount = 0;
+
   // Weapon system
   String _equippedWeapon = 'Sword';
   final Map<String, String> _weaponAssets = {
@@ -53,6 +59,13 @@ class _GameplayScreenState extends State<GameplayScreen> {
   @override
   void initState() {
     super.initState();
+
+    // Reset enemy turn counter for new battle
+    _enemyTurnCount = 0;
+    print('GameplayScreen: Starting new battle, enemy turn counter reset to 0');
+
+    // Reset shield points for new battle
+    shieldPoints = 0;
 
     // Load equipped weapon
     _loadEquippedWeapon();
@@ -136,8 +149,11 @@ class _GameplayScreenState extends State<GameplayScreen> {
             return;
           }
           break;
-        case 1: // Shield - could add defense bonus later
-          print('Shield match! (No effect yet)');
+        case 1: // Shield - stores shield points
+          shieldPoints += matchCount; // Each shield tile contributes 1 point
+          print(
+            'Shield match! Gained $matchCount shield points. Shield: $shieldPoints/$shieldBlockThreshold',
+          );
           break;
         case 2: // Heart - heals player
           int healing =
@@ -233,15 +249,22 @@ class _GameplayScreenState extends State<GameplayScreen> {
     int mobDamage = _calculateMobDamage();
 
     setState(() {
-      // First check if excess health can absorb damage
-      if (excessHealth > 0) {
-        int excessUsed = mobDamage.clamp(0, excessHealth);
-        excessHealth -= excessUsed;
-        mobDamage -= excessUsed;
+      // First check if shield can block all damage
+      if (shieldPoints >= shieldBlockThreshold) {
+        shieldPoints = 0; // Reset shield points after blocking
+        print('Shield blocked all damage! Shield points reset to 0.');
+        mobDamage = 0; // Block all damage
+      } else {
+        // Then check if excess health can absorb damage
+        if (excessHealth > 0) {
+          int excessUsed = mobDamage.clamp(0, excessHealth);
+          excessHealth -= excessUsed;
+          mobDamage -= excessUsed;
 
-        print(
-          'Excess health absorbed $excessUsed damage. Remaining excess: $excessHealth',
-        );
+          print(
+            'Excess health absorbed $excessUsed damage. Remaining excess: $excessHealth',
+          );
+        }
       }
 
       // Apply remaining damage to player health
@@ -274,28 +297,17 @@ class _GameplayScreenState extends State<GameplayScreen> {
   }
 
   int _calculateMobDamage() {
-    // Base damage varies by enemy type
-    int baseDamage = 15; // Default damage
+    // Scaling mob attack: starts at 5 damage, increases by 5 each turn, caps at 50
+    _enemyTurnCount++;
+    final baseDamage = 5;
+    final scalingDamage = baseDamage + ((_enemyTurnCount - 1) * 5);
+    final finalDamage = scalingDamage > 50 ? 50 : scalingDamage;
 
-    if (widget.chapter == 1) {
-      if (widget.level == 1 || widget.level == 2) {
-        // Goblin - weak damage
-        baseDamage = 10;
-      } else if (widget.level == 3 || widget.level == 4) {
-        // Ghost - medium damage
-        baseDamage = 15;
-      } else if (widget.level == 5) {
-        // Dragon - high damage
-        baseDamage = 25;
-      }
-    }
+    print(
+      'Enemy turn $_enemyTurnCount: calculating $baseDamage + (($_enemyTurnCount - 1) * 5) = $scalingDamage, capped at $finalDamage',
+    );
 
-    // Add some randomness (±25%)
-    int variance = (baseDamage * 0.25).round();
-    int finalDamage =
-        baseDamage + (Random().nextInt(variance * 2 + 1) - variance);
-
-    return finalDamage.clamp(1, baseDamage * 2); // Ensure at least 1 damage
+    return finalDamage;
   }
 
   void _onPlayerDefeated() {
@@ -1081,6 +1093,25 @@ class _GameplayScreenState extends State<GameplayScreen> {
                         style: TextStyle(
                           fontFamily: 'Bungee',
                           color: Colors.lightGreen,
+                          fontSize: screenWidth * 0.025,
+                          fontWeight: FontWeight.bold,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black,
+                              offset: Offset(1, 1),
+                              blurRadius: 2,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    if (shieldPoints > 0) ...[
+                      SizedBox(width: screenWidth * 0.01),
+                      Text(
+                        '🛡️$shieldPoints',
+                        style: TextStyle(
+                          fontFamily: 'Bungee',
+                          color: Colors.lightBlue,
                           fontSize: screenWidth * 0.025,
                           fontWeight: FontWeight.bold,
                           shadows: [
