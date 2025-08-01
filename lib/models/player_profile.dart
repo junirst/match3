@@ -26,6 +26,13 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
     'shield': 1,
   };
 
+  // Shop items from OutfitInside
+  Map<String, bool> shopItems = {
+    'Sword': false,
+    'Dagger': false,
+    'Hand': false,
+  };
+
   final List<String> _genderOptions = ['Male', 'Female', 'Other'];
 
   @override
@@ -56,6 +63,11 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
       upgradeLevels['heart'] = prefs.getInt('upgrade_heart_level') ?? 1;
       upgradeLevels['star'] = prefs.getInt('upgrade_star_level') ?? 1;
       upgradeLevels['shield'] = prefs.getInt('upgrade_shield_level') ?? 1;
+
+      // Load shop item ownership status
+      shopItems['Sword'] = prefs.getBool('shop_item_sword') ?? false;
+      shopItems['Dagger'] = prefs.getBool('shop_item_dagger') ?? false;
+      shopItems['Hand'] = prefs.getBool('shop_item_hand') ?? false;
     });
   }
 
@@ -220,7 +232,12 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
     );
   }
 
-  Widget _buildUpgradeRow(String upgradeType, String iconPath, Color color, double screenWidth) {
+  Widget _buildUpgradeRow(
+    String upgradeType,
+    String iconPath,
+    Color color,
+    double screenWidth,
+  ) {
     return Container(
       width: screenWidth * 0.85,
       padding: EdgeInsets.symmetric(
@@ -297,6 +314,91 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
     );
   }
 
+  Widget _buildItemRow(
+    String itemName,
+    String iconPath,
+    Color color,
+    double screenWidth,
+  ) {
+    bool isOwned = shopItems[itemName] ?? false;
+    return Container(
+      width: screenWidth * 0.85,
+      padding: EdgeInsets.symmetric(
+        horizontal: screenWidth * 0.04,
+        vertical: screenWidth * 0.025,
+      ),
+      margin: EdgeInsets.only(bottom: screenWidth * 0.02),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(screenWidth * 0.03),
+        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: screenWidth * 0.12,
+            height: screenWidth * 0.12,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(screenWidth * 0.06),
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(screenWidth * 0.02),
+              child: Image.asset(
+                iconPath,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return Icon(
+                    Icons.inventory,
+                    color: Colors.white,
+                    size: screenWidth * 0.08,
+                  );
+                },
+              ),
+            ),
+          ),
+          SizedBox(width: screenWidth * 0.04),
+          Expanded(
+            child: Text(
+              itemName.toUpperCase(),
+              style: TextStyle(
+                fontFamily: 'Bungee',
+                fontSize: screenWidth * 0.04,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                shadows: [
+                  Shadow(
+                    offset: Offset(1, 1),
+                    color: Colors.black,
+                    blurRadius: 2,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Text(
+            isOwned
+                ? _getLocalizedText('OWNED', 'SỞ HỮU')
+                : _getLocalizedText('UNOWNED', 'CHƯA CÓ'),
+            style: TextStyle(
+              fontFamily: 'Bungee',
+              fontSize: screenWidth * 0.04,
+              color: isOwned ? Colors.green : Colors.red,
+              fontWeight: FontWeight.bold,
+              shadows: [
+                Shadow(
+                  offset: Offset(1, 1),
+                  color: Colors.black,
+                  blurRadius: 2,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
@@ -338,7 +440,9 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
                 // Player Avatar
                 CircleAvatar(
                   radius: screenWidth * 0.15,
-                  backgroundImage: AssetImage('assets/images/characters/player.png'),
+                  backgroundImage: AssetImage(
+                    'assets/images/characters/player.png',
+                  ),
                 ),
                 SizedBox(height: screenHeight * 0.02),
                 // Player Name - Keep DistilleryDisplay font
@@ -390,10 +494,67 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
                 ),
                 SizedBox(height: screenHeight * 0.02),
                 // Upgrade Levels
-                _buildUpgradeRow('sword', 'assets/images/items/sword.png', Colors.red, screenWidth),
-                _buildUpgradeRow('heart', 'assets/images/items/heart.png', Colors.green, screenWidth),
-                _buildUpgradeRow('star', 'assets/images/items/star.png', Colors.yellow, screenWidth),
-                _buildUpgradeRow('shield', 'assets/images/items/shield.png', Colors.blue, screenWidth),
+                _buildUpgradeRow(
+                  'sword',
+                  'assets/images/items/sword.png',
+                  Colors.red,
+                  screenWidth,
+                ),
+                _buildUpgradeRow(
+                  'heart',
+                  'assets/images/items/heart.png',
+                  Colors.green,
+                  screenWidth,
+                ),
+                _buildUpgradeRow(
+                  'star',
+                  'assets/images/items/star.png',
+                  Colors.yellow,
+                  screenWidth,
+                ),
+                _buildUpgradeRow(
+                  'shield',
+                  'assets/images/items/shield.png',
+                  Colors.blue,
+                  screenWidth,
+                ),
+                SizedBox(height: screenHeight * 0.02),
+                // Items Section Title
+                Text(
+                  _getLocalizedText('ITEMS', 'VẬT PHẨM'),
+                  style: TextStyle(
+                    fontFamily: 'Bungee',
+                    fontSize: screenWidth * 0.05,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    shadows: [
+                      Shadow(offset: Offset(-1, -1), color: Colors.black),
+                      Shadow(offset: Offset(1, -1), color: Colors.black),
+                      Shadow(offset: Offset(-1, 1), color: Colors.black),
+                      Shadow(offset: Offset(1, 1), color: Colors.black),
+                    ],
+                  ),
+                ),
+                SizedBox(height: screenHeight * 0.02),
+                // Shop Items
+                _buildItemRow(
+                  'Sword',
+                  'assets/images/items/SwordHand.png',
+                  Colors.orange,
+                  screenWidth,
+                ),
+                _buildItemRow(
+                  'Dagger',
+                  'assets/images/items/Dagger.png',
+                  Colors.purple,
+                  screenWidth,
+                ),
+                _buildItemRow(
+                  'Hand',
+                  'assets/images/items/Hand.png',
+                  Colors.brown,
+                  screenWidth,
+                ),
                 SizedBox(height: screenHeight * 0.15),
               ],
             ),
