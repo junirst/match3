@@ -82,16 +82,16 @@ class Match3Game extends FlameGame
         images.load('items/heart.png'),
         images.load('items/star.png'),
       ]);
-      
+
       // Check if all sprites are loaded correctly
       bool allSpritesLoaded = true;
       List<String> spriteNames = [
         'items/sword.png',
-        'items/shield.png', 
+        'items/shield.png',
         'items/heart.png',
-        'items/star.png'
+        'items/star.png',
       ];
-      
+
       for (String spriteName in spriteNames) {
         if (!images.containsKey(spriteName)) {
           allSpritesLoaded = false;
@@ -100,9 +100,13 @@ class Match3Game extends FlameGame
           print('✓ Loaded sprite: $spriteName');
         }
       }
-      
+
       imagesLoaded = allSpritesLoaded;
-      print(imagesLoaded ? 'All sprites loaded successfully' : 'Using fallback rendering due to missing sprites');
+      print(
+        imagesLoaded
+            ? 'All sprites loaded successfully'
+            : 'Using fallback rendering due to missing sprites',
+      );
     } catch (e) {
       print('Failed to load sprites: $e');
       print('Will use fallback rendering for tiles');
@@ -289,10 +293,10 @@ class Match3Game extends FlameGame
   }
 
   List<List<GameTile>> _findMatches() {
-    final matches = <List<GameTile>>[];
+    final allMatches = <List<GameTile>>[];
     final processed = <GameTile>{};
 
-    // Horizontal matches
+    // Find all horizontal matches
     for (int row = 0; row < gridSize; row++) {
       for (int col = 0; col < gridSize - 2; col++) {
         final tile = grid[row][col];
@@ -302,43 +306,91 @@ class Match3Game extends FlameGame
         final match = [tile];
         for (int c = col + 1; c < gridSize; c++) {
           final nextTile = grid[row][c];
-          if (nextTile?.tileType == type && !processed.contains(nextTile)) {
+          if (nextTile?.tileType == type) {
             match.add(nextTile!);
           } else {
             break;
           }
         }
         if (match.length >= 3) {
-          matches.add(match);
-          processed.addAll(match);
+          allMatches.add(match);
         }
       }
     }
 
-    // Vertical matches
+    // Find all vertical matches
     for (int col = 0; col < gridSize; col++) {
       for (int row = 0; row < gridSize - 2; row++) {
         final tile = grid[row][col];
-        if (tile == null || processed.contains(tile)) continue;
+        if (tile == null) continue;
 
         final type = tile.tileType;
         final match = [tile];
         for (int r = row + 1; r < gridSize; r++) {
           final nextTile = grid[r][col];
-          if (nextTile?.tileType == type && !processed.contains(nextTile)) {
+          if (nextTile?.tileType == type) {
             match.add(nextTile!);
           } else {
             break;
           }
         }
         if (match.length >= 3) {
-          matches.add(match);
-          processed.addAll(match);
+          allMatches.add(match);
         }
       }
     }
 
-    return matches;
+    // Merge overlapping matches (L and T shapes)
+    final mergedMatches = <List<GameTile>>[];
+    final usedMatches = <bool>[];
+
+    for (int i = 0; i < allMatches.length; i++) {
+      usedMatches.add(false);
+    }
+
+    for (int i = 0; i < allMatches.length; i++) {
+      if (usedMatches[i]) continue;
+
+      final combinedMatch = <GameTile>[];
+      combinedMatch.addAll(allMatches[i]);
+      usedMatches[i] = true;
+
+      // Check for overlaps with remaining matches
+      bool foundOverlap = true;
+      while (foundOverlap) {
+        foundOverlap = false;
+        for (int j = i + 1; j < allMatches.length; j++) {
+          if (usedMatches[j]) continue;
+
+          // Check if matches overlap (share at least one tile)
+          bool hasOverlap = false;
+          for (final tile1 in combinedMatch) {
+            for (final tile2 in allMatches[j]) {
+              if (tile1 == tile2) {
+                hasOverlap = true;
+                break;
+              }
+            }
+            if (hasOverlap) break;
+          }
+
+          if (hasOverlap) {
+            // Add unique tiles from overlapping match
+            for (final tile in allMatches[j]) {
+              if (!combinedMatch.contains(tile)) {
+                combinedMatch.add(tile);
+              }
+            }
+            usedMatches[j] = true;
+            foundOverlap = true;
+          }
+        }
+      }
+
+      mergedMatches.add(combinedMatch);
+    }
+
+    return mergedMatches;
   }
 
   Future<void> _handleMatches(List<List<GameTile>> matches) async {
@@ -369,6 +421,7 @@ class Match3Game extends FlameGame
         onMatchCallback!(tileType, matchCount, points);
       }
 
+      // Start disappear animation for all tiles in this match simultaneously
       for (final tile in match) {
         tile.add(
           SequenceEffect([
@@ -376,7 +429,11 @@ class Match3Game extends FlameGame
             ScaleEffect.to(Vector2.all(0.0), EffectController(duration: 0.2)),
           ]),
         );
-        await Future.delayed(Duration(milliseconds: 250));
+      }
+
+      // Wait for the animation to complete, then remove all tiles at once
+      await Future.delayed(Duration(milliseconds: 300));
+      for (final tile in match) {
         tile.removeFromParent();
         grid[tile.gridRow][tile.gridCol] = null;
       }
@@ -448,10 +505,10 @@ class Match3Game extends FlameGame
 
     // Simple mob attack: deal random damage
     final baseDamage = _random.nextInt(15) + 5; // 5-20 damage
-    
+
     // Play enemy attack sound
     AudioManager().playEnemyAttack();
-    
+
     if (onMobAttackCallback != null) {
       onMobAttackCallback!(baseDamage);
     }
