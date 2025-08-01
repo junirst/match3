@@ -86,6 +86,8 @@ class LanguageManager {
     'upgrades': 'UPGRADES',
     'buy': 'BUY',
     'purchase_not_implemented': 'Purchase functionality not implemented yet',
+    'equipped': 'EQUIPPED',
+    'equip': 'EQUIP',
 
     // Purchase System
     'confirmPurchase': 'Confirm Purchase',
@@ -95,6 +97,17 @@ class LanguageManager {
     'notEnoughCoins': 'Not enough coins!',
     'purchaseSuccess': 'Upgrade successful!',
     'maxLevel': 'Max level reached!',
+    'max': 'MAX',
+    'upgraded': 'Upgraded',
+    'levels': 'levels',
+
+    // Upgrade Dialog
+    'current_level': 'Current Level',
+    'select_upgrade_quantity': 'Select upgrade quantity:',
+    'new_level': 'New Level',
+    'bonus': 'Bonus',
+    'to_tile_value': 'to tile value',
+    'total_cost': 'Total Cost',
 
     // Leaderboard
     'leaderboard_title': 'LEADERBOARD',
@@ -191,6 +204,8 @@ class LanguageManager {
     'upgrades': 'NÂNG CẤP',
     'buy': 'MUA',
     'purchase_not_implemented': 'Chức năng mua hàng chưa được triển khai',
+    'equipped': 'ĐÃ TRANG BỊ',
+    'equip': 'TRANG BỊ',
 
     // Purchase System
     'confirmPurchase': 'Xác Nhận Nâng Cấp',
@@ -200,6 +215,17 @@ class LanguageManager {
     'notEnoughCoins': 'Không đủ xu!',
     'purchaseSuccess': 'Nâng cấp thành công!',
     'maxLevel': 'Đã đạt cấp độ tối đa!',
+    'max': 'TỐI ĐA',
+    'upgraded': 'Đã nâng cấp',
+    'levels': 'cấp độ',
+
+    // Upgrade Dialog
+    'current_level': 'Cấp Hiện Tại',
+    'select_upgrade_quantity': 'Chọn số lượng nâng cấp:',
+    'new_level': 'Cấp Mới',
+    'bonus': 'Phần Thưởng',
+    'to_tile_value': 'cho giá trị ô',
+    'total_cost': 'Tổng Chi Phí',
 
     // Leaderboard
     'leaderboard_title': 'BẢNG XẾP HẠNG',
