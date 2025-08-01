@@ -47,10 +47,24 @@ class _OutfitScreenState extends State<OutfitScreen> {
   };
 
   final List<Map<String, dynamic>> _items = [
-    {'name': 'Sword', 'price': 100, 'owned': false},
-    {'name': 'Bow', 'price': 150, 'owned': false},
-    {'name': 'Staff', 'price': 200, 'owned': false},
-    {'name': 'Axe', 'price': 120, 'owned': false},
+    {
+      'name': 'Sword',
+      'price': 100,
+      'owned': false,
+      'image': 'assets/images/items/SwordHand.png',
+    },
+    {
+      'name': 'Dagger',
+      'price': 150,
+      'owned': false,
+      'image': 'assets/images/items/Dagger.png',
+    },
+    {
+      'name': 'Hand',
+      'price': 200,
+      'owned': false,
+      'image': 'assets/images/items/Hand.png',
+    },
   ];
 
   @override
@@ -69,6 +83,19 @@ class _OutfitScreenState extends State<OutfitScreen> {
 
   String _translate(String key) {
     return _translations[_currentLanguage]?[key] ?? key;
+  }
+
+  IconData _getItemIcon(String itemName) {
+    switch (itemName) {
+      case 'Sword':
+        return Icons.construction;
+      case 'Dagger':
+        return Icons.sports_tennis;
+      case 'Hand':
+        return Icons.gesture;
+      default:
+        return Icons.inventory;
+    }
   }
 
   void _showPurchaseDialog(int itemIndex) {
@@ -326,7 +353,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
             ),
           ),
 
-          // Center Grid with 4 items (2x2)
+          // Center Grid with 3 items
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.only(top: 140, bottom: 100),
@@ -335,7 +362,8 @@ class _OutfitScreenState extends State<OutfitScreen> {
                 children: [
                   buildItemRow(context, 0, 1),
                   const SizedBox(height: 40),
-                  buildItemRow(context, 2, 3),
+                  // Single item centered in second row
+                  buildItemCard(context, 2),
                 ],
               ),
             ),
@@ -401,26 +429,40 @@ class _OutfitScreenState extends State<OutfitScreen> {
         Stack(
           alignment: Alignment.bottomRight,
           children: [
-            Image.asset(
-              'assets/images/ui/itemslot.png',
-              height: screenWidth * 0.25,
-              width: screenWidth * 0.25,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Image.asset(
+                  'assets/images/ui/itemslot.png',
                   height: screenWidth * 0.25,
                   width: screenWidth * 0.25,
-                  decoration: BoxDecoration(
-                    color: isOwned ? Colors.green[700] : Colors.grey[600],
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                  child: Icon(
-                    Icons.inventory,
-                    color: Colors.white,
-                    size: screenWidth * 0.12,
-                  ),
-                );
-              },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: screenWidth * 0.25,
+                      width: screenWidth * 0.25,
+                      decoration: BoxDecoration(
+                        color: isOwned ? Colors.green[700] : Colors.grey[600],
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                    );
+                  },
+                ),
+                // Weapon image inside the slot
+                Image.asset(
+                  item['image'],
+                  height: screenWidth * 0.18,
+                  width: screenWidth * 0.18,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Icon(
+                      _getItemIcon(item['name']),
+                      color: Colors.white,
+                      size: screenWidth * 0.12,
+                    );
+                  },
+                ),
+              ],
             ),
             if (!isOwned)
               Positioned(
