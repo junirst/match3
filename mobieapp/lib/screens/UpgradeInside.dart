@@ -81,19 +81,31 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
     );
 
     if (success) {
-      // Sync with UpgradeManager
-      UpgradeManager.instance.updateUpgradeLevel(
-        upgradeType,
-        gameManager.upgradeLevels[upgradeType] ?? 1,
+      // Sync with UpgradeManager - ensure it has the latest level
+      final newLevel = gameManager.upgradeLevels[upgradeType] ?? 1;
+      UpgradeManager.instance.updateUpgradeLevel(upgradeType, newLevel);
+
+      print('Upgrade successful: $upgradeType level is now $newLevel');
+      print(
+        'UpgradeManager synced with level: ${UpgradeManager.instance.getUpgradeLevel(upgradeType)}',
       );
+
+      // Check if there's a warning (e.g., server sync failed)
+      String message =
+          '${LanguageManager.getText('purchaseSuccess')} - Upgraded $quantity levels!';
+      Color backgroundColor = Colors.green;
+
+      if (gameManager.error != null && gameManager.error!.contains('locally')) {
+        message += '\n⚠️ Syncing with server...';
+        backgroundColor = Colors.orange;
+        gameManager.clearError(); // Clear the warning after showing it
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            '${LanguageManager.getText('purchaseSuccess')} - Upgraded $quantity levels!',
-          ),
-          duration: const Duration(seconds: 2),
-          backgroundColor: Colors.green,
+          content: Text(message),
+          duration: const Duration(seconds: 3),
+          backgroundColor: backgroundColor,
         ),
       );
     } else {
@@ -529,11 +541,8 @@ class _UpgradeQuantityDialogState extends State<_UpgradeQuantityDialog> {
   int _selectedQuantity = 1;
 
   int _calculateTotalCost(int quantity) {
-    int totalCost = 0;
-    for (int i = 0; i < quantity; i++) {
-      totalCost += widget.basePrice * (widget.currentLevel + i);
-    }
-    return totalCost;
+    // Fixed price per level - simply multiply base price by quantity
+    return widget.basePrice * quantity;
   }
 
   String _getUpgradeTypeName() {

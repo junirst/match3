@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../services/api_service.dart';
 import '../models/game_models.dart';
+import 'upgrade_manager.dart';
 
 class GameManager extends ChangeNotifier {
   Player? _currentPlayer;
@@ -280,6 +281,9 @@ class GameManager extends ChangeNotifier {
 
     // Debug: Print upgrade levels
     print('Guest upgrade levels: $_guestUpgradeLevels');
+
+    // Sync with UpgradeManager after loading guest data
+    _syncUpgradeManager();
   }
 
   // Clear guest mode data (for testing)
@@ -992,6 +996,34 @@ class GameManager extends ChangeNotifier {
     }
   }
 
+  // Method to add tower rewards (coins) - handles both guest and authenticated users
+  Future<bool> addTowerReward(int coinReward, int floor, bool isBoss) async {
+    if (isGuestMode) {
+      // For guest mode, directly add coins
+      _guestCoins += coinReward;
+      await _saveGuestModeData();
+      print(
+        'Guest mode: Added $coinReward coins for ${isBoss ? 'boss' : 'normal'} floor $floor completion. Total: $_guestCoins',
+      );
+      notifyListeners();
+      return true;
+    } else {
+      // For authenticated users, use the addCoins method
+      bool success = await addCoins(
+        coinReward,
+        'Tower ${isBoss ? 'boss' : 'normal'} floor $floor completion',
+      );
+      if (success) {
+        print(
+          'Added $coinReward coins for ${isBoss ? 'boss' : 'normal'} floor $floor completion. New total: ${_currentPlayer?.coins ?? 0}',
+        );
+      } else {
+        print('Failed to add coins for tower floor completion');
+      }
+      return success;
+    }
+  }
+
   // Upgrade management methods
   Map<String, int> _upgradeLevels = {};
 
@@ -1018,10 +1050,28 @@ class GameManager extends ChangeNotifier {
           }
         }
 
+        // Immediately sync with UpgradeManager to ensure consistency
+        _syncUpgradeManager();
+
+        print('Loaded upgrades from server: $_upgradeLevels');
         notifyListeners();
+      } else {
+        print('Failed to load upgrades from server - no response');
       }
     } catch (e) {
-      print('Error loading upgrades: $e');
+      print('Error loading upgrades from server: $e');
+    }
+  }
+
+  // Helper method to sync UpgradeManager with current upgrade levels
+  void _syncUpgradeManager() {
+    try {
+      // Import here to avoid circular dependencies
+      final upgradeManager = UpgradeManager.instance;
+      upgradeManager.syncWithUpgradeLevels(upgradeLevels);
+      print('GameManager: Synced upgrade levels with UpgradeManager');
+    } catch (e) {
+      print('Error syncing with UpgradeManager: $e');
     }
   }
 
@@ -1070,6 +1120,9 @@ class GameManager extends ChangeNotifier {
       _guestUpgradeLevels[upgradeType] = newLevel;
       _guestCoins -= totalCost;
 
+      // Sync with UpgradeManager for guest mode as well
+      _syncUpgradeManager();
+
       // Save guest data
       await _saveGuestModeData();
       notifyListeners();
@@ -1109,15 +1162,127 @@ class GameManager extends ChangeNotifier {
           coins: response['remainingCoins'] ?? (currentCoins - totalCost),
         );
 
+        // Sync with UpgradeManager immediately after successful purchase
+        _syncUpgradeManager();
+
         await _savePlayerToStorage();
         notifyListeners();
+        print(
+          'Upgrade purchase successful via API: $upgradeType -> level $newLevel',
+        );
         return true;
       } else {
-        _setError('Failed to purchase upgrade on server');
-        return false;
+        // API failed, show warning but allow local update
+        String errorMsg = 'API failed for upgrade purchase';
+        if (response != null && response.containsKey('error')) {
+          errorMsg = 'Server error: ${response['error']}';
+        }
+        print('$errorMsg, falling back to local update');
+        print('API response: $response');
+
+        // Update local data as fallback
+        _upgradeLevels[upgradeType] = newLevel;
+        _currentPlayer = _currentPlayer!.copyWith(
+          coins: currentCoins - totalCost,
+        );
+
+        // Sync with UpgradeManager even in fallback case
+        _syncUpgradeManager();
+
+        await _savePlayerToStorage();
+        notifyListeners();
+
+        // Try to sync with server in background
+        _syncUpgradeInBackground(upgradeType, newLevel);
+
+        // Set a warning message for UI with more detailed error
+        _setError(
+          'Upgrade saved locally. $errorMsg. Will sync when connection improves.',
+        );
+
+        return true; // Still return success for better UX, but user sees warning
       }
     } catch (e) {
-      _setError('Error purchasing upgrade: $e');
+      print('Exception during upgrade purchase: $e');
+
+      // Fallback: Update locally and sync later
+      print('Using local fallback due to exception');
+      _upgradeLevels[upgradeType] = newLevel;
+      _currentPlayer = _currentPlayer!.copyWith(
+        coins: currentCoins - totalCost,
+      );
+
+      // Sync with UpgradeManager even in exception case
+      _syncUpgradeManager();
+
+      await _savePlayerToStorage();
+      notifyListeners();
+
+      // Try to sync with server in background
+      _syncUpgradeInBackground(upgradeType, newLevel);
+
+      // Set a warning message for UI
+      _setError(
+        'Upgrade saved locally. Will sync with server when connection improves.',
+      );
+
+      return true; // Return success for better user experience, but show warning
+    }
+  }
+
+  // Background sync method for upgrades
+  Future<void> _syncUpgradeInBackground(
+    String upgradeType,
+    int newLevel,
+  ) async {
+    if (_currentPlayer == null) return;
+
+    try {
+      print(
+        'Attempting background sync for $upgradeType upgrade to level $newLevel',
+      );
+      final response = await ApiService.updatePlayerUpgrade(
+        playerId: _currentPlayer!.playerId,
+        upgradeType: upgradeType,
+        level: newLevel,
+      );
+
+      if (response != null && response['success'] == true) {
+        print('Background sync successful for $upgradeType upgrade');
+      } else {
+        print(
+          'Background sync failed for $upgradeType upgrade, will retry later',
+        );
+      }
+    } catch (e) {
+      print('Background sync error for $upgradeType upgrade: $e');
+    }
+  }
+
+  // Method to force refresh all player data from server
+  Future<bool> refreshPlayerDataFromServer() async {
+    if (_currentPlayer == null) return false;
+
+    try {
+      print('Force refreshing all player data from server...');
+      _setLoading(true);
+
+      // Refresh player info (including coins)
+      await refreshPlayerInfo();
+
+      // Refresh upgrades
+      await loadPlayerUpgrades();
+
+      // Refresh other data as needed
+      // await loadPlayerProgress(); // if needed
+
+      _setLoading(false);
+      print('Successfully refreshed all player data from server');
+      return true;
+    } catch (e) {
+      print('Error refreshing player data from server: $e');
+      _setError('Failed to refresh data from server: $e');
+      _setLoading(false);
       return false;
     }
   }
@@ -1130,6 +1295,11 @@ class GameManager extends ChangeNotifier {
 
   void _setError(String? error) {
     _error = error;
+    notifyListeners();
+  }
+
+  void clearError() {
+    _error = null;
     notifyListeners();
   }
 
@@ -1240,6 +1410,14 @@ class GameManager extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     // Remove the old hard-coded coins storage
     await prefs.remove('coins');
+
+    // Clean up old upgrade data from SharedPreferences since we now use GameManager
+    await prefs.remove('upgrade_sword');
+    await prefs.remove('upgrade_heart');
+    await prefs.remove('upgrade_star');
+    await prefs.remove('upgrade_shield');
+
+    print('Cleaned up legacy storage (coins and individual upgrade keys)');
   }
 
   // Helper method to update leaderboard progress

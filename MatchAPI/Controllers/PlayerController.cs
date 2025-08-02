@@ -495,42 +495,51 @@ namespace MatchAPI.Controllers
 
             int newLevel = request.NewLevel;
 
-            if (existingUpgrade != null)
-            {
-                existingUpgrade.Level = newLevel;
-                existingUpgrade.UpdatedDate = DateTime.UtcNow;
-            }
-            else
-            {
-                var newUpgrade = new Upgrade
-                {
-                    PlayerId = id,
-                    UpgradeType = request.UpgradeType,
-                    Level = newLevel,
-                    CreatedDate = DateTime.UtcNow,
-                    UpdatedDate = DateTime.UtcNow
-                };
-                _context.Upgrades.Add(newUpgrade);
-            }
-
-            // Deduct coins
-            player.Coins -= request.TotalCost;
-
             try
             {
+                if (existingUpgrade != null)
+                {
+                    existingUpgrade.Level = newLevel;
+                    existingUpgrade.UpdatedDate = DateTime.UtcNow;
+                }
+                else
+                {
+                    var newUpgrade = new Upgrade
+                    {
+                        PlayerId = id,
+                        UpgradeType = request.UpgradeType,
+                        Level = newLevel,
+                        CreatedDate = DateTime.UtcNow,
+                        UpdatedDate = DateTime.UtcNow
+                    };
+                    _context.Upgrades.Add(newUpgrade);
+                }
+
+                // Deduct coins
+                player.Coins -= request.TotalCost;
+
                 await _context.SaveChangesAsync();
                 
                 return Ok(new 
                 { 
                     success = true, 
-                    UpgradeType = request.UpgradeType, 
-                    Level = newLevel, 
-                    RemainingCoins = player.Coins 
+                    upgradeType = request.UpgradeType, 
+                    level = newLevel, 
+                    remainingCoins = player.Coins 
                 });
             }
-            catch (DbUpdateException)
+            catch (DbUpdateException ex)
             {
-                return StatusCode(500, "Error updating upgrade");
+                // Log the actual exception details
+                Console.WriteLine($"Database error in PurchaseUpgrade: {ex.Message}");
+                Console.WriteLine($"Inner exception: {ex.InnerException?.Message}");
+                
+                return StatusCode(500, $"Database error: {ex.InnerException?.Message ?? ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"General error in PurchaseUpgrade: {ex.Message}");
+                return StatusCode(500, $"Server error: {ex.Message}");
             }
         }
 

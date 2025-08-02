@@ -33,13 +33,13 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
   bool isDragon = false;
   int damageThresholdIncrease = 0;
 
-  // Persistent player stats
-  static int maxPlayerHealth = GameConstants.maxPlayerHealth;
-  static int currentPlayerHealth = GameConstants.maxPlayerHealth;
-  static int excessHealth = 0;
-  static int maxPowerPoints = GameConstants.maxPowerPoints;
-  static int currentPowerPoints = 0;
-  static int shieldPoints = 0;
+  // Persistent player stats - made non-static to allow proper scaling
+  int maxPlayerHealth = GameConstants.maxPlayerHealth;
+  int currentPlayerHealth = GameConstants.maxPlayerHealth;
+  int excessHealth = 0;
+  int maxPowerPoints = GameConstants.maxPowerPoints;
+  int currentPowerPoints = 0;
+  int shieldPoints = 0;
   static const int shieldBlockThreshold = GameConstants.shieldBlockThreshold;
 
   // Damage and healing values (removed unused swordDamage)
@@ -103,20 +103,47 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
   }
 
   Future<void> _loadUpgrades() async {
-    await UpgradeManager.instance.loadUpgrades();
+    final gameManager = Provider.of<GameManager>(context, listen: false);
+
+    // Sync UpgradeManager with GameManager's upgrade levels
+    UpgradeManager.instance.syncWithUpgradeLevels(gameManager.upgradeLevels);
 
     // Update max health with permanent bonuses
     final permanentHealthBonus = UpgradeManager.instance
         .getPermanentHealthBonus();
     maxPlayerHealth = GameConstants.maxPlayerHealth + permanentHealthBonus;
 
+    // Update max power points with permanent bonuses
+    final permanentPowerBonus = UpgradeManager.instance
+        .getPermanentPowerBonus();
+    maxPowerPoints = GameConstants.maxPowerPoints + permanentPowerBonus;
+
     // Only reset health if starting a new tower run, not between floors
-    if (currentPlayerHealth <= 0 || currentPlayerHealth > maxPlayerHealth) {
+    // Also reset if health is still at default base value (first load with upgrades)
+    if (currentPlayerHealth <= 0 ||
+        currentPlayerHealth > maxPlayerHealth ||
+        currentPlayerHealth == GameConstants.maxPlayerHealth) {
       currentPlayerHealth = maxPlayerHealth;
+      print(
+        'Tower health reset to max: $currentPlayerHealth (was at base value or invalid)',
+      );
     }
+
+    // Sync the max values with the Match3Game engine
+    game.maxPlayerHealth = maxPlayerHealth;
+    game.maxPlayerPower = maxPowerPoints;
+    game.playerHealth = currentPlayerHealth;
+    game.playerPower = currentPowerPoints;
 
     print(
       'Tower player health updated: $maxPlayerHealth (base: ${GameConstants.maxPlayerHealth} + permanent bonus: $permanentHealthBonus)',
+    );
+    print(
+      'Tower max power updated: $maxPowerPoints (base: ${GameConstants.maxPowerPoints} + permanent bonus: $permanentPowerBonus)',
+    );
+    print('Tower synced upgrade levels: ${gameManager.upgradeLevels}');
+    print(
+      'Match3Game synced with max health: $maxPlayerHealth, max power: $maxPowerPoints',
     );
   }
 
@@ -472,16 +499,34 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
                     color: Colors.green[800],
                   ),
                 ),
+                SizedBox(height: 10),
+                Text(
+                  'Reward: ${isDragon ? '200' : '50'} coins',
+                  style: TextStyle(
+                    fontSize: MediaQuery.of(context).size.width * 0.06,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.amber[700],
+                  ),
+                ),
                 SizedBox(height: 20),
                 GestureDetector(
                   onTap: () async {
                     AudioManager().playButtonSound();
 
-                    // Update tower record in GameManager and leaderboard
-                    await Provider.of<GameManager>(
+                    // Calculate coin reward based on floor type
+                    int coinReward = isDragon
+                        ? 200
+                        : 50; // Boss floors give 200, normal floors give 50
+
+                    // Add coins to GameManager
+                    final gameManager = Provider.of<GameManager>(
                       context,
                       listen: false,
-                    ).updateTowerRecord(currentFloor);
+                    );
+                    await _addTowerReward(gameManager, coinReward);
+
+                    // Update tower record in GameManager and leaderboard
+                    await gameManager.updateTowerRecord(currentFloor);
 
                     setState(() {
                       currentFloor++;
@@ -534,6 +579,18 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
         );
       },
     );
+  }
+
+  // Helper method to add tower rewards (coins) that works for both guest and authenticated users
+  Future<void> _addTowerReward(GameManager gameManager, int coinReward) async {
+    bool success = await gameManager.addTowerReward(
+      coinReward,
+      currentFloor,
+      isDragon,
+    );
+    if (!success) {
+      print('Failed to add tower reward');
+    }
   }
 
   void _onPausePressed() {

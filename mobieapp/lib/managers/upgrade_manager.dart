@@ -1,4 +1,3 @@
-import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/game_constants.dart';
 
 class UpgradeManager {
@@ -22,12 +21,21 @@ class UpgradeManager {
     'shield': GameConstants.baseShieldPoints,
   };
 
-  Future<void> loadUpgrades() async {
-    final prefs = await SharedPreferences.getInstance();
-    _upgradeLevels['sword'] = prefs.getInt('upgrade_sword') ?? 1;
-    _upgradeLevels['heart'] = prefs.getInt('upgrade_heart') ?? 1;
-    _upgradeLevels['star'] = prefs.getInt('upgrade_star') ?? 1;
-    _upgradeLevels['shield'] = prefs.getInt('upgrade_shield') ?? 1;
+  // Removed loadUpgrades() method - all data should come from GameManager synchronization
+  // Use syncWithUpgradeLevels() instead for proper data flow
+
+  // Synchronize UpgradeManager with upgrade levels from GameManager
+  void syncWithUpgradeLevels(Map<String, int> upgradeLevels) {
+    _upgradeLevels = Map<String, int>.from(upgradeLevels);
+
+    // Ensure all upgrade types exist with at least level 1
+    for (String upgradeType in ['sword', 'heart', 'star', 'shield']) {
+      if (!_upgradeLevels.containsKey(upgradeType)) {
+        _upgradeLevels[upgradeType] = 1;
+      }
+    }
+
+    print('UpgradeManager synced with levels: $_upgradeLevels');
   }
 
   int getUpgradeLevel(String tileType) {
@@ -39,14 +47,20 @@ class UpgradeManager {
     final baseValue = _baseValues[tileType] ?? 1;
     final upgradeLevel = _upgradeLevels[tileType] ?? 1;
 
+    int effectiveValue;
     if (tileType == 'sword') {
-      return _calculateSwordDamage(baseValue, upgradeLevel);
+      effectiveValue = _calculateSwordDamage(baseValue, upgradeLevel);
     } else if (tileType == 'heart') {
-      return _calculateHeartHeal(baseValue, upgradeLevel);
+      effectiveValue = _calculateHeartHeal(baseValue, upgradeLevel);
     } else {
       // For star and shield, use simple increment
-      return baseValue + (upgradeLevel - 1);
+      effectiveValue = baseValue + (upgradeLevel - 1);
     }
+
+    print(
+      'UpgradeManager: $tileType level $upgradeLevel -> effective value $effectiveValue (base: $baseValue)',
+    );
+    return effectiveValue;
   }
 
   // Calculate sword damage with new formula:
@@ -102,6 +116,16 @@ class UpgradeManager {
     return totalBonus;
   }
 
+  int getPermanentPowerBonus() {
+    int totalBonus = 0;
+    for (String upgradeType in ['sword', 'heart', 'star', 'shield']) {
+      final level = _upgradeLevels[upgradeType] ?? 1;
+      totalBonus +=
+          (level ~/ 5) * 5; // Every 5 levels adds 5 permanent max power
+    }
+    return totalBonus;
+  }
+
   // Get effective values for each tile type
   int get effectiveSwordDamage => getEffectiveValue('sword');
   int get effectiveHeartHeal => getEffectiveValue('heart');
@@ -111,5 +135,6 @@ class UpgradeManager {
   // Update upgrade level (for UI synchronization)
   void updateUpgradeLevel(String tileType, int level) {
     _upgradeLevels[tileType] = level;
+    print('UpgradeManager: Updated $tileType to level $level');
   }
 }

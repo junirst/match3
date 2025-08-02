@@ -96,16 +96,46 @@ class _GameplayScreenState extends State<GameplayScreen> {
   }
 
   Future<void> _loadUpgrades() async {
-    await UpgradeManager.instance.loadUpgrades();
+    final gameManager = Provider.of<GameManager>(context, listen: false);
+
+    // Sync UpgradeManager with GameManager's upgrade levels
+    UpgradeManager.instance.syncWithUpgradeLevels(gameManager.upgradeLevels);
 
     // Update max health with permanent bonuses
     final permanentHealthBonus = UpgradeManager.instance
         .getPermanentHealthBonus();
     maxPlayerHealth = GameConstants.maxPlayerHealth + permanentHealthBonus;
-    currentPlayerHealth = maxPlayerHealth; // Reset to full health with new max
+
+    // Update max power points with permanent bonuses
+    final permanentPowerBonus = UpgradeManager.instance
+        .getPermanentPowerBonus();
+    maxPowerPoints = GameConstants.maxPowerPoints + permanentPowerBonus;
+
+    // Only reset to full health if current health is at the old max (meaning it's a fresh start)
+    if (currentPlayerHealth == GameConstants.maxPlayerHealth) {
+      currentPlayerHealth = maxPlayerHealth; // Set to new max health
+    } else if (currentPlayerHealth > maxPlayerHealth) {
+      // Handle case where current health exceeds new max (shouldn't happen but just in case)
+      currentPlayerHealth = maxPlayerHealth;
+    }
+    // If current health is less than max, keep it as is (player took damage)
+
+    // Sync the max values with the Match3Game engine
+    game.maxPlayerHealth = maxPlayerHealth;
+    game.maxPlayerPower = maxPowerPoints;
+    game.playerHealth = currentPlayerHealth;
+    game.playerPower = currentPowerPoints;
 
     print(
       'Player health updated: $maxPlayerHealth (base: ${GameConstants.maxPlayerHealth} + permanent bonus: $permanentHealthBonus)',
+    );
+    print(
+      'Max power updated: $maxPowerPoints (base: ${GameConstants.maxPowerPoints} + permanent bonus: $permanentPowerBonus)',
+    );
+    print('Current player health: $currentPlayerHealth');
+    print('Synced upgrade levels: ${gameManager.upgradeLevels}');
+    print(
+      'Match3Game synced with max health: $maxPlayerHealth, max power: $maxPowerPoints',
     );
   }
 

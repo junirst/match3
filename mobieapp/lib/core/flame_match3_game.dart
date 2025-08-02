@@ -25,9 +25,9 @@ class Match3Game extends FlameGame
 
   // Combat stats
   int enemyHealth = 100;
-  int maxEnemyHealth = 100;
+  int maxEnemyHealth = 1000;
   int playerHealth = 100;
-  int maxPlayerHealth = 100;
+  int maxPlayerHealth = 340;
   int playerPower = 0;
   int maxPlayerPower = 50; // Sync with TowerGameplayScreen
   bool hasActiveMatches = false;
