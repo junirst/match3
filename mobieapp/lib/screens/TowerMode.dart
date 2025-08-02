@@ -6,6 +6,7 @@ import '../managers/language_manager.dart';
 import '../managers/game_manager.dart';
 import 'LeaderboardScreen.dart';
 import 'TowerGameplayScreen.dart';
+import 'login_screen.dart';
 
 class TowerModeScreen extends StatefulWidget {
   const TowerModeScreen({super.key});
@@ -106,11 +107,21 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
       } else if (buttonName == 'back') {
         Navigator.pop(context);
       } else if (buttonName == 'achievement') {
-        // Navigate to leaderboard
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => LeaderboardScreen()),
-        );
+        // Check if player is logged in before accessing leaderboard
+        final gameManager = Provider.of<GameManager>(context, listen: false);
+        if (gameManager.isGuestMode) {
+          // Navigate to login screen if not logged in
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => LoginScreen()),
+          );
+        } else {
+          // Navigate to leaderboard if logged in
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => LeaderboardScreen()),
+          );
+        }
       }
     });
   }
@@ -353,10 +364,15 @@ class _TowerModeScreenState extends State<TowerModeScreen> {
                 right: 0,
                 child: Center(
                   child: Text(
-                    _getLocalizedText(
-                      'RECORD: LEVEL ${gameManager.currentPlayer?.towerRecord ?? 0}',
-                      'KỶ LỤC: CẤP ${gameManager.currentPlayer?.towerRecord ?? 0}',
-                    ),
+                    gameManager.isGuestMode
+                        ? _getLocalizedText(
+                            'Log in to see tower record',
+                            'Đăng nhập để xem kỷ lục tháp',
+                          )
+                        : _getLocalizedText(
+                            'RECORD: LEVEL ${gameManager.currentPlayer?.towerRecord ?? 0}',
+                            'KỶ LỤC: CẤP ${gameManager.currentPlayer?.towerRecord ?? 0}',
+                          ),
                     style: TextStyle(
                       fontFamily: 'Bungee',
                       fontSize: screenWidth * 0.04,

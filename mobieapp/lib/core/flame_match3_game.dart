@@ -42,8 +42,8 @@ class Match3Game extends FlameGame
   int _comboCount = 0;
   int _cascadeCount = 0;
 
-  // Enemy damage scaling
-  int _enemyBaseDamage = 5;
+  // Enemy damage scaling (nerfed)
+  int _enemyBaseDamage = 3; // Reduced from 5 to 3
   int _enemyTurnCount = 0;
 
   // Assets
@@ -220,8 +220,9 @@ class Match3Game extends FlameGame
   int get currentEnemyDamage {
     // Calculate damage for NEXT enemy turn (after _enemyTurnCount would be incremented)
     final nextTurnCount = _enemyTurnCount + 1;
-    final scalingDamage = _enemyBaseDamage + ((nextTurnCount - 1) * 5);
-    return scalingDamage > 50 ? 50 : scalingDamage;
+    final scalingDamage =
+        _enemyBaseDamage + ((nextTurnCount - 1) * 2); // Reduced from 5 to 2
+    return scalingDamage > 25 ? 25 : scalingDamage; // Reduced cap from 50 to 25
   }
 
   void onTileTapped(GameTile tile) {
@@ -549,14 +550,17 @@ class Match3Game extends FlameGame
       'Starting enemy turn: PlayerTurn=$isPlayerTurn, Processing=$isProcessingTurn',
     );
 
-    // Scaling mob attack: starts at 5 damage, increases by 5 each turn, caps at 50
+    // Nerfed mob attack: starts at 3 damage, increases by 2 each turn, caps at 25
     print('Before increment: _enemyTurnCount = $_enemyTurnCount');
     _enemyTurnCount++;
     print('After increment: _enemyTurnCount = $_enemyTurnCount');
-    final scalingDamage = _enemyBaseDamage + ((_enemyTurnCount - 1) * 5);
-    final baseDamage = scalingDamage > 50 ? 50 : scalingDamage;
+    final scalingDamage =
+        _enemyBaseDamage + ((_enemyTurnCount - 1) * 2); // Reduced from 5 to 2
+    final baseDamage = scalingDamage > 25
+        ? 25
+        : scalingDamage; // Reduced cap from 50 to 25
     print(
-      'Calculation: $_enemyBaseDamage + (($_enemyTurnCount - 1) * 5) = $scalingDamage, capped at $baseDamage',
+      'Calculation: $_enemyBaseDamage + (($_enemyTurnCount - 1) * 2) = $scalingDamage, capped at $baseDamage',
     );
 
     print('Enemy turn $_enemyTurnCount: dealing $baseDamage damage');

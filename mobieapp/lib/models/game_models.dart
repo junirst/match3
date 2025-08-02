@@ -452,7 +452,8 @@ class PlayerProgress {
       playerId: json['playerId'] ?? '',
       chapterId: json['chapterId'],
       levelId:
-          json['levelNumber'], // Changed from 'levelId' to 'levelNumber' to match backend
+          json['levelId'] ??
+          json['levelNumber'], // Support both keys for compatibility
       isCompleted: json['isCompleted'] ?? false,
       bestScore: json['bestScore'],
       completedDate: json['completedDate'] != null

@@ -42,8 +42,7 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
   static int shieldPoints = 0;
   static const int shieldBlockThreshold = GameConstants.shieldBlockThreshold;
 
-  // Damage and healing values
-  static const int swordDamage = GameConstants.baseSwordDamage;
+  // Damage and healing values (removed unused swordDamage)
   static const int starPowerGain = GameConstants.baseStarPowerGain;
   static const int powerAttackDamage = GameConstants.basePowerAttackDamage;
 
@@ -105,6 +104,20 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
 
   Future<void> _loadUpgrades() async {
     await UpgradeManager.instance.loadUpgrades();
+
+    // Update max health with permanent bonuses
+    final permanentHealthBonus = UpgradeManager.instance
+        .getPermanentHealthBonus();
+    maxPlayerHealth = GameConstants.maxPlayerHealth + permanentHealthBonus;
+
+    // Only reset health if starting a new tower run, not between floors
+    if (currentPlayerHealth <= 0 || currentPlayerHealth > maxPlayerHealth) {
+      currentPlayerHealth = maxPlayerHealth;
+    }
+
+    print(
+      'Tower player health updated: $maxPlayerHealth (base: ${GameConstants.maxPlayerHealth} + permanent bonus: $permanentHealthBonus)',
+    );
   }
 
   Future<void> _loadEquippedWeapon() async {
@@ -133,16 +146,37 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
   }
 
   void _initializeEnemy() {
-    final enemy = enemyTypes[_random.nextInt(enemyTypes.length)];
+    Map<String, dynamic> enemy;
+
+    // Boss every 5th floor
+    if (currentFloor % 5 == 0) {
+      // Boss floor - always dragon
+      enemy = enemyTypes.firstWhere((e) => e['isDragon'] == true);
+    } else {
+      // Regular floor - random small enemy (non-dragon)
+      final smallEnemies = enemyTypes
+          .where((e) => e['isDragon'] == false)
+          .toList();
+      enemy = smallEnemies[_random.nextInt(smallEnemies.length)];
+    }
+
     enemyAsset = enemy['asset'];
     enemyLabel = enemy['label'];
     enemyColor = enemy['color'];
-    maxEnemyHealth = enemy['baseHealth'];
-    currentEnemyHealth = maxEnemyHealth;
     isDragon = enemy['isDragon'];
-    damageThresholdIncrease = currentFloor - 1;
+
+    // Calculate scaled health and damage based on floor with 1.05x multiplier per floor
+    double floorMultiplier =
+        1.0 +
+        (currentFloor - 1) * 0.05; // 1.05x scaling per floor (reduced from 0.2)
+    maxEnemyHealth = (enemy['baseHealth'] * floorMultiplier).round();
+    currentEnemyHealth = maxEnemyHealth;
+
+    damageThresholdIncrease =
+        (enemy['baseDamage'] * floorMultiplier).round() - enemy['baseDamage'];
+
     print(
-      'Floor $currentFloor: Facing $enemyLabel (Health: $maxEnemyHealth, Damage Increase: $damageThresholdIncrease)',
+      'Floor $currentFloor: Facing ${isDragon ? 'BOSS ' : ''}$enemyLabel (Health: $maxEnemyHealth [base: ${enemy['baseHealth']}], Multiplier: ${floorMultiplier.toStringAsFixed(2)}x)',
     );
   }
 
@@ -154,8 +188,20 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
         case 0: // Sword
           int effectiveSwordDamage =
               UpgradeManager.instance.effectiveSwordDamage;
-          int damage = effectiveSwordDamage * (matchCount ~/ 3);
-          if (matchCount > 3) damage += (matchCount - 3) * 2;
+
+          // New damage calculation: Base + (Base × 0.5 × (Match Count - 3))
+          int damage;
+          if (matchCount >= 4) {
+            double bonusDamage = effectiveSwordDamage * 0.5 * (matchCount - 3);
+            damage = effectiveSwordDamage + bonusDamage.round();
+          } else {
+            // 3-tile matches get base damage only
+            damage = effectiveSwordDamage;
+          }
+
+          // Add permanent damage bonus from upgrades
+          damage += UpgradeManager.instance.getPermanentDamageBonus();
+
           currentEnemyHealth = (currentEnemyHealth - damage).clamp(
             0,
             maxEnemyHealth,
@@ -168,7 +214,7 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
 
           game.enemyHealth = currentEnemyHealth; // Sync with game
           print(
-            'Sword match: $damage damage (upgraded from $swordDamage to $effectiveSwordDamage), Enemy HP: $currentEnemyHealth/$maxEnemyHealth',
+            'Sword match: $damage damage (base: $effectiveSwordDamage${matchCount >= 4 ? ' + bonus: ${(effectiveSwordDamage * 0.5 * (matchCount - 3)).round()}' : ''}), Enemy HP: $currentEnemyHealth/$maxEnemyHealth',
           );
           if (currentEnemyHealth <= 0) {
             Future.delayed(Duration(milliseconds: 500), () {
@@ -182,9 +228,9 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
           int gainedShieldPoints =
               effectiveShieldPoints * (matchCount ~/ 3) +
               effectiveShieldPoints; // Each shield tile contributes upgraded amount
-          shieldPoints += gainedShieldPoints;
+          shieldPoints += gainedShieldPoints; // Accumulate shield points
           print(
-            'Shield match! Gained $gainedShieldPoints shield points (upgraded from $matchCount to ${matchCount}x$effectiveShieldPoints). Shield: $shieldPoints/$shieldBlockThreshold',
+            'Shield match! Gained $gainedShieldPoints shield points (upgraded from $matchCount to ${matchCount}x$effectiveShieldPoints). Total Shield: $shieldPoints (threshold: $shieldBlockThreshold)',
           );
           break;
         case 2: // Heart
@@ -241,11 +287,17 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
       // Use the scaling damage from Match3Game directly, no additional floor damage
       int finalDamage = damage;
 
-      // Shield blocking system
+      // Shield blocking system - use 10 shield to block damage, keep remainder
       if (shieldPoints >= shieldBlockThreshold) {
-        shieldPoints = 0; // Reset shield points after blocking
+        int blocksUsed =
+            shieldPoints ~/
+            shieldBlockThreshold; // How many blocks of 10 we can use
+        shieldPoints -=
+            blocksUsed * shieldBlockThreshold; // Subtract only the used shields
         finalDamage = 0; // Block all damage
-        print('Shield blocked all damage! Shield points reset.');
+        print(
+          'Shield blocked all damage! Used ${blocksUsed * shieldBlockThreshold} shield points, ${shieldPoints} remaining.',
+        );
       }
 
       if (excessHealth > 0) {

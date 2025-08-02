@@ -21,8 +21,8 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
     'shield': 180,
   };
 
-  // Maximum level for upgrades (level 5 = +4 bonus)
-  static const int maxUpgradeLevel = 5;
+  // Maximum level for upgrades (level 15 = +14 bonus)
+  static const int maxUpgradeLevel = 15;
 
   @override
   void initState() {

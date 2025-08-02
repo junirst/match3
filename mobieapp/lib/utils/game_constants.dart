@@ -16,10 +16,10 @@ class GameConstants {
   static const int baseShieldPoints = 3;
   static const int basePowerAttackDamage = 50;
 
-  // Enemy configuration
-  static const int baseEnemyDamage = 5;
-  static const int enemyDamageIncrement = 5;
-  static const int maxEnemyDamage = 50;
+  // Enemy configuration (nerfed)
+  static const int baseEnemyDamage = 3; // Reduced from 5 to 3
+  static const int enemyDamageIncrement = 2; // Reduced from 5 to 2
+  static const int maxEnemyDamage = 25; // Reduced from 50 to 25
 
   // Weapon passive values
   static const int daggerBonusHealing = 10;
@@ -36,7 +36,7 @@ class GameConstants {
   static const double sfxVolume = 0.5;
 
   // Upgrade system
-  static const int maxUpgradeLevel = 4;
+  static const int maxUpgradeLevel = 15; // Increased from 4 to 15
   static const int upgradeValueIncrement = 1;
 
   // Private constructor to prevent instantiation

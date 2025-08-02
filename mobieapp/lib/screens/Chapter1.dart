@@ -39,6 +39,11 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
   Future<void> _loadLevelCompletionStatus() async {
     final gameManager = Provider.of<GameManager>(context, listen: false);
 
+    // Debug: Check if we're in guest mode
+    print('=== Chapter1 Debug Info ===');
+    print('Guest mode: ${gameManager.isGuestMode}');
+    print('Current coins: ${gameManager.currentCoins}');
+
     // Refresh player progress from server to ensure we have latest completion status
     await gameManager.loadPlayerProgress();
 
@@ -62,9 +67,13 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
           .where((p) => p.chapterId == 1)
           .toList();
       print('Chapter 1 progress entries: ${chapter1Progress.length}');
+      print('Total progress entries: ${gameManager.playerProgress.length}');
       for (var progress in chapter1Progress) {
-        print('Level ${progress.levelId}: completed=${progress.isCompleted}');
+        print(
+          'Level ${progress.levelId}: completed=${progress.isCompleted}, score=${progress.bestScore}',
+        );
       }
+      print('=== End Debug Info ===');
     });
   }
 

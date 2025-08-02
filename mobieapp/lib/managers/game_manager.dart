@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import '../services/api_service.dart';
 import '../models/game_models.dart';
 
@@ -13,14 +14,22 @@ class GameManager extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
+  // Guest mode data
+  int _guestCoins = 100; // Starting coins for guest
+  List<PlayerProgress> _guestProgress = []; // Guest progress storage
+  Map<String, int> _guestUpgradeLevels = {}; // Guest upgrade levels
+  String _guestEquippedWeapon = 'Hand'; // Guest equipped weapon
+  List<String> _guestOwnedWeapons = ['Hand']; // Guest owned weapons
+
   // Season management
   int _currentSeason = 0;
   DateTime? _seasonEndTime;
 
-  // Getters
+  // Getters that support guest mode
   Player? get currentPlayer => _currentPlayer;
   List<Chapter> get chapters => _chapters;
-  List<PlayerProgress> get playerProgress => _playerProgress;
+  List<PlayerProgress> get playerProgress =>
+      isGuestMode ? _guestProgress : _playerProgress;
   List<LeaderboardEntry> get leaderboard => _leaderboard;
   PlayerStats? get playerStats => _playerStats;
   GameSession? get currentGameSession => _currentGameSession;
@@ -36,6 +45,9 @@ class GameManager extends ChangeNotifier {
     await _loadPlayerFromStorage();
     if (_currentPlayer != null) {
       await loadPlayerData();
+    } else {
+      // If no player is loaded, initialize guest mode data
+      await _loadGuestModeData();
     }
     // Load season data
     await loadSeasonData();
@@ -183,17 +195,23 @@ class GameManager extends ChangeNotifier {
     _upgradeLevels = {}; // Clear upgrades data
     _error = null;
 
+    // Clear guest mode data
+    _guestCoins = 100;
+    _guestProgress = [];
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('player_id');
     await _cleanupLegacyCoinStorage();
+    // Clear guest data from storage
+    await prefs.remove('guest_coins');
+    await prefs.remove('guest_progress');
     notifyListeners();
   }
 
   // Guest mode functionality
-  void enableGuestMode() {
+  void enableGuestMode() async {
     _currentPlayer = null;
     _chapters = [];
-    _playerProgress = [];
     _leaderboard = [];
     _playerStats = null;
     _currentGameSession = null;
@@ -204,10 +222,121 @@ class GameManager extends ChangeNotifier {
       'shield': 1,
     }; // Default upgrades for guest
     _error = null;
+
+    // Load guest mode progress and coins from local storage
+    await _loadGuestModeData();
+
     notifyListeners();
   }
 
   bool get isGuestMode => _currentPlayer == null;
+
+  // Guest mode data management
+  Future<void> _loadGuestModeData() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // Load guest coins
+    _guestCoins = prefs.getInt('guest_coins') ?? 100;
+
+    // Load guest progress from SharedPreferences
+    final progressData = prefs.getStringList('guest_progress') ?? [];
+    _guestProgress = progressData.map((jsonString) {
+      final json = jsonDecode(jsonString);
+      return PlayerProgress.fromJson(json);
+    }).toList();
+
+    // Load guest upgrade levels
+    final upgradeData = prefs.getString('guest_upgrades');
+    if (upgradeData != null) {
+      final upgrades = jsonDecode(upgradeData) as Map<String, dynamic>;
+      _guestUpgradeLevels = upgrades.map(
+        (key, value) => MapEntry(key, value as int),
+      );
+    } else {
+      _guestUpgradeLevels = {'sword': 1, 'heart': 1, 'star': 1, 'shield': 1};
+    }
+
+    // Load guest equipped weapon
+    _guestEquippedWeapon = prefs.getString('guest_weapon') ?? 'Hand';
+
+    // Load guest owned weapons
+    final ownedWeaponsData = prefs.getStringList('guest_owned_weapons');
+    if (ownedWeaponsData != null) {
+      _guestOwnedWeapons = ownedWeaponsData;
+    } else {
+      _guestOwnedWeapons = ['Hand'];
+    }
+
+    print(
+      'Loaded guest mode data: ${_guestCoins} coins, ${_guestProgress.length} progress entries, weapon: $_guestEquippedWeapon',
+    );
+
+    // Debug: Print each progress entry being loaded
+    for (var progress in _guestProgress) {
+      print(
+        'Loaded progress: Chapter ${progress.chapterId}, Level ${progress.levelId}, Completed: ${progress.isCompleted}',
+      );
+    }
+
+    // Debug: Print upgrade levels
+    print('Guest upgrade levels: $_guestUpgradeLevels');
+  }
+
+  // Clear guest mode data (for testing)
+  Future<void> clearGuestModeData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('guest_coins');
+    await prefs.remove('guest_progress');
+    await prefs.remove('guest_upgrades');
+    await prefs.remove('guest_weapon');
+    _guestCoins = 100;
+    _guestProgress.clear();
+    _guestUpgradeLevels = {'sword': 1, 'heart': 1, 'star': 1, 'shield': 1};
+    _guestEquippedWeapon = 'Hand';
+    _guestOwnedWeapons = ['Hand'];
+    notifyListeners();
+    print(
+      'Guest mode data cleared. Reset to 100 coins, no progress, level 1 upgrades, and Hand weapon.',
+    );
+  }
+
+  Future<void> _saveGuestModeData() async {
+    if (!isGuestMode) return;
+
+    final prefs = await SharedPreferences.getInstance();
+
+    // Save guest coins
+    await prefs.setInt('guest_coins', _guestCoins);
+
+    // Save guest progress
+    final progressData = _guestProgress
+        .map((progress) => jsonEncode(progress.toJson()))
+        .toList();
+    await prefs.setStringList('guest_progress', progressData);
+
+    // Save guest upgrade levels
+    await prefs.setString('guest_upgrades', jsonEncode(_guestUpgradeLevels));
+
+    // Save guest equipped weapon
+    await prefs.setString('guest_weapon', _guestEquippedWeapon);
+
+    // Save guest owned weapons
+    await prefs.setStringList('guest_owned_weapons', _guestOwnedWeapons);
+
+    print(
+      'Saved guest mode data: ${_guestCoins} coins, ${_guestProgress.length} progress entries, weapon: $_guestEquippedWeapon',
+    );
+
+    // Debug: Print each progress entry being saved
+    for (var progress in _guestProgress) {
+      print(
+        'Saving progress: Chapter ${progress.chapterId}, Level ${progress.levelId}, Completed: ${progress.isCompleted}',
+      );
+    }
+
+    // Debug: Print upgrade levels
+    print('Saved guest upgrade levels: $_guestUpgradeLevels');
+  }
 
   // Player data methods
   Future<void> loadPlayerData() async {
@@ -264,6 +393,13 @@ class GameManager extends ChangeNotifier {
   }
 
   Future<void> loadPlayerProgress() async {
+    // In guest mode, load from local storage
+    if (isGuestMode) {
+      await _loadGuestModeData();
+      notifyListeners();
+      return;
+    }
+
     if (_currentPlayer == null) return;
 
     try {
@@ -384,6 +520,57 @@ class GameManager extends ChangeNotifier {
     required int score,
     int coinsEarned = 0,
   }) async {
+    // Handle guest mode with local storage
+    if (isGuestMode) {
+      // Add coins for guest
+      if (coinsEarned > 0) {
+        _guestCoins += coinsEarned;
+      }
+
+      // Create or update guest progress
+      final existingProgressIndex = _guestProgress.indexWhere(
+        (p) => p.chapterId == chapterId && p.levelId == levelId,
+      );
+
+      if (existingProgressIndex >= 0) {
+        // Update existing progress if score is better
+        final existingProgress = _guestProgress[existingProgressIndex];
+        if (score > (existingProgress.bestScore ?? 0)) {
+          _guestProgress[existingProgressIndex] = PlayerProgress(
+            progressId: existingProgress.progressId,
+            playerId: 'guest',
+            chapterId: chapterId,
+            levelId: levelId,
+            isCompleted: true,
+            bestScore: score,
+            completedDate: DateTime.now(),
+          );
+        }
+      } else {
+        // Create new progress entry
+        _guestProgress.add(
+          PlayerProgress(
+            progressId: _guestProgress.length + 1,
+            playerId: 'guest',
+            chapterId: chapterId,
+            levelId: levelId,
+            isCompleted: true,
+            bestScore: score,
+            completedDate: DateTime.now(),
+          ),
+        );
+      }
+
+      // Save guest mode data
+      await _saveGuestModeData();
+      notifyListeners();
+
+      print(
+        'Guest completed Level $chapterId.$levelId - Coins: $_guestCoins (+$coinsEarned), Score: $score',
+      );
+      return true;
+    }
+
     if (_currentPlayer == null) return false;
 
     try {
@@ -518,6 +705,35 @@ class GameManager extends ChangeNotifier {
 
   // Weapon management methods
   Future<bool> purchaseWeapon(String weaponName, int cost) async {
+    // Handle guest mode weapon purchase
+    if (isGuestMode) {
+      // Check if weapon is already owned
+      if (_guestOwnedWeapons.contains(weaponName)) {
+        print('Guest already owns weapon: $weaponName');
+        return true;
+      }
+
+      // Check if guest has enough coins
+      if (_guestCoins < cost) {
+        print('Not enough coins! Need $cost but have $_guestCoins');
+        return false;
+      }
+
+      // Purchase weapon for guest
+      _guestOwnedWeapons.add(weaponName);
+      _guestCoins -= cost;
+
+      // Save guest data
+      await _saveGuestModeData();
+      notifyListeners();
+
+      print(
+        'Guest purchased weapon: $weaponName for $cost coins. Remaining coins: $_guestCoins',
+      );
+      return true;
+    }
+
+    // Handle authenticated user weapon purchase
     if (_currentPlayer == null) return false;
 
     // Check if player has enough coins before making API call
@@ -593,6 +809,26 @@ class GameManager extends ChangeNotifier {
   }
 
   Future<bool> equipWeapon(String weaponName) async {
+    // Handle guest mode weapon equipping
+    if (isGuestMode) {
+      // Check if weapon is owned by guest
+      if (!_guestOwnedWeapons.contains(weaponName)) {
+        print('Guest does not own weapon: $weaponName');
+        return false;
+      }
+
+      // Equip weapon for guest
+      _guestEquippedWeapon = weaponName;
+
+      // Save guest data
+      await _saveGuestModeData();
+      notifyListeners();
+
+      print('Guest equipped weapon: $weaponName');
+      return true;
+    }
+
+    // Handle authenticated user weapon equipping
     if (_currentPlayer == null) return false;
 
     try {
@@ -617,6 +853,10 @@ class GameManager extends ChangeNotifier {
 
   // Get weapons owned by player
   List<String> get ownedWeapons {
+    if (isGuestMode) {
+      return _guestOwnedWeapons;
+    }
+
     if (_currentPlayer?.weapons == null) return ['Sword']; // Default sword
 
     return _currentPlayer!.weapons!
@@ -625,7 +865,9 @@ class GameManager extends ChangeNotifier {
         .toList();
   }
 
-  String get equippedWeapon => _currentPlayer?.equippedWeapon ?? 'Sword';
+  String get equippedWeapon => isGuestMode
+      ? _guestEquippedWeapon
+      : (_currentPlayer?.equippedWeapon ?? 'Sword');
 
   // Player settings getters
   bool get bgmEnabled => _currentPlayer?.settings?.first.bgmEnabled ?? true;
@@ -686,7 +928,8 @@ class GameManager extends ChangeNotifier {
   }
 
   // Coin management methods
-  int get currentCoins => _currentPlayer?.coins ?? 0;
+  int get currentCoins =>
+      isGuestMode ? _guestCoins : (_currentPlayer?.coins ?? 0);
 
   Future<bool> spendCoins(int amount, String reason) async {
     if (_currentPlayer == null) return false;
@@ -752,7 +995,8 @@ class GameManager extends ChangeNotifier {
   // Upgrade management methods
   Map<String, int> _upgradeLevels = {};
 
-  Map<String, int> get upgradeLevels => _upgradeLevels;
+  Map<String, int> get upgradeLevels =>
+      isGuestMode ? _guestUpgradeLevels : _upgradeLevels;
 
   Future<void> loadPlayerUpgrades() async {
     if (_currentPlayer == null) return;
@@ -810,6 +1054,33 @@ class GameManager extends ChangeNotifier {
     int quantity,
     int totalCost,
   ) async {
+    // Handle guest mode upgrades
+    if (isGuestMode) {
+      // Check if guest has enough coins
+      if (_guestCoins < totalCost) {
+        _setError('Not enough coins! Need $totalCost but have $_guestCoins');
+        return false;
+      }
+
+      // Calculate new level
+      final currentLevel = _guestUpgradeLevels[upgradeType] ?? 1;
+      final newLevel = currentLevel + quantity;
+
+      // Update guest upgrade levels and coins
+      _guestUpgradeLevels[upgradeType] = newLevel;
+      _guestCoins -= totalCost;
+
+      // Save guest data
+      await _saveGuestModeData();
+      notifyListeners();
+
+      print(
+        'Guest purchased $upgradeType upgrade: Level $currentLevel -> $newLevel, Cost: $totalCost, Remaining coins: $_guestCoins',
+      );
+      return true;
+    }
+
+    // Handle authenticated user upgrades
     if (_currentPlayer == null) return false;
 
     // Check if player has enough coins

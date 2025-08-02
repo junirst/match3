@@ -40,12 +40,12 @@ class _GameplayScreenState extends State<GameplayScreen> {
   static const int starPowerGain = GameConstants.baseStarPowerGain;
   static const int powerAttackDamage = 50;
 
-  // Damage values for different tile types
-  static const int swordDamage = 10;
+  // Damage values for different tile types (removed unused swordDamage)
 
   // Turn-based system
   bool isPlayerTurn = true;
   bool isProcessingTurn = false;
+  bool _levelCompleted = false; // Prevent duplicate level completion
 
   // Enemy damage scaling
   int _enemyTurnCount = 0;
@@ -97,6 +97,16 @@ class _GameplayScreenState extends State<GameplayScreen> {
 
   Future<void> _loadUpgrades() async {
     await UpgradeManager.instance.loadUpgrades();
+
+    // Update max health with permanent bonuses
+    final permanentHealthBonus = UpgradeManager.instance
+        .getPermanentHealthBonus();
+    maxPlayerHealth = GameConstants.maxPlayerHealth + permanentHealthBonus;
+    currentPlayerHealth = maxPlayerHealth; // Reset to full health with new max
+
+    print(
+      'Player health updated: $maxPlayerHealth (base: ${GameConstants.maxPlayerHealth} + permanent bonus: $permanentHealthBonus)',
+    );
   }
 
   Future<void> _loadEquippedWeapon() async {
@@ -140,19 +150,26 @@ class _GameplayScreenState extends State<GameplayScreen> {
         case 0: // Sword - deals damage
           int effectiveSwordDamage =
               UpgradeManager.instance.effectiveSwordDamage;
-          int damage =
-              effectiveSwordDamage *
-              (matchCount ~/ 3); // Base damage per set of 3
-          if (matchCount > 3) {
-            // Bonus damage for longer matches
-            damage += (matchCount - 3) * 2;
+
+          // New damage calculation: Base + (Base × 0.5 × (Match Count - 3))
+          int damage;
+          if (matchCount >= 4) {
+            double bonusDamage = effectiveSwordDamage * 0.5 * (matchCount - 3);
+            damage = effectiveSwordDamage + bonusDamage.round();
+          } else {
+            // 3-tile matches get base damage only
+            damage = effectiveSwordDamage;
           }
+
+          // Add permanent damage bonus from upgrades
+          damage += UpgradeManager.instance.getPermanentDamageBonus();
+
           currentEnemyHealth = (currentEnemyHealth - damage).clamp(
             0,
             maxEnemyHealth,
           );
           print(
-            'Sword match! Dealt $damage damage (upgraded from $swordDamage to $effectiveSwordDamage). Enemy health: $currentEnemyHealth/$maxEnemyHealth',
+            'Sword match! Dealt $damage damage (base: $effectiveSwordDamage${matchCount >= 4 ? ' + bonus: ${(effectiveSwordDamage * 0.5 * (matchCount - 3)).round()}' : ''}). Enemy health: $currentEnemyHealth/$maxEnemyHealth',
           );
 
           // Check if enemy is defeated immediately (don't wait for turn end)
@@ -171,9 +188,9 @@ class _GameplayScreenState extends State<GameplayScreen> {
           int gainedShieldPoints =
               matchCount *
               effectiveShieldPoints; // Each shield tile contributes upgraded amount
-          shieldPoints += gainedShieldPoints;
+          shieldPoints += gainedShieldPoints; // Accumulate shield points
           print(
-            'Shield match! Gained $gainedShieldPoints shield points (upgraded from $matchCount to ${matchCount}x$effectiveShieldPoints). Shield: $shieldPoints/$shieldBlockThreshold',
+            'Shield match! Gained $gainedShieldPoints shield points (upgraded from $matchCount to ${matchCount}x$effectiveShieldPoints). Total Shield: $shieldPoints (threshold: $shieldBlockThreshold)',
           );
           break;
         case 2: // Heart - heals player
@@ -287,11 +304,17 @@ class _GameplayScreenState extends State<GameplayScreen> {
     int mobDamage = _calculateMobDamage();
 
     setState(() {
-      // First check if shield can block all damage
+      // Shield blocking system - use 10 shield to block damage, keep remainder
       if (shieldPoints >= shieldBlockThreshold) {
-        shieldPoints = 0; // Reset shield points after blocking
-        print('Shield blocked all damage! Shield points reset to 0.');
+        int blocksUsed =
+            shieldPoints ~/
+            shieldBlockThreshold; // How many blocks of 10 we can use
+        shieldPoints -=
+            blocksUsed * shieldBlockThreshold; // Subtract only the used shields
         mobDamage = 0; // Block all damage
+        print(
+          'Shield blocked all damage! Used ${blocksUsed * shieldBlockThreshold} shield points, ${shieldPoints} remaining.',
+        );
       } else {
         // Then check if excess health can absorb damage
         if (excessHealth > 0) {
@@ -335,14 +358,17 @@ class _GameplayScreenState extends State<GameplayScreen> {
   }
 
   int _calculateMobDamage() {
-    // Scaling mob attack: starts at 5 damage, increases by 5 each turn, caps at 50
+    // Reduced mob attack: starts at 3 damage, increases by 2 each turn, caps at 25 (nerfed from original)
     _enemyTurnCount++;
-    final baseDamage = 5;
-    final scalingDamage = baseDamage + ((_enemyTurnCount - 1) * 5);
-    final finalDamage = scalingDamage > 50 ? 50 : scalingDamage;
+    final baseDamage = 3; // Reduced from 5 to 3
+    final scalingDamage =
+        baseDamage + ((_enemyTurnCount - 1) * 2); // Reduced from 5 to 2
+    final finalDamage = scalingDamage > 25
+        ? 25
+        : scalingDamage; // Reduced cap from 50 to 25
 
     print(
-      'Enemy turn $_enemyTurnCount: calculating $baseDamage + (($_enemyTurnCount - 1) * 5) = $scalingDamage, capped at $finalDamage',
+      'Enemy turn $_enemyTurnCount: calculating $baseDamage + (($_enemyTurnCount - 1) * 2) = $scalingDamage, capped at $finalDamage',
     );
 
     return finalDamage;
@@ -361,18 +387,11 @@ class _GameplayScreenState extends State<GameplayScreen> {
           backgroundColor: Colors.transparent,
           child: Container(
             width: MediaQuery.of(context).size.width * 0.8,
-            height: MediaQuery.of(context).size.height * 0.4,
+            height: MediaQuery.of(context).size.height * 0.3,
             decoration: BoxDecoration(
               color: Colors.red[100],
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.red[800]!, width: 4),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 10,
-                  offset: Offset(0, 5),
-                ),
-              ],
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -384,26 +403,9 @@ class _GameplayScreenState extends State<GameplayScreen> {
                     fontSize: MediaQuery.of(context).size.width * 0.08,
                     fontWeight: FontWeight.bold,
                     color: Colors.red[800],
-                    shadows: [
-                      Shadow(
-                        color: Colors.black26,
-                        offset: Offset(1, 1),
-                        blurRadius: 2,
-                      ),
-                    ],
                   ),
                 ),
                 SizedBox(height: 20),
-                Text(
-                  'You have been defeated!',
-                  style: TextStyle(
-                    fontFamily: 'Bungee',
-                    fontSize: MediaQuery.of(context).size.width * 0.04,
-                    color: Colors.red[700],
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                SizedBox(height: 30),
                 GestureDetector(
                   onTap: () {
                     AudioManager().playButtonSound();
@@ -411,44 +413,20 @@ class _GameplayScreenState extends State<GameplayScreen> {
                     Navigator.pop(context); // Return to previous screen
                   },
                   child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 4,
-                          offset: Offset(2, 2),
-                        ),
-                      ],
+                      color: Colors.red[600],
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(color: Colors.red[800]!, width: 3),
                     ),
-                    child: Image.asset(
-                      'assets/images/ui/retry.png',
-                      height: 60,
-                      width: 120,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          height: 60,
-                          width: 120,
-                          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                          decoration: BoxDecoration(
-                            color: Colors.red[600],
-                            borderRadius: BorderRadius.circular(15),
-                            border: Border.all(color: Colors.red[800]!, width: 3),
-                          ),
-                          child: Center(
-                            child: Text(
-                              'RETRY',
-                              style: TextStyle(
-                                fontFamily: 'Bungee',
-                                color: Colors.white,
-                                fontSize: MediaQuery.of(context).size.width * 0.04,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
+                    child: Text(
+                      'RETRY',
+                      style: TextStyle(
+                        fontFamily: 'Bungee',
+                        color: Colors.white,
+                        fontSize: MediaQuery.of(context).size.width * 0.04,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -507,11 +485,20 @@ class _GameplayScreenState extends State<GameplayScreen> {
   }
 
   void _onEnemyDefeated() {
+    // Prevent duplicate level completion
+    if (_levelCompleted) {
+      print(
+        'Level already completed, ignoring duplicate _onEnemyDefeated call',
+      );
+      return;
+    }
+
     print('Enemy defeated!');
     AudioManager().playButtonSound();
     setState(() {
       isProcessingTurn = true;
       game.setProcessingTurn(true);
+      _levelCompleted = true; // Mark as completed
       print('Enemy defeated: Processing=$isProcessingTurn');
     });
 
@@ -626,6 +613,22 @@ class _GameplayScreenState extends State<GameplayScreen> {
     print(
       'Starting level completion save for Chapter ${widget.chapter} Level ${widget.level}',
     );
+    print(
+      'Player health: $currentPlayerHealth/$maxPlayerHealth, Enemy health: $currentEnemyHealth/$maxEnemyHealth',
+    );
+
+    // Double-check: Only save if enemy is actually defeated and player is alive
+    if (currentEnemyHealth > 0) {
+      print(
+        'ERROR: Trying to save level completion but enemy is not defeated!',
+      );
+      return;
+    }
+
+    if (currentPlayerHealth <= 0) {
+      print('ERROR: Trying to save level completion but player is defeated!');
+      return;
+    }
 
     // Save level completion through GameManager with coins
     final levelCompleted = await gameManager.completeLevel(

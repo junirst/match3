@@ -36,95 +36,228 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          'LEADERBOARD',
-          style: TextStyle(
-            fontFamily: 'Bungee',
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            shadows: [
-              Shadow(offset: Offset(-1, -1), color: Colors.black),
-              Shadow(offset: Offset(1, -1), color: Colors.black),
-              Shadow(offset: Offset(-1, 1), color: Colors.black),
-              Shadow(offset: Offset(1, 1), color: Colors.black),
-              Shadow(offset: Offset(0, 0), color: Colors.black, blurRadius: 2),
-            ],
-            letterSpacing: 2,
-          ),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.amber,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.grey,
-          labelStyle: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-          tabs: const [
-            Tab(text: 'GENERAL'),
-            Tab(text: 'TOWER'),
-          ],
-        ),
-      ),
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Background image
-          Container(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/backgrounds/background.png'),
-                fit: BoxFit.cover,
-              ),
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.3),
-                    Colors.black.withOpacity(0.6),
+    return Consumer<GameManager>(
+      builder: (context, gameManager, child) {
+        // If user is not logged in, show a message and back button
+        if (gameManager.isGuestMode) {
+          return Scaffold(
+            backgroundColor: Colors.transparent,
+            extendBodyBehindAppBar: true,
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              title: Text(
+                'LEADERBOARD',
+                style: TextStyle(
+                  fontFamily: 'Bungee',
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(offset: Offset(-1, -1), color: Colors.black),
+                    Shadow(offset: Offset(1, -1), color: Colors.black),
+                    Shadow(offset: Offset(-1, 1), color: Colors.black),
+                    Shadow(offset: Offset(1, 1), color: Colors.black),
+                    Shadow(
+                      offset: Offset(0, 0),
+                      color: Colors.black,
+                      blurRadius: 2,
+                    ),
                   ],
+                  letterSpacing: 2,
                 ),
               ),
+              centerTitle: true,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => Navigator.pop(context),
+              ),
             ),
-          ),
-
-          // Content
-          SafeArea(
-            child: Consumer<GameManager>(
-              builder: (context, gameManager, child) {
-                return gameManager.isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(color: Colors.amber),
-                      )
-                    : TabBarView(
-                        controller: _tabController,
-                        children: [
-                          _buildGeneralLeaderboard(),
-                          _buildTowerLeaderboard(),
+            body: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Background image
+                Container(
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage(
+                        'assets/images/backgrounds/background.png',
+                      ),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withOpacity(0.3),
+                          Colors.black.withOpacity(0.6),
                         ],
-                      );
-              },
+                      ),
+                    ),
+                  ),
+                ),
+                // Content
+                SafeArea(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.lock, size: 80, color: Colors.white),
+                          SizedBox(height: 20),
+                          Text(
+                            'Please log in to view the leaderboard',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: 'Bungee',
+                              fontSize: 20,
+                              color: Colors.white,
+                              shadows: [
+                                Shadow(
+                                  offset: Offset(1, 1),
+                                  color: Colors.black,
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 30),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(context); // Go back
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue[600],
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 30,
+                                vertical: 15,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: Text(
+                              'Go Back',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // Normal leaderboard content for logged in users
+        return Scaffold(
+          backgroundColor: Colors.transparent,
+          extendBodyBehindAppBar: true,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            title: Text(
+              'LEADERBOARD',
+              style: TextStyle(
+                fontFamily: 'Bungee',
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                shadows: [
+                  Shadow(offset: Offset(-1, -1), color: Colors.black),
+                  Shadow(offset: Offset(1, -1), color: Colors.black),
+                  Shadow(offset: Offset(-1, 1), color: Colors.black),
+                  Shadow(offset: Offset(1, 1), color: Colors.black),
+                  Shadow(
+                    offset: Offset(0, 0),
+                    color: Colors.black,
+                    blurRadius: 2,
+                  ),
+                ],
+                letterSpacing: 2,
+              ),
+            ),
+            centerTitle: true,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
+            ),
+            bottom: TabBar(
+              controller: _tabController,
+              indicatorColor: Colors.amber,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.grey,
+              labelStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+              tabs: const [
+                Tab(text: 'GENERAL'),
+                Tab(text: 'TOWER'),
+              ],
             ),
           ),
-        ],
-      ),
-    );
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Background image
+              Container(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage(
+                      'assets/images/backgrounds/background.png',
+                    ),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.3),
+                        Colors.black.withOpacity(0.6),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // Content
+              SafeArea(
+                child: Consumer<GameManager>(
+                  builder: (context, gameManager, child) {
+                    return gameManager.isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.amber,
+                            ),
+                          )
+                        : TabBarView(
+                            controller: _tabController,
+                            children: [
+                              _buildGeneralLeaderboard(),
+                              _buildTowerLeaderboard(),
+                            ],
+                          );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      }, // Close Consumer builder
+    ); // Close Consumer
   }
 
   Widget _buildGeneralLeaderboard() {
