@@ -4,15 +4,15 @@ import 'package:http/http.dart' as http;
 class ApiService {
   // Environment configurations
   static const String _localEmulatorUrl =
-      'http://10.0.2.2:8080/api'; // For Android emulator - 10.0.2.2 maps to host machine's localhost
+      'http://10.0.2.2:5000/api'; // For Android emulator - 10.0.2.2 maps to host machine's localhost
   static const String _localPhysicalUrl =
-      'http://192.168.2.202:8080/api'; // Your local network IP for physical devices
+      'http://192.168.1.9:5000/api'; // Your local network IP for physical devices
   static const String _remoteUrl =
       'http://1.54.215.45:5000/api'; // Your public IP for remote access
 
   // Current environment - change this based on your setup
   static String _currentEnv =
-      'local_emulator'; // Options: 'local_emulator', 'local_physical', 'remote'
+      'local_physical'; // Options: 'local_emulator', 'local_physical', 'remote'
 
   static void setEnvironment(String environment) {
     _currentEnv = environment;
