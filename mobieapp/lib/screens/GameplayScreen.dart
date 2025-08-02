@@ -361,11 +361,18 @@ class _GameplayScreenState extends State<GameplayScreen> {
           backgroundColor: Colors.transparent,
           child: Container(
             width: MediaQuery.of(context).size.width * 0.8,
-            height: MediaQuery.of(context).size.height * 0.3,
+            height: MediaQuery.of(context).size.height * 0.4,
             decoration: BoxDecoration(
               color: Colors.red[100],
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.red[800]!, width: 4),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 10,
+                  offset: Offset(0, 5),
+                ),
+              ],
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -377,9 +384,26 @@ class _GameplayScreenState extends State<GameplayScreen> {
                     fontSize: MediaQuery.of(context).size.width * 0.08,
                     fontWeight: FontWeight.bold,
                     color: Colors.red[800],
+                    shadows: [
+                      Shadow(
+                        color: Colors.black26,
+                        offset: Offset(1, 1),
+                        blurRadius: 2,
+                      ),
+                    ],
                   ),
                 ),
                 SizedBox(height: 20),
+                Text(
+                  'You have been defeated!',
+                  style: TextStyle(
+                    fontFamily: 'Bungee',
+                    fontSize: MediaQuery.of(context).size.width * 0.04,
+                    color: Colors.red[700],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 30),
                 GestureDetector(
                   onTap: () {
                     AudioManager().playButtonSound();
@@ -387,20 +411,44 @@ class _GameplayScreenState extends State<GameplayScreen> {
                     Navigator.pop(context); // Return to previous screen
                   },
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                     decoration: BoxDecoration(
-                      color: Colors.red[600],
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border.all(color: Colors.red[800]!, width: 3),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 4,
+                          offset: Offset(2, 2),
+                        ),
+                      ],
                     ),
-                    child: Text(
-                      'RETRY',
-                      style: TextStyle(
-                        fontFamily: 'Bungee',
-                        color: Colors.white,
-                        fontSize: MediaQuery.of(context).size.width * 0.04,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: Image.asset(
+                      'assets/images/ui/retry.png',
+                      height: 60,
+                      width: 120,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 60,
+                          width: 120,
+                          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                          decoration: BoxDecoration(
+                            color: Colors.red[600],
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(color: Colors.red[800]!, width: 3),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'RETRY',
+                              style: TextStyle(
+                                fontFamily: 'Bungee',
+                                color: Colors.white,
+                                fontSize: MediaQuery.of(context).size.width * 0.04,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
