@@ -4,10 +4,11 @@ import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 
 class ApiService {
+  // For Docker container running on localhost:5000
   // For Android emulator, use 10.0.2.2 instead of localhost
   // For iOS simulator, use localhost or actual IP
   static const String baseUrl =
-      'http://10.0.2.2:5128/api'; // Updated for Android emulator
+      'http://10.0.2.2:5000/api'; // Updated for Docker container
 
   static const Map<String, String> headers = {
     'Content-Type': 'application/json',
@@ -49,8 +50,10 @@ class ApiService {
   ) async {
     try {
       print('API Login - URL: $baseUrl/Player/login');
-      print('API Login - Request body: ${json.encode({'email': email, 'password': password})}');
-      
+      print(
+        'API Login - Request body: ${json.encode({'email': email, 'password': password})}',
+      );
+
       final response = await http.post(
         Uri.parse('$baseUrl/Player/login'),
         headers: headers,
@@ -84,14 +87,10 @@ class ApiService {
   }) async {
     try {
       print('API Register - URL: $baseUrl/Player/register');
-      print('API Register - Request body: ${json.encode({
-        'playerName': playerName,
-        'password': password,
-        'email': email,
-        'gender': gender,
-        'languagePreference': languagePreference,
-      })}');
-      
+      print(
+        'API Register - Request body: ${json.encode({'playerName': playerName, 'password': password, 'email': email, 'gender': gender, 'languagePreference': languagePreference})}',
+      );
+
       final response = await http.post(
         Uri.parse('$baseUrl/Player/register'),
         headers: headers,
@@ -171,7 +170,9 @@ class ApiService {
   }
 
   // Upgrade API methods
-  static Future<Map<String, dynamic>?> getPlayerUpgrades(String playerId) async {
+  static Future<Map<String, dynamic>?> getPlayerUpgrades(
+    String playerId,
+  ) async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/Player/$playerId/upgrades'),
@@ -199,10 +200,7 @@ class ApiService {
       final response = await http.post(
         Uri.parse('$baseUrl/Player/$playerId/upgrades'),
         headers: headers,
-        body: json.encode({
-          'upgradeType': upgradeType,
-          'level': level,
-        }),
+        body: json.encode({'upgradeType': upgradeType, 'level': level}),
       );
 
       if (response.statusCode == 200) {

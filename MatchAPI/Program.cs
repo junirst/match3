@@ -54,7 +54,7 @@ app.UseRouting();
 
 // Use CORS
 app.UseCors("AllowMobileApp");
-builder.WebHost.UseUrls("http://127.0.0.1:0");
+
 app.UseAuthorization();
 
 // Map API controllers
