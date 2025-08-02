@@ -23,11 +23,62 @@ void main() async {
   // Initialize GameManager
   await gameManager.initialize();
 
+  // Start background music immediately after initialization
+  await AudioManager().playBackgroundMusic();
+
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    // Add observer to monitor app lifecycle
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    // Remove observer when app is disposed
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    switch (state) {
+      case AppLifecycleState.resumed:
+        // App came to foreground - ensure BGM is playing
+        AudioManager().onAppResume();
+        break;
+      case AppLifecycleState.paused:
+        // App went to background - stop all audio
+        AudioManager().stopAllAudio();
+        break;
+      case AppLifecycleState.inactive:
+        // App is inactive but still visible - pause audio
+        AudioManager().onAppPause();
+        break;
+      case AppLifecycleState.detached:
+        // App is detached - stop all audio and dispose
+        AudioManager().stopAllAudio();
+        AudioManager().dispose();
+        break;
+      case AppLifecycleState.hidden:
+        // App is hidden - pause audio
+        AudioManager().onAppPause();
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +91,7 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
         ),
         debugShowCheckedModeBanner: false,
-        initialRoute: '/login',
+        initialRoute: '/',
         routes: {
           '/': (context) => const OpeningScreen(),
           '/login': (context) => const LoginScreen(),

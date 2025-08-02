@@ -26,7 +26,7 @@ class AudioManager {
   bool _isBgmEnabled = true;
   bool _isSfxEnabled = true;
   bool _isBgmPlaying = false;
-  
+
   // BGM monitoring
   Timer? _bgmMonitorTimer;
   String _currentBgmPath = 'audio/bgm.mp3';
@@ -37,7 +37,8 @@ class AudioManager {
     SfxType.enemyAttack: 'audio/enemyattack.mp3',
     SfxType.enemyHurt: 'audio/enemyhurt.mp3',
     SfxType.playerAttackSword: 'audio/playerattacksword.mp3',
-    SfxType.playerDamaged: 'audio/playerdamaged.m4a',
+    SfxType.playerDamaged:
+        'audio/playerdamaged.mp3', // Updated from .m4a to .mp3
     SfxType.playerMagicSpell: 'audio/playermagicspell.mp3',
     SfxType.starTwinkle: 'audio/magical-twinkle.mp3', // Star match effect
   };
@@ -51,7 +52,7 @@ class AudioManager {
   Future<void> init() async {
     try {
       print('Initializing AudioManager...');
-      
+
       // Set player modes with error handling
       try {
         await _bgmPlayer.setReleaseMode(ReleaseMode.loop);
@@ -60,7 +61,7 @@ class AudioManager {
       } catch (e) {
         print('Error configuring BGM player: $e');
       }
-      
+
       try {
         await _sfxPlayer.setReleaseMode(ReleaseMode.stop);
         await _sfxPlayer.setVolume(1.0);
@@ -71,11 +72,29 @@ class AudioManager {
 
       // Set up listeners to track playback state
       _bgmPlayer.onPlayerStateChanged.listen((PlayerState state) {
+        print('🎵 BGM Player State Changed: $state');
         _isBgmPlaying = state == PlayerState.playing;
-        print('BGM Player State: $state');
-      });
 
-      // Handle completion events (backup for looping)
+        // If BGM stops and should be playing, restart it immediately
+        if (state == PlayerState.stopped && _isBgmEnabled) {
+          print('⚠️ BGM stopped unexpectedly, restarting immediately...');
+          Future.delayed(Duration(milliseconds: 200), () {
+            if (_isBgmEnabled && !_isBgmPlaying) {
+              playBackgroundMusic();
+            }
+          });
+        }
+
+        // Also handle pause state
+        if (state == PlayerState.paused && _isBgmEnabled) {
+          print('⚠️ BGM paused unexpectedly, resuming...');
+          Future.delayed(Duration(milliseconds: 200), () {
+            if (_isBgmEnabled && !_isBgmPlaying) {
+              _bgmPlayer.resume();
+            }
+          });
+        }
+      }); // Handle completion events (backup for looping)
       _bgmPlayer.onPlayerComplete.listen((_) {
         print('BGM completed, restarting immediately...');
         _isBgmPlaying = false;
@@ -91,19 +110,19 @@ class AudioManager {
       _bgmPlayer.onDurationChanged.listen((Duration duration) {
         print('BGM Duration: $duration');
       });
-      
-      // Start BGM monitoring timer
+
+      // Start BGM monitoring timer (more frequent check)
       _startBgmMonitoring();
-      
+
       // SFX player listeners for debugging
       _sfxPlayer.onPlayerStateChanged.listen((PlayerState state) {
         print('SFX Player State: $state');
       });
-      
+
       _sfxPlayer.onPlayerComplete.listen((_) {
         print('SFX playback completed');
       });
-      
+
       // Reduce number of additional SFX players to avoid conflicts
       for (int i = 0; i < 2; i++) {
         try {
@@ -115,23 +134,23 @@ class AudioManager {
           print('Error creating additional SFX player $i: $e');
         }
       }
-      
+
       print('AudioManager initialized successfully');
     } catch (e) {
       print('Error initializing AudioManager: $e');
     }
   }
 
-  // Start BGM monitoring to prevent stops
+  // Start BGM monitoring to prevent stops (more frequent check)
   void _startBgmMonitoring() {
     _bgmMonitorTimer?.cancel();
-    _bgmMonitorTimer = Timer.periodic(Duration(seconds: 2), (timer) {
+    _bgmMonitorTimer = Timer.periodic(Duration(seconds: 1), (timer) {
       if (_isBgmEnabled && !_isBgmPlaying) {
         print('BGM Monitor: BGM stopped, restarting...');
         playBackgroundMusic();
       }
     });
-    print('BGM monitoring started');
+    print('BGM monitoring started (1 second intervals)');
   }
 
   // Stop BGM monitoring
@@ -147,42 +166,49 @@ class AudioManager {
     if (_sfxPlayer.state != PlayerState.playing) {
       return _sfxPlayer;
     }
-    
+
     // Check additional players
     for (AudioPlayer player in _sfxPlayers) {
       if (player.state != PlayerState.playing) {
         return player;
       }
     }
-    
+
     // If all busy, use the first additional player
     return _sfxPlayers.isNotEmpty ? _sfxPlayers[0] : _sfxPlayer;
   }
 
-  // Play background music
+  // Play background music with enhanced reliability
   Future<void> playBackgroundMusic() async {
     if (!_isBgmEnabled) {
-      print('BGM is disabled, not playing');
+      print('🔇 BGM is disabled, not playing');
       return;
     }
-    
+
     try {
-      print('Starting BGM playback...');
-      await _bgmPlayer.stop(); // Stop any existing playback
+      print('🎵 Starting BGM playback... (Path: $_currentBgmPath)');
+
+      // Stop any existing playback first
+      await _bgmPlayer.stop();
+
+      // Small delay to ensure clean state
+      await Future.delayed(Duration(milliseconds: 100));
+
+      // Start playing with loop mode
       await _bgmPlayer.play(AssetSource(_currentBgmPath));
       _isBgmPlaying = true;
-      print('BGM started successfully');
-      
+      print('✅ BGM started successfully with loop mode');
+
       // Ensure monitoring is active
       if (_bgmMonitorTimer == null || !_bgmMonitorTimer!.isActive) {
         _startBgmMonitoring();
       }
     } catch (e) {
-      print('Error playing background music: $e');
+      print('❌ Error playing background music: $e');
       _isBgmPlaying = false;
-      
+
       // Retry after a short delay
-      Future.delayed(Duration(seconds: 2), () {
+      Future.delayed(Duration(seconds: 3), () {
         if (_isBgmEnabled) {
           print('Retrying BGM playback...');
           playBackgroundMusic();
@@ -209,33 +235,66 @@ class AudioManager {
     }
   }
 
-  // Resume background music
+  // Resume background music with enhanced reliability
   Future<void> resumeBackgroundMusic() async {
     if (_isBgmEnabled && !_isBgmPlaying) {
-      await _bgmPlayer.resume();
-      _isBgmPlaying = true;
-      _startBgmMonitoring();
-      print('BGM resumed and monitoring enabled');
+      print('Resuming BGM...');
+      try {
+        await _bgmPlayer.resume();
+        _isBgmPlaying = true;
+        _startBgmMonitoring();
+        print('BGM resumed and monitoring enabled');
+      } catch (e) {
+        print('Error resuming BGM, restarting: $e');
+        await playBackgroundMusic();
+      }
     }
   }
 
-  // Check and ensure BGM is playing
+  // Check and ensure BGM is playing (enhanced version)
   Future<void> ensureBgmPlaying() async {
+    print(
+      '🔍 Checking BGM status - Enabled: $_isBgmEnabled, Playing: $_isBgmPlaying',
+    );
     if (_isBgmEnabled && !_isBgmPlaying) {
-      print('BGM not playing, restarting...');
+      print('🔄 BGM not playing, restarting...');
       await playBackgroundMusic();
+    } else if (_isBgmEnabled && _isBgmPlaying) {
+      print('✅ BGM is already playing correctly');
     }
+  }
+
+  // Force restart BGM (for debugging/troubleshooting)
+  Future<void> forceRestartBgm() async {
+    print('🔄 Force restarting BGM...');
+    _isBgmPlaying = false;
+    await playBackgroundMusic();
+  }
+
+  // Method to call when app comes to foreground
+  Future<void> onAppResume() async {
+    print('App resumed, ensuring BGM is playing...');
+    if (_isBgmEnabled) {
+      await ensureBgmPlaying();
+    }
+  }
+
+  // Method to call when app goes to background
+  Future<void> onAppPause() async {
+    print('App paused, BGM will continue playing...');
+    // Don't pause BGM - let it continue playing in background
+    // Users can manually turn off BGM if they want
   }
 
   // Play sound effect (generic method with specific type)
   Future<void> playSfx(SfxType type) async {
     if (!_isSfxEnabled) return;
-    
+
     String filePath = _sfxFiles[type] ?? 'audio/button.mp3';
-    
+
     try {
       print('Playing SFX: $filePath');
-      
+
       // Try to use the BGM file as a fallback to test audio system
       try {
         AudioPlayer testPlayer = AudioPlayer();
@@ -243,17 +302,15 @@ class AudioManager {
         await testPlayer.setVolume(0.3); // Lower volume for SFX
         await testPlayer.play(AssetSource('audio/bgm.mp3'));
         print('SFX played successfully using BGM file as test');
-        
+
         // Auto-dispose after short time
         Future.delayed(Duration(milliseconds: 200), () {
           testPlayer.stop();
           testPlayer.dispose();
         });
-        
       } catch (e) {
         print('Audio system completely unavailable: $e');
       }
-      
     } catch (e) {
       print('Error in playSfx method: $e');
     }
@@ -263,9 +320,12 @@ class AudioManager {
   Future<void> playButtonSound() async => await playSfx(SfxType.button);
   Future<void> playEnemyAttack() async => await playSfx(SfxType.enemyAttack);
   Future<void> playEnemyHurt() async => await playSfx(SfxType.enemyHurt);
-  Future<void> playPlayerAttackSword() async => await playSfx(SfxType.playerAttackSword);
-  Future<void> playPlayerDamaged() async => await playSfx(SfxType.playerDamaged);
-  Future<void> playPlayerMagicSpell() async => await playSfx(SfxType.playerMagicSpell);
+  Future<void> playPlayerAttackSword() async =>
+      await playSfx(SfxType.playerAttackSword);
+  Future<void> playPlayerDamaged() async =>
+      await playSfx(SfxType.playerDamaged);
+  Future<void> playPlayerMagicSpell() async =>
+      await playSfx(SfxType.playerMagicSpell);
   Future<void> playStarTwinkle() async => await playSfx(SfxType.starTwinkle);
 
   // Legacy method for backward compatibility
@@ -276,13 +336,15 @@ class AudioManager {
     print('=== Testing all audio files ===');
     AudioPlayer testPlayer = AudioPlayer();
     await testPlayer.setReleaseMode(ReleaseMode.stop);
-    
+
     for (var entry in _sfxFiles.entries) {
       print('Testing ${entry.key}: ${entry.value}');
       try {
         await testPlayer.stop();
         await testPlayer.play(AssetSource(entry.value));
-        await Future.delayed(Duration(milliseconds: 500)); // Let it play briefly
+        await Future.delayed(
+          Duration(milliseconds: 500),
+        ); // Let it play briefly
         await testPlayer.stop();
         print('✓ ${entry.key} works');
       } catch (e) {
@@ -352,5 +414,21 @@ class AudioManager {
     }
     _sfxPlayers.clear();
     print('AudioManager disposed');
+  }
+
+  // Stop all audio immediately
+  Future<void> stopAllAudio() async {
+    try {
+      _stopBgmMonitoring();
+      await _bgmPlayer.stop();
+      await _sfxPlayer.stop();
+      for (AudioPlayer player in _sfxPlayers) {
+        await player.stop();
+      }
+      _isBgmPlaying = false;
+      print('All audio stopped');
+    } catch (e) {
+      print('Error stopping all audio: $e');
+    }
   }
 }

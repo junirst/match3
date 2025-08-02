@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 import '../managers/language_manager.dart';
 import '../managers/audio_manager.dart';
 import '../managers/upgrade_manager.dart';
+import '../managers/game_manager.dart';
 
 class UpgradeScreen extends StatefulWidget {
   const UpgradeScreen({super.key});
@@ -12,16 +13,6 @@ class UpgradeScreen extends StatefulWidget {
 }
 
 class _UpgradeScreenState extends State<UpgradeScreen> {
-  int _coins = 9999;
-
-  // Track upgrade levels (initially set to 1, max 5 = 4 upgrades)
-  Map<String, int> upgradeLevels = {
-    'sword': 1,
-    'heart': 1,
-    'star': 1,
-    'shield': 1,
-  };
-
   // Upgrade prices
   Map<String, int> upgradePrices = {
     'sword': 100,
@@ -37,34 +28,12 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
   void initState() {
     super.initState();
     LanguageManager.initializeLanguage();
-    _loadUpgradeData();
-  }
-
-  Future<void> _loadUpgradeData() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      // Load coins
-      _coins = prefs.getInt('coins') ?? 9999;
-
-      // Load upgrade levels (default to 1)
-      upgradeLevels['sword'] = prefs.getInt('upgrade_sword') ?? 1;
-      upgradeLevels['heart'] = prefs.getInt('upgrade_heart') ?? 1;
-      upgradeLevels['star'] = prefs.getInt('upgrade_star') ?? 1;
-      upgradeLevels['shield'] = prefs.getInt('upgrade_shield') ?? 1;
-    });
-  }
-
-  Future<void> _saveUpgradeData() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('coins', _coins);
-    await prefs.setInt('upgrade_sword', upgradeLevels['sword']!);
-    await prefs.setInt('upgrade_heart', upgradeLevels['heart']!);
-    await prefs.setInt('upgrade_star', upgradeLevels['star']!);
-    await prefs.setInt('upgrade_shield', upgradeLevels['shield']!);
+    // No need to load data - using GameManager
   }
 
   void _showUpgradeDialog(String upgradeType) {
-    final currentLevel = upgradeLevels[upgradeType]!;
+    final gameManager = Provider.of<GameManager>(context, listen: false);
+    final currentLevel = gameManager.upgradeLevels[upgradeType] ?? 1;
     final maxPossibleLevel = maxUpgradeLevel;
 
     // Check if already at max level
@@ -91,29 +60,32 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
           currentLevel: currentLevel,
           maxUpgradeSteps: maxUpgradeSteps,
           basePrice: upgradePrices[upgradeType]!,
-          coins: _coins,
+          coins: gameManager.currentCoins,
           onConfirm: _confirmUpgrade,
         );
       },
     );
   }
 
-  void _confirmUpgrade(String upgradeType, int quantity, int totalCost) {
+  void _confirmUpgrade(String upgradeType, int quantity, int totalCost) async {
     AudioManager().playButtonSound();
     Navigator.of(context).pop(); // Close dialog
 
-    if (_coins >= totalCost) {
-      setState(() {
-        _coins -= totalCost;
-        upgradeLevels[upgradeType] = upgradeLevels[upgradeType]! + quantity;
-      });
+    final gameManager = Provider.of<GameManager>(context, listen: false);
 
+    // Use GameManager to purchase upgrade
+    final success = await gameManager.purchaseUpgrade(
+      upgradeType,
+      quantity,
+      totalCost,
+    );
+
+    if (success) {
       // Sync with UpgradeManager
       UpgradeManager.instance.updateUpgradeLevel(
         upgradeType,
-        upgradeLevels[upgradeType]!,
+        gameManager.upgradeLevels[upgradeType] ?? 1,
       );
-      _saveUpgradeData(); // Save upgrade data
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -127,7 +99,9 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(LanguageManager.getText('notEnoughCoins')),
+          content: Text(
+            gameManager.error ?? LanguageManager.getText('notEnoughCoins'),
+          ),
           duration: const Duration(seconds: 2),
           backgroundColor: Colors.red,
         ),
@@ -276,29 +250,33 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
                   ),
                 ),
                 // Coin Count
-                Row(
-                  children: [
-                    Text(
-                      '$_coins',
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.05,
-                        color: Colors.white,
-                        shadows: const [
-                          Shadow(
-                            blurRadius: 2,
-                            color: Colors.black,
-                            offset: Offset(1, 1),
+                Consumer<GameManager>(
+                  builder: (context, gameManager, child) {
+                    return Row(
+                      children: [
+                        Text(
+                          '${gameManager.currentCoins}',
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.05,
+                            color: Colors.white,
+                            shadows: const [
+                              Shadow(
+                                blurRadius: 2,
+                                color: Colors.black,
+                                offset: Offset(1, 1),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(width: screenWidth * 0.01),
-                    Icon(
-                      Icons.monetization_on,
-                      color: Colors.amber,
-                      size: screenWidth * 0.06,
-                    ),
-                  ],
+                        ),
+                        SizedBox(width: screenWidth * 0.01),
+                        Icon(
+                          Icons.monetization_on,
+                          color: Colors.amber,
+                          size: screenWidth * 0.06,
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),
@@ -313,41 +291,45 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
             child: SingleChildScrollView(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.02),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildUpgradeRow(
-                      context,
-                      'sword',
-                      'LVL ${upgradeLevels['sword']}',
-                      Colors.red,
-                      screenWidth,
-                    ),
-                    SizedBox(height: screenHeight * 0.04),
-                    _buildUpgradeRow(
-                      context,
-                      'heart',
-                      'LVL ${upgradeLevels['heart']}',
-                      Colors.green,
-                      screenWidth,
-                    ),
-                    SizedBox(height: screenHeight * 0.04),
-                    _buildUpgradeRow(
-                      context,
-                      'star',
-                      'LVL ${upgradeLevels['star']}',
-                      Colors.yellow,
-                      screenWidth,
-                    ),
-                    SizedBox(height: screenHeight * 0.04),
-                    _buildUpgradeRow(
-                      context,
-                      'shield',
-                      'LVL ${upgradeLevels['shield']}',
-                      Colors.blue,
-                      screenWidth,
-                    ),
-                  ],
+                child: Consumer<GameManager>(
+                  builder: (context, gameManager, child) {
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildUpgradeRow(
+                          context,
+                          'sword',
+                          'LVL ${gameManager.upgradeLevels['sword'] ?? 1}',
+                          Colors.red,
+                          screenWidth,
+                        ),
+                        SizedBox(height: screenHeight * 0.04),
+                        _buildUpgradeRow(
+                          context,
+                          'heart',
+                          'LVL ${gameManager.upgradeLevels['heart'] ?? 1}',
+                          Colors.green,
+                          screenWidth,
+                        ),
+                        SizedBox(height: screenHeight * 0.04),
+                        _buildUpgradeRow(
+                          context,
+                          'star',
+                          'LVL ${gameManager.upgradeLevels['star'] ?? 1}',
+                          Colors.yellow,
+                          screenWidth,
+                        ),
+                        SizedBox(height: screenHeight * 0.04),
+                        _buildUpgradeRow(
+                          context,
+                          'shield',
+                          'LVL ${gameManager.upgradeLevels['shield'] ?? 1}',
+                          Colors.blue,
+                          screenWidth,
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
             ),
@@ -390,12 +372,12 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
   }
 
   Widget _buildUpgradeRow(
-      BuildContext context,
-      String upgradeType,
-      String levelText,
-      Color color,
-      double screenWidth,
-      ) {
+    BuildContext context,
+    String upgradeType,
+    String levelText,
+    Color color,
+    double screenWidth,
+  ) {
     return Container(
       width: double.infinity,
       height: screenWidth * 0.3,
@@ -450,11 +432,14 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
           // Level Indicator
           Expanded(
             flex: 3,
-            child: Center(
-              child: _buildLevelIndicator(
-                upgradeLevels[upgradeType]!,
-                screenWidth,
-              ),
+            child: Consumer<GameManager>(
+              builder: (context, gameManager, child) {
+                final currentLevel =
+                    gameManager.upgradeLevels[upgradeType] ?? 1;
+                return Center(
+                  child: _buildLevelIndicator(currentLevel, screenWidth),
+                );
+              },
             ),
           ),
 
@@ -687,10 +672,10 @@ class _UpgradeQuantityDialogState extends State<_UpgradeQuantityDialog> {
                 GestureDetector(
                   onTap: canAfford
                       ? () => widget.onConfirm(
-                    widget.upgradeType,
-                    _selectedQuantity,
-                    totalCost,
-                  )
+                          widget.upgradeType,
+                          _selectedQuantity,
+                          totalCost,
+                        )
                       : null,
                   child: Opacity(
                     opacity: canAfford ? 1.0 : 0.5,

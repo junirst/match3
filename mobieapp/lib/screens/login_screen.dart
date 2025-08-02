@@ -39,6 +39,18 @@ class _LoginScreenState extends State<LoginScreen> {
     // Pre-fill test credentials for easier testing
     _emailController.text = 'test@gmail.com';
     _passwordController.text = '123456';
+
+    // Ensure BGM is playing in login screen
+    _ensureBgmPlaying();
+  }
+
+  Future<void> _ensureBgmPlaying() async {
+    try {
+      await AudioManager().ensureBgmPlaying();
+      print('BGM ensured in LoginScreen');
+    } catch (e) {
+      print('Error ensuring BGM in LoginScreen: $e');
+    }
   }
 
   Future<void> _loadLanguagePreference() async {
@@ -95,6 +107,10 @@ class _LoginScreenState extends State<LoginScreen> {
     if (mounted) {
       if (success) {
         print('Login successful, navigating to main menu');
+
+        // Ensure BGM continues after successful login
+        await AudioManager().forceRestartBgm();
+
         Navigator.pushReplacementNamed(context, '/main_menu');
       } else {
         print('Login failed: ${gameManager.error}');
@@ -560,33 +576,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                 // Submit Button
                                 _buildSubmitButton(gameManager),
-
-                                const SizedBox(height: 15),
-
-                                // Mode toggle buttons
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: _buildModeButton(
-                                        _getLocalizedText('LOGIN', 'ĐĂNG NHẬP'),
-                                        !_isCreateMode,
-                                        () => setState(
-                                          () => _isCreateMode = false,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: _buildModeButton(
-                                        _getLocalizedText('CREATE', 'TẠO MỚI'),
-                                        _isCreateMode,
-                                        () => setState(
-                                          () => _isCreateMode = true,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
 
                                 const SizedBox(height: 15),
 

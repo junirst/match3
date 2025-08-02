@@ -25,6 +25,18 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   void initState() {
     super.initState();
     _loadLanguagePreference();
+
+    // Ensure BGM is playing when reaching main menu
+    _ensureBgmPlaying();
+  }
+
+  Future<void> _ensureBgmPlaying() async {
+    try {
+      await AudioManager().ensureBgmPlaying();
+      print('BGM ensured in MainMenuScreen');
+    } catch (e) {
+      print('Error ensuring BGM in MainMenuScreen: $e');
+    }
   }
 
   Future<void> _loadLanguagePreference() async {
@@ -86,13 +98,13 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   }
 
   Widget _buildMenuButton(
-      String text,
-      String buttonType,
-      double scale,
-      VoidCallback onTap,
-      double screenWidth,
-      double screenHeight,
-      ) {
+    String text,
+    String buttonType,
+    double scale,
+    VoidCallback onTap,
+    double screenWidth,
+    double screenHeight,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedScale(
@@ -142,125 +154,130 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
       body: Consumer<GameManager>(
         builder: (context, gameManager, child) {
           final isGuest = gameManager.isGuestMode;
-          final playerName = isGuest ? 'GUEST' : (gameManager.currentPlayer?.playerName ?? 'PLAYER');
-          
+          final playerName = isGuest
+              ? 'GUEST'
+              : (gameManager.currentPlayer?.playerName ?? 'PLAYER');
+
           return Stack(
             fit: StackFit.expand,
             children: [
-          Container(
-            color: Colors.grey[800],
-            child: Image.asset(
-              'assets/images/backgrounds/background.png',
-              fit: BoxFit.cover,
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(top: screenHeight * 0.05),
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: Image.asset(
-                'assets/images/ui/logo.png',
-                width: screenWidth * 0.95,
-                height: screenHeight * 0.25,
+              Container(
+                color: Colors.grey[800],
+                child: Image.asset(
+                  'assets/images/backgrounds/background.png',
+                  fit: BoxFit.cover,
+                ),
               ),
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(
-              top: screenHeight * 0.02,
-              left: screenWidth * 0.05,
-            ),
-            child: Text(
-              isGuest 
-                ? _getLocalizedText('WELCOME, GUEST', 'CHÀO MỪNG, KHÁCH')
-                : _getLocalizedText('WELCOME BACK, $playerName', 'CHÀO MỪNG TRỞ LẠI, $playerName'),
-              style: TextStyle(
-                fontFamily: 'DistilleryDisplay',
-                fontSize: screenWidth * 0.025,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                shadows: [
-                  Shadow(
-                    offset: Offset(1, 1),
-                    color: Colors.black,
-                    blurRadius: 2,
+              Padding(
+                padding: EdgeInsets.only(top: screenHeight * 0.05),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: Image.asset(
+                    'assets/images/ui/logo.png',
+                    width: screenWidth * 0.95,
+                    height: screenHeight * 0.25,
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
-          
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildMenuButton(
-                  _getLocalizedText('STORY MODE', 'CỐT TRUYỆN'),
-                  'story',
-                  _storyScale,
+              Padding(
+                padding: EdgeInsets.only(
+                  top: screenHeight * 0.02,
+                  left: screenWidth * 0.05,
+                ),
+                child: Text(
+                  isGuest
+                      ? _getLocalizedText('WELCOME, GUEST', 'CHÀO MỪNG, KHÁCH')
+                      : _getLocalizedText(
+                          'WELCOME BACK, $playerName',
+                          'CHÀO MỪNG TRỞ LẠI, $playerName',
+                        ),
+                  style: TextStyle(
+                    fontFamily: 'DistilleryDisplay',
+                    fontSize: screenWidth * 0.025,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    shadows: [
+                      Shadow(
+                        offset: Offset(1, 1),
+                        color: Colors.black,
+                        blurRadius: 2,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildMenuButton(
+                      _getLocalizedText('STORY MODE', 'CỐT TRUYỆN'),
+                      'story',
+                      _storyScale,
                       () => _onButtonTap('story', setState),
-                  screenWidth,
-                  screenHeight,
-                ),
-                SizedBox(height: screenHeight * 0.02),
-                _buildMenuButton(
-                  _getLocalizedText('TOWER MODE', 'CHẾ ĐỘ THÁP'),
-                  'tower',
-                  _towerScale,
+                      screenWidth,
+                      screenHeight,
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    _buildMenuButton(
+                      _getLocalizedText('TOWER MODE', 'CHẾ ĐỘ THÁP'),
+                      'tower',
+                      _towerScale,
                       () => _onButtonTap('tower', setState),
-                  screenWidth,
-                  screenHeight,
-                ),
-                SizedBox(height: screenHeight * 0.02),
-                _buildMenuButton(
-                  _getLocalizedText('SHOP', 'CỬA HÀNG'),
-                  'shop',
-                  _shopScale,
+                      screenWidth,
+                      screenHeight,
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    _buildMenuButton(
+                      _getLocalizedText('SHOP', 'CỬA HÀNG'),
+                      'shop',
+                      _shopScale,
                       () => _onButtonTap('shop', setState),
-                  screenWidth,
-                  screenHeight,
+                      screenWidth,
+                      screenHeight,
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: EdgeInsets.only(bottom: screenHeight * 0.18),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  GestureDetector(
-                    onTap: () => _onButtonTap('player', setState),
-                    child: AnimatedScale(
-                      scale: _playerScale,
-                      duration: Duration(milliseconds: 100),
-                      child: Image.asset(
-                        'assets/images/characters/player.png',
-                        width: screenWidth * 0.25,
-                        height: screenHeight * 0.08,
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: screenWidth * 0.1),
-                  GestureDetector(
-                    onTap: () => _onButtonTap('settings', setState),
-                    child: AnimatedScale(
-                      scale: _settingsScale,
-                      duration: Duration(milliseconds: 100),
-                      child: Image.asset(
-                        'assets/images/ui/settings_button.png',
-                        width: screenWidth * 0.25,
-                        height: screenHeight * 0.08,
-                      ),
-                    ),
-                  ),
-                ],
               ),
-            ),
-          ),
-        ],
-      );
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: screenHeight * 0.18),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      GestureDetector(
+                        onTap: () => _onButtonTap('player', setState),
+                        child: AnimatedScale(
+                          scale: _playerScale,
+                          duration: Duration(milliseconds: 100),
+                          child: Image.asset(
+                            'assets/images/characters/player.png',
+                            width: screenWidth * 0.25,
+                            height: screenHeight * 0.08,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: screenWidth * 0.1),
+                      GestureDetector(
+                        onTap: () => _onButtonTap('settings', setState),
+                        child: AnimatedScale(
+                          scale: _settingsScale,
+                          duration: Duration(milliseconds: 100),
+                          child: Image.asset(
+                            'assets/images/ui/settings_button.png',
+                            width: screenWidth * 0.25,
+                            height: screenHeight * 0.08,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
         },
       ),
     );

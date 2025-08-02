@@ -6,13 +6,13 @@ class ApiService {
   static const String _localEmulatorUrl =
       'http://10.0.2.2:5000/api'; // For Android emulator with local Docker
   static const String _localPhysicalUrl =
-      'http://192.168.1.100:5000/api'; // Replace with your actual local IP
+      'http://192.168.1.9:5000/api'; // Replace with your actual local IP
   static const String _remoteUrl =
       'http://YOUR_REMOTE_IP:5000/api'; // Replace with remote server IP
 
   // Current environment - change this based on your setup
   static String _currentEnv =
-      'local_emulator'; // Options: 'local_emulator', 'local_physical', 'remote'
+      'local_physical'; // Options: 'local_emulator', 'local_physical', 'remote'
 
   static void setEnvironment(String environment) {
     _currentEnv = environment;

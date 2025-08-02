@@ -72,18 +72,17 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
     // Clear game data first
     final gameManager = Provider.of<GameManager>(context, listen: false);
     await gameManager.logout();
-    
+
     final prefs = await SharedPreferences.getInstance();
     // Reset first launch to show login popup again
     await prefs.setBool('first_launch', true);
 
     AudioManager().playButtonSound();
 
-    // Navigate back to opening screen and clear all previous routes
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      '/',
-          (Route<dynamic> route) => false,
-    );
+    // Navigate to login screen and clear all previous routes
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil('/login', (Route<dynamic> route) => false);
   }
 
   String _getLocalizedText(String englishText, String vietnameseText) {
@@ -252,11 +251,11 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
   }
 
   Widget _buildUpgradeRow(
-      String upgradeType,
-      String iconPath,
-      Color color,
-      double screenWidth,
-      ) {
+    String upgradeType,
+    String iconPath,
+    Color color,
+    double screenWidth,
+  ) {
     return Container(
       width: screenWidth * 0.85,
       padding: EdgeInsets.symmetric(
@@ -334,11 +333,11 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
   }
 
   Widget _buildItemRow(
-      String itemName,
-      String iconPath,
-      Color color,
-      double screenWidth,
-      ) {
+    String itemName,
+    String iconPath,
+    Color color,
+    double screenWidth,
+  ) {
     bool isOwned = shopItems[itemName] ?? false;
     return Container(
       width: screenWidth * 0.85,
@@ -427,236 +426,239 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
     return Consumer<GameManager>(
       builder: (context, gameManager, child) {
         return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          Container(
-            color: Colors.grey[800],
-            child: Image.asset(
-              'assets/images/backgrounds/background.png',
-              fit: BoxFit.cover,
-            ),
-          ),
-          SingleChildScrollView(
-            child: Column(
-              children: [
-                SizedBox(height: screenHeight * 0.08),
-                // Title
-                Text(
-                  _getLocalizedText('PLAYER PROFILE', 'HỒ SƠ NGƯỜI CHƠI'),
-                  style: TextStyle(
-                    fontFamily: 'Bungee',
-                    fontSize: screenWidth * 0.08,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    shadows: [
-                      Shadow(offset: Offset(-1, -1), color: Colors.black),
-                      Shadow(offset: Offset(1, -1), color: Colors.black),
-                      Shadow(offset: Offset(-1, 1), color: Colors.black),
-                      Shadow(offset: Offset(1, 1), color: Colors.black),
-                    ],
-                  ),
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              Container(
+                color: Colors.grey[800],
+                child: Image.asset(
+                  'assets/images/backgrounds/background.png',
+                  fit: BoxFit.cover,
                 ),
-                SizedBox(height: screenHeight * 0.03),
-                // Player Avatar
-                CircleAvatar(
-                  radius: screenWidth * 0.15,
-                  backgroundImage: AssetImage(
-                    'assets/images/characters/player.png',
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.02),
-                // Player Name - Keep DistilleryDisplay font
-                Text(
-                  _playerName,
-                  style: TextStyle(
-                    fontFamily: 'DistilleryDisplay',
-                    fontSize: screenWidth * 0.06,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    shadows: [
-                      Shadow(
-                        offset: Offset(1, 1),
-                        color: Colors.black,
-                        blurRadius: 2,
+              ),
+              SingleChildScrollView(
+                child: Column(
+                  children: [
+                    SizedBox(height: screenHeight * 0.08),
+                    // Title
+                    Text(
+                      _getLocalizedText('PLAYER PROFILE', 'HỒ SƠ NGƯỜI CHƠI'),
+                      style: TextStyle(
+                        fontFamily: 'Bungee',
+                        fontSize: screenWidth * 0.08,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        shadows: [
+                          Shadow(offset: Offset(-1, -1), color: Colors.black),
+                          Shadow(offset: Offset(1, -1), color: Colors.black),
+                          Shadow(offset: Offset(-1, 1), color: Colors.black),
+                          Shadow(offset: Offset(1, 1), color: Colors.black),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    SizedBox(height: screenHeight * 0.03),
+                    // Player Avatar
+                    CircleAvatar(
+                      radius: screenWidth * 0.15,
+                      backgroundImage: AssetImage(
+                        'assets/images/characters/player.png',
+                      ),
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    // Player Name - Keep DistilleryDisplay font
+                    Text(
+                      _playerName,
+                      style: TextStyle(
+                        fontFamily: 'DistilleryDisplay',
+                        fontSize: screenWidth * 0.06,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        shadows: [
+                          Shadow(
+                            offset: Offset(1, 1),
+                            color: Colors.black,
+                            blurRadius: 2,
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: screenHeight * 0.04),
+                    // Player Information
+                    _buildInfoSection(
+                      _getLocalizedText('PLAYER ID:', 'ID NGƯỜI CHƠI:'),
+                      _playerId,
+                      screenWidth,
+                    ),
+                    _buildGenderSelector(screenWidth),
+                    _buildInfoSection(
+                      _getLocalizedText('TOWER RECORD:', 'KỶ LỤC THÁP:'),
+                      _getLocalizedText(
+                        'LEVEL $_towerRecord',
+                        'CẤP $_towerRecord',
+                      ),
+                      screenWidth,
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    // Upgrades Section Title
+                    Text(
+                      _getLocalizedText('UPGRADES', 'NÂNG CẤP'),
+                      style: TextStyle(
+                        fontFamily: 'Bungee',
+                        fontSize: screenWidth * 0.05,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        shadows: [
+                          Shadow(offset: Offset(-1, -1), color: Colors.black),
+                          Shadow(offset: Offset(1, -1), color: Colors.black),
+                          Shadow(offset: Offset(-1, 1), color: Colors.black),
+                          Shadow(offset: Offset(1, 1), color: Colors.black),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    // Upgrade Levels
+                    _buildUpgradeRow(
+                      'sword',
+                      'assets/images/items/sword.png',
+                      Colors.red,
+                      screenWidth,
+                    ),
+                    _buildUpgradeRow(
+                      'heart',
+                      'assets/images/items/heart.png',
+                      Colors.green,
+                      screenWidth,
+                    ),
+                    _buildUpgradeRow(
+                      'star',
+                      'assets/images/items/star.png',
+                      Colors.yellow,
+                      screenWidth,
+                    ),
+                    _buildUpgradeRow(
+                      'shield',
+                      'assets/images/items/shield.png',
+                      Colors.blue,
+                      screenWidth,
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    // Items Section Title
+                    Text(
+                      _getLocalizedText('ITEMS', 'VẬT PHẨM'),
+                      style: TextStyle(
+                        fontFamily: 'Bungee',
+                        fontSize: screenWidth * 0.05,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        shadows: [
+                          Shadow(offset: Offset(-1, -1), color: Colors.black),
+                          Shadow(offset: Offset(1, -1), color: Colors.black),
+                          Shadow(offset: Offset(-1, 1), color: Colors.black),
+                          Shadow(offset: Offset(1, 1), color: Colors.black),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    // Shop Items
+                    _buildItemRow(
+                      'Sword',
+                      'assets/images/items/SwordHand.png',
+                      Colors.orange,
+                      screenWidth,
+                    ),
+                    _buildItemRow(
+                      'Dagger',
+                      'assets/images/items/Dagger.png',
+                      Colors.purple,
+                      screenWidth,
+                    ),
+                    _buildItemRow(
+                      'Hand',
+                      'assets/images/items/Hand.png',
+                      Colors.brown,
+                      screenWidth,
+                    ),
+                    SizedBox(height: screenHeight * 0.15),
+                  ],
                 ),
-                SizedBox(height: screenHeight * 0.04),
-                // Player Information
-                _buildInfoSection(
-                  _getLocalizedText('PLAYER ID:', 'ID NGƯỜI CHƠI:'),
-                  _playerId,
-                  screenWidth,
-                ),
-                _buildGenderSelector(screenWidth),
-                _buildInfoSection(
-                  _getLocalizedText('TOWER RECORD:', 'KỶ LỤC THÁP:'),
-                  _getLocalizedText('LEVEL $_towerRecord', 'CẤP $_towerRecord'),
-                  screenWidth,
-                ),
-                SizedBox(height: screenHeight * 0.02),
-                // Upgrades Section Title
-                Text(
-                  _getLocalizedText('UPGRADES', 'NÂNG CẤP'),
-                  style: TextStyle(
-                    fontFamily: 'Bungee',
-                    fontSize: screenWidth * 0.05,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    shadows: [
-                      Shadow(offset: Offset(-1, -1), color: Colors.black),
-                      Shadow(offset: Offset(1, -1), color: Colors.black),
-                      Shadow(offset: Offset(-1, 1), color: Colors.black),
-                      Shadow(offset: Offset(1, 1), color: Colors.black),
-                    ],
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.02),
-                // Upgrade Levels
-                _buildUpgradeRow(
-                  'sword',
-                  'assets/images/items/sword.png',
-                  Colors.red,
-                  screenWidth,
-                ),
-                _buildUpgradeRow(
-                  'heart',
-                  'assets/images/items/heart.png',
-                  Colors.green,
-                  screenWidth,
-                ),
-                _buildUpgradeRow(
-                  'star',
-                  'assets/images/items/star.png',
-                  Colors.yellow,
-                  screenWidth,
-                ),
-                _buildUpgradeRow(
-                  'shield',
-                  'assets/images/items/shield.png',
-                  Colors.blue,
-                  screenWidth,
-                ),
-                SizedBox(height: screenHeight * 0.02),
-                // Items Section Title
-                Text(
-                  _getLocalizedText('ITEMS', 'VẬT PHẨM'),
-                  style: TextStyle(
-                    fontFamily: 'Bungee',
-                    fontSize: screenWidth * 0.05,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    shadows: [
-                      Shadow(offset: Offset(-1, -1), color: Colors.black),
-                      Shadow(offset: Offset(1, -1), color: Colors.black),
-                      Shadow(offset: Offset(-1, 1), color: Colors.black),
-                      Shadow(offset: Offset(1, 1), color: Colors.black),
-                    ],
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.02),
-                // Shop Items
-                _buildItemRow(
-                  'Sword',
-                  'assets/images/items/SwordHand.png',
-                  Colors.orange,
-                  screenWidth,
-                ),
-                _buildItemRow(
-                  'Dagger',
-                  'assets/images/items/Dagger.png',
-                  Colors.purple,
-                  screenWidth,
-                ),
-                _buildItemRow(
-                  'Hand',
-                  'assets/images/items/Hand.png',
-                  Colors.brown,
-                  screenWidth,
-                ),
-                SizedBox(height: screenHeight * 0.15),
-              ],
-            ),
-          ),
-          // Back Button
-          Align(
-            alignment: Alignment.bottomRight,
-            child: Padding(
-              padding: EdgeInsets.only(
-                bottom: screenHeight * 0.03,
-                right: screenWidth * 0.02,
               ),
-              child: GestureDetector(
-                onTap: _onBackTap,
-                child: AnimatedScale(
-                  scale: _backScale,
-                  duration: Duration(milliseconds: 100),
-                  child: Image.asset(
-                    'assets/images/ui/back_button.png',
-                    width: screenWidth * 0.18,
-                    height: screenHeight * 0.18,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
+              // Back Button
+              Align(
+                alignment: Alignment.bottomRight,
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    bottom: screenHeight * 0.03,
+                    right: screenWidth * 0.02,
+                  ),
+                  child: GestureDetector(
+                    onTap: _onBackTap,
+                    child: AnimatedScale(
+                      scale: _backScale,
+                      duration: Duration(milliseconds: 100),
+                      child: Image.asset(
+                        'assets/images/ui/back_button.png',
                         width: screenWidth * 0.18,
                         height: screenHeight * 0.18,
-                        decoration: BoxDecoration(
-                          color: Colors.brown[600],
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.arrow_back,
-                          color: Colors.white,
-                          size: screenWidth * 0.08,
-                        ),
-                      );
-                    },
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            width: screenWidth * 0.18,
+                            height: screenHeight * 0.18,
+                            decoration: BoxDecoration(
+                              color: Colors.brown[600],
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              Icons.arrow_back,
+                              color: Colors.white,
+                              size: screenWidth * 0.08,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
-          // Logout Button
-          Align(
-            alignment: Alignment.bottomLeft,
-            child: Padding(
-              padding: EdgeInsets.only(
-                bottom: screenHeight * 0.03,
-                left: screenWidth * 0.02,
-              ),
-              child: GestureDetector(
-                onTap: _onLogoutTap,
-                child: AnimatedScale(
-                  scale: _logoutScale,
-                  duration: Duration(milliseconds: 100),
-                  child: Image.asset(
-                    'assets/images/ui/logout.png',
-                    width: screenWidth * 0.18,
-                    height: screenHeight * 0.18,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
+              // Logout Button
+              Align(
+                alignment: Alignment.bottomLeft,
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    bottom: screenHeight * 0.03,
+                    left: screenWidth * 0.02,
+                  ),
+                  child: GestureDetector(
+                    onTap: _onLogoutTap,
+                    child: AnimatedScale(
+                      scale: _logoutScale,
+                      duration: Duration(milliseconds: 100),
+                      child: Image.asset(
+                        'assets/images/ui/logout.png',
                         width: screenWidth * 0.18,
                         height: screenHeight * 0.18,
-                        decoration: BoxDecoration(
-                          color: Colors.red[600],
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.logout,
-                          color: Colors.white,
-                          size: screenWidth * 0.08,
-                        ),
-                      );
-                    },
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            width: screenWidth * 0.18,
+                            height: screenHeight * 0.18,
+                            decoration: BoxDecoration(
+                              color: Colors.red[600],
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              Icons.logout,
+                              color: Colors.white,
+                              size: screenWidth * 0.08,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
-    );
+        );
       }, // Consumer builder closing bracket
     ); // Consumer closing bracket
   }
