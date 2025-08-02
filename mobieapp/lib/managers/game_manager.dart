@@ -408,6 +408,9 @@ class GameManager extends ChangeNotifier {
           await _updateLeaderboardProgress(score: score);
         }
 
+        // Refresh player info to ensure accurate coin balance
+        await refreshPlayerInfo();
+
         notifyListeners();
 
         // Reload progress and stats
@@ -807,25 +810,45 @@ class GameManager extends ChangeNotifier {
     int quantity,
     int totalCost,
   ) async {
-    // First spend the coins
-    final coinsSpent = await spendCoins(
-      totalCost,
-      'Upgrade $upgradeType x$quantity',
-    );
-    if (!coinsSpent) return false;
+    if (_currentPlayer == null) return false;
 
-    // Then update the upgrade level
-    final currentLevel = _upgradeLevels[upgradeType] ?? 1;
-    final newLevel = currentLevel + quantity;
-
-    final upgradeUpdated = await updateUpgradeLevel(upgradeType, newLevel);
-    if (!upgradeUpdated) {
-      // If upgrade update failed, try to refund coins
-      await addCoins(totalCost, 'Refund for failed upgrade');
+    // Check if player has enough coins
+    final currentCoins = _currentPlayer!.coins ?? 0;
+    if (currentCoins < totalCost) {
+      _setError('Not enough coins! Need $totalCost but have $currentCoins');
       return false;
     }
 
-    return true;
+    // Calculate new level
+    final currentLevel = _upgradeLevels[upgradeType] ?? 1;
+    final newLevel = currentLevel + quantity;
+
+    try {
+      final response = await ApiService.purchasePlayerUpgrade(
+        playerId: _currentPlayer!.playerId,
+        upgradeType: upgradeType,
+        newLevel: newLevel,
+        totalCost: totalCost,
+      );
+
+      if (response != null && response['success'] == true) {
+        // Update local data
+        _upgradeLevels[upgradeType] = newLevel;
+        _currentPlayer = _currentPlayer!.copyWith(
+          coins: response['remainingCoins'] ?? (currentCoins - totalCost),
+        );
+
+        await _savePlayerToStorage();
+        notifyListeners();
+        return true;
+      } else {
+        _setError('Failed to purchase upgrade on server');
+        return false;
+      }
+    } catch (e) {
+      _setError('Error purchasing upgrade: $e');
+      return false;
+    }
   }
 
   // Private methods

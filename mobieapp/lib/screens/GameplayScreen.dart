@@ -461,6 +461,16 @@ class _GameplayScreenState extends State<GameplayScreen> {
   void _onEnemyDefeated() {
     print('Enemy defeated!');
     AudioManager().playButtonSound();
+    setState(() {
+      isProcessingTurn = true;
+      game.setProcessingTurn(true);
+      print('Enemy defeated: Processing=$isProcessingTurn');
+    });
+
+    // Calculate coins based on level
+    int coinsEarned = 50; // Base coins for completing a level
+    if (widget.level >= 5) coinsEarned = 100; // Boss levels give more coins
+    if (widget.level >= 3) coinsEarned = 75; // Mid-tier levels
 
     // Save level completion status
     _saveLevelCompletion();
@@ -474,11 +484,18 @@ class _GameplayScreenState extends State<GameplayScreen> {
           backgroundColor: Colors.transparent,
           child: Container(
             width: MediaQuery.of(context).size.width * 0.8,
-            height: MediaQuery.of(context).size.height * 0.3,
+            height: MediaQuery.of(context).size.height * 0.4,
             decoration: BoxDecoration(
               color: Colors.green[100],
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.green[800]!, width: 4),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 10,
+                  offset: Offset(0, 5),
+                ),
+              ],
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -490,6 +507,29 @@ class _GameplayScreenState extends State<GameplayScreen> {
                     fontSize: MediaQuery.of(context).size.width * 0.08,
                     fontWeight: FontWeight.bold,
                     color: Colors.green[800],
+                    shadows: [
+                      Shadow(color: Colors.black26, offset: Offset(1, 1)),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'Level ${widget.chapter}.${widget.level} Complete!',
+                  style: TextStyle(
+                    fontFamily: 'Bungee',
+                    fontSize: MediaQuery.of(context).size.width * 0.04,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green[700],
+                  ),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'Coins Earned: $coinsEarned',
+                  style: TextStyle(
+                    fontFamily: 'Bungee',
+                    fontSize: MediaQuery.of(context).size.width * 0.035,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.amber[700],
                   ),
                 ),
                 SizedBox(height: 20),
@@ -497,7 +537,9 @@ class _GameplayScreenState extends State<GameplayScreen> {
                   onTap: () {
                     AudioManager().playButtonSound();
                     Navigator.pop(context); // Close dialog
-                    Navigator.pop(context); // Return to previous screen
+
+                    // Navigate back to Chapter1 screen instead of just popping
+                    Navigator.pushReplacementNamed(context, '/chapter1');
                   },
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
@@ -528,25 +570,27 @@ class _GameplayScreenState extends State<GameplayScreen> {
   Future<void> _saveLevelCompletion() async {
     final gameManager = Provider.of<GameManager>(context, listen: false);
 
-    // Save level completion through GameManager
-    await gameManager.updatePlayerProgress(
-      chapterId: widget.chapter.toString(),
-      levelNumber: widget.level,
-      completed: true,
-    );
-
-    // Also trigger leaderboard update for level 2+
-    if (widget.level >= 2) {
-      await gameManager.completeLevel(
-        chapterId: widget.chapter,
-        levelId: widget.level,
-        score: game.score, // Get score from the game
-        coinsEarned: 0,
-      );
-    }
+    // Calculate coins earned based on level
+    int coinsEarned = 50; // Base coins for completing a level
+    if (widget.level >= 5) coinsEarned = 100; // Boss levels give more coins
+    if (widget.level >= 3) coinsEarned = 75; // Mid-tier levels
 
     print(
-      'Level completion saved: Chapter ${widget.chapter} Level ${widget.level}',
+      'Starting level completion save for Chapter ${widget.chapter} Level ${widget.level}',
+    );
+
+    // Save level completion through GameManager with coins
+    final levelCompleted = await gameManager.completeLevel(
+      chapterId: widget.chapter,
+      levelId: widget.level,
+      score: game.score, // Get score from the game
+      coinsEarned: coinsEarned,
+    );
+
+    print('CompleteLevel result: $levelCompleted');
+
+    print(
+      'Level completion saved: Chapter ${widget.chapter} Level ${widget.level}, Coins: $coinsEarned',
     );
   }
 

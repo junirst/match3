@@ -4,20 +4,29 @@ import 'package:http/http.dart' as http;
 class ApiService {
   // Environment configurations
   static const String _localEmulatorUrl =
-      'http://10.0.2.2:5000/api'; // For Android emulator with local Docker
+      'http://10.0.2.2:8080/api'; // For Android emulator - 10.0.2.2 maps to host machine's localhost
   static const String _localPhysicalUrl =
-      'http://192.168.1.9:5000/api'; // Your local network IP
+      'http://192.168.2.202:8080/api'; // Your local network IP for physical devices
   static const String _remoteUrl =
       'http://1.54.215.45:5000/api'; // Your public IP for remote access
 
   // Current environment - change this based on your setup
   static String _currentEnv =
-      'local_physical'; // Options: 'local_emulator', 'local_physical', 'remote'
+      'local_emulator'; // Options: 'local_emulator', 'local_physical', 'remote'
 
   static void setEnvironment(String environment) {
     _currentEnv = environment;
     print('API Environment changed to: $environment');
     print('API Base URL is now: $baseUrl');
+  }
+
+  // Helper method to automatically detect and set environment
+  static void setEnvironmentForEmulator() {
+    setEnvironment('local_emulator');
+  }
+
+  static void setEnvironmentForPhysicalDevice() {
+    setEnvironment('local_physical');
   }
 
   static String get baseUrl {
@@ -253,6 +262,39 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>?> purchasePlayerUpgrade({
+    required String playerId,
+    required String upgradeType,
+    required int newLevel,
+    required int totalCost,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/Player/$playerId/purchaseUpgrade'),
+        headers: headers,
+        body: json.encode({
+          'upgradeType': upgradeType,
+          'newLevel': newLevel,
+          'totalCost': totalCost,
+        }),
+      );
+
+      print('Purchase upgrade API response status: ${response.statusCode}');
+      print('Purchase upgrade API response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        print('Error purchasing upgrade: ${response.statusCode}');
+        print('Error response body: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('Error purchasing upgrade: $e');
+      return null;
+    }
+  }
+
   // Game Session API methods
   static Future<Map<String, dynamic>?> startGameSession({
     required String playerId,
@@ -441,7 +483,7 @@ class ApiService {
         body: json.encode({
           'playerId': playerId,
           'chapterId': chapterId,
-          'levelId': levelId,
+          'levelNumber': levelId, // Changed from 'levelId' to 'levelNumber'
           'score': score,
           'coinsEarned': coinsEarned,
         }),

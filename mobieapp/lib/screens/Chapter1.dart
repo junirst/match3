@@ -29,8 +29,18 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
     _loadLevelCompletionStatus();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh level completion status when returning to this screen
+    _loadLevelCompletionStatus();
+  }
+
   Future<void> _loadLevelCompletionStatus() async {
     final gameManager = Provider.of<GameManager>(context, listen: false);
+
+    // Refresh player progress from server to ensure we have latest completion status
+    await gameManager.loadPlayerProgress();
 
     setState(() {
       for (int level = 1; level <= 5; level++) {
@@ -39,6 +49,21 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
         _levelCompletionStatus[level] = progress.any(
           (p) => p.chapterId == 1 && p.levelId == level && p.isCompleted,
         );
+
+        // Debug logging
+        print(
+          'Level $level completion status: ${_levelCompletionStatus[level]}',
+        );
+        print('Level $level unlocked: ${_isLevelUnlocked(level)}');
+      }
+
+      // Debug: Print all player progress for chapter 1
+      final chapter1Progress = gameManager.playerProgress
+          .where((p) => p.chapterId == 1)
+          .toList();
+      print('Chapter 1 progress entries: ${chapter1Progress.length}');
+      for (var progress in chapter1Progress) {
+        print('Level ${progress.levelId}: completed=${progress.isCompleted}');
       }
     });
   }

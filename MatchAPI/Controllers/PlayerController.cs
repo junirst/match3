@@ -471,6 +471,69 @@ namespace MatchAPI.Controllers
             return Ok(new { success = true, UpgradeType = request.UpgradeType, Level = request.Level });
         }
 
+        // POST: api/Player/{id}/purchaseUpgrade
+        [HttpPost("{id}/purchaseUpgrade")]
+        public async Task<ActionResult> PurchaseUpgrade(string id, [FromBody] PurchaseUpgradeRequest request)
+        {
+            var player = await _context.Players
+                .Include(p => p.Upgrades)
+                .FirstOrDefaultAsync(p => p.PlayerId == id);
+
+            if (player == null)
+            {
+                return NotFound("Player not found");
+            }
+
+            // Check if player has enough coins
+            if (player.Coins < request.TotalCost)
+            {
+                return BadRequest("Insufficient coins");
+            }
+
+            var existingUpgrade = player.Upgrades
+                .FirstOrDefault(u => u.UpgradeType.ToLower() == request.UpgradeType.ToLower());
+
+            int newLevel = request.NewLevel;
+
+            if (existingUpgrade != null)
+            {
+                existingUpgrade.Level = newLevel;
+                existingUpgrade.UpdatedDate = DateTime.UtcNow;
+            }
+            else
+            {
+                var newUpgrade = new Upgrade
+                {
+                    PlayerId = id,
+                    UpgradeType = request.UpgradeType,
+                    Level = newLevel,
+                    CreatedDate = DateTime.UtcNow,
+                    UpdatedDate = DateTime.UtcNow
+                };
+                _context.Upgrades.Add(newUpgrade);
+            }
+
+            // Deduct coins
+            player.Coins -= request.TotalCost;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                
+                return Ok(new 
+                { 
+                    success = true, 
+                    UpgradeType = request.UpgradeType, 
+                    Level = newLevel, 
+                    RemainingCoins = player.Coins 
+                });
+            }
+            catch (DbUpdateException)
+            {
+                return StatusCode(500, "Error updating upgrade");
+            }
+        }
+
         // DELETE: api/Player/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePlayer(string id)
@@ -641,6 +704,13 @@ namespace MatchAPI.Controllers
     {
         public string UpgradeType { get; set; } = string.Empty;
         public int Level { get; set; }
+    }
+
+    public class PurchaseUpgradeRequest
+    {
+        public string UpgradeType { get; set; } = string.Empty;
+        public int NewLevel { get; set; }
+        public int TotalCost { get; set; }
     }
 
     public class PurchaseWeaponRequest
