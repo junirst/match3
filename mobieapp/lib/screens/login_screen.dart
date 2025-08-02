@@ -35,9 +35,9 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
     _isCreateMode = widget.startInCreateMode;
     _loadLanguagePreference();
-    
+
     // Pre-fill test credentials for easier testing
-    _emailController.text = 'test@example.com';
+    _emailController.text = 'test@gmail.com';
     _passwordController.text = '123456';
   }
 
@@ -55,18 +55,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _onButtonTap(String buttonName) {
     AudioManager().playButtonSound();
-    
+
     setState(() {
       if (buttonName == 'back') {
         _backButtonScale = 1.1;
       }
     });
-    
+
     Future.delayed(const Duration(milliseconds: 100), () {
       setState(() {
         _backButtonScale = 1.0;
       });
-      
+
       if (buttonName == 'back') {
         Navigator.pop(context);
       } else if (buttonName == 'login') {
@@ -83,10 +83,10 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final gameManager = Provider.of<GameManager>(context, listen: false);
-    
+
     // Debug info
     print('Attempting login with email: ${_emailController.text.trim()}');
-    
+
     final success = await gameManager.loginPlayer(
       _emailController.text.trim(),
       _passwordController.text,
@@ -98,7 +98,10 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pushReplacementNamed(context, '/main_menu');
       } else {
         print('Login failed: ${gameManager.error}');
-        _showErrorDialog(gameManager.error ?? 'Login failed. Please check your credentials and try again.');
+        _showErrorDialog(
+          gameManager.error ??
+              'Login failed. Please check your credentials and try again.',
+        );
       }
     }
   }
@@ -107,11 +110,11 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final gameManager = Provider.of<GameManager>(context, listen: false);
-    
+
     // Store email and password for later use
     String email = _emailController.text.trim();
     String password = _passwordController.text;
-    
+
     final success = await gameManager.registerPlayer(
       playerName: _playerNameController.text.trim(),
       password: password,
@@ -155,10 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
             _getLocalizedText('Error', 'Lỗi'),
             style: const TextStyle(color: Colors.white),
           ),
-          content: Text(
-            message,
-            style: const TextStyle(color: Colors.white),
-          ),
+          content: Text(message, style: const TextStyle(color: Colors.white)),
           actions: [
             TextButton(
               child: Text(
@@ -183,10 +183,7 @@ class _LoginScreenState extends State<LoginScreen> {
             _getLocalizedText('Success', 'Thành công'),
             style: const TextStyle(color: Colors.white),
           ),
-          content: Text(
-            message,
-            style: const TextStyle(color: Colors.white),
-          ),
+          content: Text(message, style: const TextStyle(color: Colors.white)),
           actions: [
             TextButton(
               child: Text(
@@ -201,7 +198,11 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildModeButton(String text, bool isSelected, VoidCallback onPressed) {
+  Widget _buildModeButton(
+    String text,
+    bool isSelected,
+    VoidCallback onPressed,
+  ) {
     return TextButton(
       onPressed: onPressed,
       child: Text(
@@ -282,10 +283,7 @@ class _LoginScreenState extends State<LoginScreen> {
       dropdownColor: Colors.grey[800],
       style: const TextStyle(color: Colors.white),
       items: items.map((String item) {
-        return DropdownMenuItem<String>(
-          value: item,
-          child: Text(item),
-        );
+        return DropdownMenuItem<String>(value: item, child: Text(item));
       }).toList(),
       onChanged: onChanged,
     );
@@ -298,9 +296,9 @@ class _LoginScreenState extends State<LoginScreen> {
       child: ElevatedButton(
         onPressed: gameManager.isLoading
             ? null
-            : _isCreateMode 
-                ? () => _onButtonTap('register')
-                : () => _onButtonTap('login'),
+            : _isCreateMode
+            ? () => _onButtonTap('register')
+            : () => _onButtonTap('login'),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.blue,
           shape: RoundedRectangleBorder(
@@ -308,9 +306,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
         child: gameManager.isLoading
-            ? const CircularProgressIndicator(
-                color: Colors.white,
-              )
+            ? const CircularProgressIndicator(color: Colors.white)
             : Text(
                 _isCreateMode
                     ? _getLocalizedText('CREATE ACCOUNT', 'TẠO TÀI KHOẢN')
@@ -337,7 +333,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    
+
     return Scaffold(
       body: Stack(
         children: [
@@ -351,7 +347,7 @@ class _LoginScreenState extends State<LoginScreen> {
               height: double.infinity,
             ),
           ),
-          
+
           // Back button
           Positioned(
             top: 40,
@@ -359,12 +355,16 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Transform.scale(
               scale: _backButtonScale,
               child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.white,
+                  size: 30,
+                ),
                 onPressed: () => _onButtonTap('back'),
               ),
             ),
           ),
-          
+
           // Main content
           SafeArea(
             child: Padding(
@@ -376,16 +376,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         SizedBox(height: screenHeight * 0.1),
-                        
+
                         // Game Logo
                         Image.asset(
                           'assets/images/ui/logo.png',
                           width: screenWidth * 0.8,
                           height: screenHeight * 0.2,
                         ),
-                        
+
                         const SizedBox(height: 20),
-                        
+
                         // Title
                         Text(
                           _getLocalizedText('WELCOME', 'CHÀO MỪNG'),
@@ -403,16 +403,18 @@ class _LoginScreenState extends State<LoginScreen> {
                             ],
                           ),
                         ),
-                        
+
                         const SizedBox(height: 30),
-                        
+
                         // Form container with background
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
                             color: Colors.black.withOpacity(0.7),
                             borderRadius: BorderRadius.circular(15),
-                            border: Border.all(color: Colors.blue.withOpacity(0.5)),
+                            border: Border.all(
+                              color: Colors.blue.withOpacity(0.5),
+                            ),
                           ),
                           child: Form(
                             key: _formKey,
@@ -423,40 +425,52 @@ class _LoginScreenState extends State<LoginScreen> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     _buildModeButton(
-                                      _getLocalizedText('LOGIN', 'ĐĂNG NHẬP'), 
-                                      !_isCreateMode, 
-                                      () => setState(() => _isCreateMode = false)
+                                      _getLocalizedText('LOGIN', 'ĐĂNG NHẬP'),
+                                      !_isCreateMode,
+                                      () =>
+                                          setState(() => _isCreateMode = false),
                                     ),
                                     const Text(
                                       ' | ',
-                                      style: TextStyle(color: Colors.white, fontSize: 18),
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                      ),
                                     ),
                                     _buildModeButton(
-                                      _getLocalizedText('REGISTER', 'ĐĂNG KÝ'), 
-                                      _isCreateMode, 
-                                      () => setState(() => _isCreateMode = true)
+                                      _getLocalizedText('REGISTER', 'ĐĂNG KÝ'),
+                                      _isCreateMode,
+                                      () =>
+                                          setState(() => _isCreateMode = true),
                                     ),
                                   ],
                                 ),
-                                
+
                                 const SizedBox(height: 20),
-                                
+
                                 // Player Name (only for register)
                                 if (_isCreateMode) ...[
                                   _buildTextField(
                                     controller: _playerNameController,
-                                    label: _getLocalizedText('Player Name', 'Tên người chơi'),
+                                    label: _getLocalizedText(
+                                      'Player Name',
+                                      'Tên người chơi',
+                                    ),
                                     icon: Icons.person,
                                     validator: (value) {
-                                      if (value == null || value.trim().isEmpty) {
-                                        return _getLocalizedText('Please enter player name', 'Vui lòng nhập tên người chơi');
+                                      if (value == null ||
+                                          value.trim().isEmpty) {
+                                        return _getLocalizedText(
+                                          'Please enter player name',
+                                          'Vui lòng nhập tên người chơi',
+                                        );
                                       }
                                       return null;
                                     },
                                   ),
                                   const SizedBox(height: 15),
                                 ],
-                                
+
                                 // Email
                                 _buildTextField(
                                   controller: _emailController,
@@ -465,66 +479,90 @@ class _LoginScreenState extends State<LoginScreen> {
                                   keyboardType: TextInputType.emailAddress,
                                   validator: (value) {
                                     if (value == null || value.trim().isEmpty) {
-                                      return _getLocalizedText('Please enter email', 'Vui lòng nhập email');
+                                      return _getLocalizedText(
+                                        'Please enter email',
+                                        'Vui lòng nhập email',
+                                      );
                                     }
                                     if (!value.contains('@')) {
-                                      return _getLocalizedText('Please enter valid email', 'Vui lòng nhập email hợp lệ');
+                                      return _getLocalizedText(
+                                        'Please enter valid email',
+                                        'Vui lòng nhập email hợp lệ',
+                                      );
                                     }
                                     return null;
                                   },
                                 ),
-                                
+
                                 const SizedBox(height: 15),
-                                
+
                                 // Password
                                 _buildTextField(
                                   controller: _passwordController,
-                                  label: _getLocalizedText('Password', 'Mật khẩu'),
+                                  label: _getLocalizedText(
+                                    'Password',
+                                    'Mật khẩu',
+                                  ),
                                   icon: Icons.lock,
                                   obscureText: true,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
-                                      return _getLocalizedText('Please enter password', 'Vui lòng nhập mật khẩu');
+                                      return _getLocalizedText(
+                                        'Please enter password',
+                                        'Vui lòng nhập mật khẩu',
+                                      );
                                     }
                                     if (value.length < 6) {
-                                      return _getLocalizedText('Password must be at least 6 characters', 'Mật khẩu phải có ít nhất 6 ký tự');
+                                      return _getLocalizedText(
+                                        'Password must be at least 6 characters',
+                                        'Mật khẩu phải có ít nhất 6 ký tự',
+                                      );
                                     }
                                     return null;
                                   },
                                 ),
-                                
+
                                 // Additional fields for register
                                 if (_isCreateMode) ...[
                                   const SizedBox(height: 15),
-                                  
+
                                   // Gender dropdown
                                   _buildDropdown(
                                     value: _selectedGender,
-                                    label: _getLocalizedText('Gender (Optional)', 'Giới tính (Tùy chọn)'),
+                                    label: _getLocalizedText(
+                                      'Gender (Optional)',
+                                      'Giới tính (Tùy chọn)',
+                                    ),
                                     icon: Icons.people,
                                     items: _genders,
-                                    onChanged: (value) => setState(() => _selectedGender = value),
+                                    onChanged: (value) =>
+                                        setState(() => _selectedGender = value),
                                   ),
-                                  
+
                                   const SizedBox(height: 15),
-                                  
+
                                   // Language dropdown
                                   _buildDropdown(
                                     value: _selectedLanguage,
-                                    label: _getLocalizedText('Language (Optional)', 'Ngôn ngữ (Tùy chọn)'),
+                                    label: _getLocalizedText(
+                                      'Language (Optional)',
+                                      'Ngôn ngữ (Tùy chọn)',
+                                    ),
                                     icon: Icons.language,
                                     items: _languages,
-                                    onChanged: (value) => setState(() => _selectedLanguage = value),
+                                    onChanged: (value) => setState(
+                                      () => _selectedLanguage = value,
+                                    ),
                                   ),
                                 ],
-                                
+
                                 const SizedBox(height: 30),
-                                
+
                                 // Submit Button
                                 _buildSubmitButton(gameManager),
-                                
+
                                 const SizedBox(height: 15),
-                                
+
                                 // Mode toggle buttons
                                 Row(
                                   children: [
@@ -532,7 +570,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                       child: _buildModeButton(
                                         _getLocalizedText('LOGIN', 'ĐĂNG NHẬP'),
                                         !_isCreateMode,
-                                        () => setState(() => _isCreateMode = false),
+                                        () => setState(
+                                          () => _isCreateMode = false,
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(width: 10),
@@ -540,14 +580,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                       child: _buildModeButton(
                                         _getLocalizedText('CREATE', 'TẠO MỚI'),
                                         _isCreateMode,
-                                        () => setState(() => _isCreateMode = true),
+                                        () => setState(
+                                          () => _isCreateMode = true,
+                                        ),
                                       ),
                                     ),
                                   ],
                                 ),
-                                
+
                                 const SizedBox(height: 15),
-                                
+
                                 // Guest Mode Button
                                 SizedBox(
                                   width: double.infinity,
@@ -555,13 +597,19 @@ class _LoginScreenState extends State<LoginScreen> {
                                   child: OutlinedButton(
                                     onPressed: () => _onButtonTap('guest'),
                                     style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(color: Colors.amber, width: 2),
+                                      side: const BorderSide(
+                                        color: Colors.amber,
+                                        width: 2,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
                                     child: Text(
-                                      _getLocalizedText('PLAY AS GUEST', 'CHƠI VỚI TƯ CÁCH KHÁCH'),
+                                      _getLocalizedText(
+                                        'PLAY AS GUEST',
+                                        'CHƠI VỚI TƯ CÁCH KHÁCH',
+                                      ),
                                       style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
@@ -570,12 +618,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                 ),
-                                
                               ],
                             ),
                           ),
                         ),
-                        
+
                         const SizedBox(height: 50),
                       ],
                     ),

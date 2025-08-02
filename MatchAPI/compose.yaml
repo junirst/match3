@@ -13,7 +13,7 @@ services:
       context: .
       target: final
     ports:
-      - "5000:8080"
+      - "0.0.0.0:5000:8080"  # Listen on all network interfaces
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080

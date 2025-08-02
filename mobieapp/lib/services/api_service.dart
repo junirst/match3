@@ -1,28 +1,42 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:http/io_client.dart';
 
 class ApiService {
-  // For Docker container running on localhost:5000
-  // For Android emulator, use 10.0.2.2 instead of localhost
-  // For iOS simulator, use localhost or actual IP
-  static const String baseUrl =
-      'http://10.0.2.2:5000/api'; // Updated for Docker container
+  // Environment configurations
+  static const String _localEmulatorUrl =
+      'http://10.0.2.2:5000/api'; // For Android emulator with local Docker
+  static const String _localPhysicalUrl =
+      'http://192.168.1.100:5000/api'; // Replace with your actual local IP
+  static const String _remoteUrl =
+      'http://YOUR_REMOTE_IP:5000/api'; // Replace with remote server IP
+
+  // Current environment - change this based on your setup
+  static String _currentEnv =
+      'local_emulator'; // Options: 'local_emulator', 'local_physical', 'remote'
+
+  static void setEnvironment(String environment) {
+    _currentEnv = environment;
+    print('API Environment changed to: $environment');
+    print('API Base URL is now: $baseUrl');
+  }
+
+  static String get baseUrl {
+    switch (_currentEnv) {
+      case 'local_emulator':
+        return _localEmulatorUrl;
+      case 'local_physical':
+        return _localPhysicalUrl;
+      case 'remote':
+        return _remoteUrl;
+      default:
+        return _localEmulatorUrl;
+    }
+  }
 
   static const Map<String, String> headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   };
-
-  // Initialize HTTP client with SSL bypass for development
-  static http.Client _createHttpClient() {
-    HttpClient httpClient = HttpClient()
-      ..badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
-    IOClient client = IOClient(httpClient);
-    return client;
-  }
 
   // Player API methods
   static Future<Map<String, dynamic>?> getPlayerProfile(String playerId) async {
