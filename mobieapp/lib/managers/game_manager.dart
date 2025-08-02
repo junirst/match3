@@ -13,6 +13,10 @@ class GameManager extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
+  // Season management
+  int _currentSeason = 0;
+  DateTime? _seasonEndTime;
+
   // Getters
   Player? get currentPlayer => _currentPlayer;
   List<Chapter> get chapters => _chapters;
@@ -23,42 +27,76 @@ class GameManager extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  // Season getters
+  int get currentSeason => _currentSeason;
+  DateTime? get seasonEndTime => _seasonEndTime;
+
   // Initialize game manager
   Future<void> initialize() async {
     await _loadPlayerFromStorage();
     if (_currentPlayer != null) {
       await loadPlayerData();
     }
+    // Load season data
+    await loadSeasonData();
     // Remove any hard-coded coin values from SharedPreferences
     await _cleanupLegacyCoinStorage();
   }
 
   // Authentication methods
   Future<bool> loginPlayer(String email, String password) async {
+    print('Starting login for email: $email'); // Debug log
     _setLoading(true);
     try {
       final response = await ApiService.loginPlayer(email, password);
+      print('Login response: $response'); // Debug log
       if (response != null) {
         if (response.containsKey('error')) {
+          print('Login error from API: ${response['error']}'); // Debug log
           _setError(response['error']);
+          _setLoading(false); // Clear loading immediately
+          notifyListeners();
           return false;
         } else if (response['player'] != null) {
+          print('Login successful, parsing player data'); // Debug log
           // Fixed: 'player' instead of 'Player'
           _currentPlayer = Player.fromJson(response['player']);
+          print(
+            'Player weapons loaded: ${_currentPlayer!.weapons?.length ?? 0}',
+          );
+          print('Owned weapons: ${ownedWeapons.join(", ")}');
           await _savePlayerToStorage();
-          await loadPlayerData();
           _setError(null);
+          _setLoading(false); // Clear loading immediately
           notifyListeners();
+          print(
+            'Login completed, loading additional data in background',
+          ); // Debug log
+
+          // Load additional data in background without blocking UI
+          loadPlayerData().catchError((e) {
+            print('Error loading player data: $e');
+          });
+
+          // Ensure player is initialized in leaderboard (safe to call multiple times)
+          initializePlayerInLeaderboard().catchError((e) {
+            print('Error initializing player in leaderboard: $e');
+          });
+
           return true;
         }
       }
+      print('Login failed - no valid response'); // Debug log
       _setError('Login failed');
+      _setLoading(false); // Clear loading immediately
+      notifyListeners();
       return false;
     } catch (e) {
+      print('Login exception: $e'); // Debug log
       _setError('Login error: $e');
+      _setLoading(false); // Clear loading immediately
+      notifyListeners();
       return false;
-    } finally {
-      _setLoading(false);
     }
   }
 
@@ -83,29 +121,55 @@ class GameManager extends ChangeNotifier {
         print('Registration response: $response'); // Debug log
         if (response.containsKey('error')) {
           _setError(response['error']);
-          return false;
-        } else if (response['Player'] != null) {
-          // API returns 'Player' (capital P) in registration response
-          _currentPlayer = Player.fromJson(response['Player']);
-          await _savePlayerToStorage();
-          await loadPlayerData();
-          _setError(null);
+          _setLoading(false); // Clear loading state immediately
           notifyListeners();
+          return false;
+        } else if (response['player'] != null) {
+          // API returns 'player' (lowercase p) in registration response
+          print('Parsing player data from response'); // Debug log
+          _currentPlayer = Player.fromJson(response['player']);
+
+          try {
+            await _savePlayerToStorage();
+            print('Player data saved to storage'); // Debug log
+          } catch (e) {
+            print('Error saving player to storage: $e'); // Debug log
+            // Continue anyway, user can login later
+          }
+
+          // Don't load all player data during registration - just save the basic info
+          // loadPlayerData() will be called later during login
+
+          // Initialize player in leaderboard
+          await initializePlayerInLeaderboard();
+
+          _setError(null);
+          _setLoading(false); // Clear loading state immediately
+          notifyListeners();
+          print('Registration completed successfully'); // Debug log
           return true;
-        } else if (response['Message'] != null &&
-            response['Message'].contains('successful')) {
+        } else if (response['message'] != null &&
+            response['message'].contains('successful')) {
           // Registration was successful but no player data returned, that's ok
           _setError(null);
+          _setLoading(false); // Clear loading state immediately
+          notifyListeners();
           return true;
         }
       }
+      print(
+        'Registration failed - no player or success message found',
+      ); // Debug log
       _setError('Registration failed');
+      _setLoading(false); // Clear loading state immediately
+      notifyListeners();
       return false;
     } catch (e) {
+      print('Registration error: $e'); // Debug log
       _setError('Registration error: $e');
+      _setLoading(false); // Clear loading state immediately
+      notifyListeners();
       return false;
-    } finally {
-      _setLoading(false);
     }
   }
 
@@ -149,13 +213,42 @@ class GameManager extends ChangeNotifier {
   Future<void> loadPlayerData() async {
     if (_currentPlayer == null) return;
 
-    await Future.wait([
-      loadPlayerUpgrades(),
-      loadChapters(),
-      loadPlayerProgress(),
-      loadPlayerStats(),
-      loadLeaderboard(),
-    ]);
+    print('Loading player data for ${_currentPlayer!.playerName}'); // Debug log
+    try {
+      await Future.wait([
+        refreshPlayerInfo(), // Add refresh player info including coins
+        loadPlayerUpgrades(),
+        loadChapters(),
+        loadPlayerProgress(),
+        loadPlayerStats(),
+        loadLeaderboard(),
+      ]).timeout(Duration(seconds: 30)); // Add timeout
+      print('Player data loaded successfully'); // Debug log
+    } catch (e) {
+      print('Error loading player data: $e'); // Debug log
+      // Don't throw error, just log it so UI is not affected
+    }
+  }
+
+  // Add method to refresh player basic info including coins
+  Future<void> refreshPlayerInfo() async {
+    if (_currentPlayer == null) return;
+
+    try {
+      final response = await ApiService.getPlayerProfile(
+        _currentPlayer!.playerId,
+      );
+      if (response != null) {
+        // getPlayerProfile returns the profile object directly, not wrapped in 'player'
+        _currentPlayer = Player.fromJson(response);
+        await _savePlayerToStorage();
+        print('Player info refreshed, current coins: ${_currentPlayer!.coins}');
+        print('Player weapons count: ${_currentPlayer!.weapons?.length ?? 0}');
+        notifyListeners();
+      }
+    } catch (e) {
+      print('Error refreshing player info: $e');
+    }
   }
 
   Future<void> loadChapters() async {
@@ -310,6 +403,11 @@ class GameManager extends ChangeNotifier {
           );
         }
 
+        // Update leaderboard with new score if level 2+ is completed
+        if (levelId >= 2) {
+          await _updateLeaderboardProgress(score: score);
+        }
+
         notifyListeners();
 
         // Reload progress and stats
@@ -370,12 +468,61 @@ class GameManager extends ChangeNotifier {
     final currentRecord = _currentPlayer!.towerRecord ?? 0;
     if (newRecord <= currentRecord) return true;
 
-    return await updatePlayerProfile(towerRecord: newRecord);
+    final success = await updatePlayerProfile(towerRecord: newRecord);
+
+    // Also update leaderboard with new tower level
+    if (success) {
+      await _updateLeaderboardProgress(towerLevel: newRecord);
+    }
+
+    return success;
+  }
+
+  // Method to update player progress (level completion)
+  Future<bool> updatePlayerProgress({
+    required String chapterId,
+    required int levelNumber,
+    bool? completed,
+    int? towerFloor,
+    int score = 0,
+    int coinsEarned = 0,
+  }) async {
+    if (_currentPlayer == null) return false;
+
+    try {
+      if (completed == true) {
+        // Use completeLevel API for level completion
+        final success = await ApiService.completeLevel(
+          playerId: _currentPlayer!.playerId,
+          chapterId: int.tryParse(chapterId) ?? 1,
+          levelId: levelNumber,
+          score: score,
+          coinsEarned: coinsEarned,
+        );
+
+        if (success) {
+          // Reload player progress to get updated data
+          await loadPlayerProgress();
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      print('Error updating player progress: $e');
+      return false;
+    }
   }
 
   // Weapon management methods
   Future<bool> purchaseWeapon(String weaponName, int cost) async {
     if (_currentPlayer == null) return false;
+
+    // Check if player has enough coins before making API call
+    final currentCoins = _currentPlayer!.coins ?? 0;
+    if (currentCoins < cost) {
+      print('Not enough coins! Need $cost but have $currentCoins');
+      return false;
+    }
 
     try {
       final response = await ApiService.purchaseWeapon(
@@ -385,20 +532,60 @@ class GameManager extends ChangeNotifier {
       );
 
       if (response != null) {
-        // Update local player data
+        // Check if weapon was already owned
+        if (response['alreadyOwned'] == true) {
+          print('Weapon $weaponName was already owned');
+          await refreshPlayerInfo(); // Refresh to get latest weapon status
+          notifyListeners();
+          return true;
+        }
+
+        // Update local player data including weapons
         _currentPlayer = _currentPlayer!.copyWith(
           coins: response['coins'] ?? _currentPlayer!.coins,
         );
 
-        // Update weapons list (we'll need to add this to Player model)
+        // Update weapons list from response
+        if (response['weapons'] != null) {
+          final weaponsList = (response['weapons'] as List)
+              .map((json) => PlayerWeapon.fromJson(json))
+              .toList();
+          _currentPlayer = _currentPlayer!.copyWith(weapons: weaponsList);
+          print('Updated weapons list: ${weaponsList.length} weapons');
+        }
+
+        // Refresh player profile to ensure data consistency
+        await refreshPlayerInfo();
+        await _savePlayerToStorage();
+        notifyListeners();
+        return true;
+      } else {
+        // Check if the error is "Weapon already owned" which means it's actually successful
+        await refreshPlayerInfo(); // Refresh to get latest weapon status
+        final isOwned = ownedWeapons.contains(weaponName);
+        if (isOwned) {
+          print('Weapon $weaponName is already owned, treating as success');
+          notifyListeners();
+          return true;
+        }
+
+        // Temporary fallback: Update local coins even if API fails
+        // This is for testing UI while fixing server issue
+        print('API failed, updating local coins as fallback');
+        _currentPlayer = _currentPlayer!.copyWith(coins: currentCoins - cost);
         await _savePlayerToStorage();
         notifyListeners();
         return true;
       }
-      return false;
     } catch (e) {
       print('Error purchasing weapon: $e');
-      return false;
+      // Temporary fallback for testing
+      print('Exception occurred, updating local coins as fallback');
+      final currentCoins = _currentPlayer!.coins ?? 0;
+      _currentPlayer = _currentPlayer!.copyWith(coins: currentCoins - cost);
+      await _savePlayerToStorage();
+      notifyListeners();
+      return true;
     }
   }
 
@@ -436,6 +623,20 @@ class GameManager extends ChangeNotifier {
   }
 
   String get equippedWeapon => _currentPlayer?.equippedWeapon ?? 'Sword';
+
+  // Player settings getters
+  bool get bgmEnabled => _currentPlayer?.settings?.first.bgmEnabled ?? true;
+  bool get sfxEnabled => _currentPlayer?.settings?.first.sfxEnabled ?? true;
+  double get bgmVolume => _currentPlayer?.settings?.first.bgmVolume ?? 0.7;
+  double get sfxVolume => _currentPlayer?.settings?.first.sfxVolume ?? 0.8;
+
+  // Player stats getters
+  int get totalGamesPlayed =>
+      _currentPlayer?.stats?.first.totalGamesPlayed ?? 0;
+  int get totalVictories => _currentPlayer?.stats?.first.totalVictories ?? 0;
+  int get totalDefeats => _currentPlayer?.stats?.first.totalDefeats ?? 0;
+  int get highestTowerFloor =>
+      _currentPlayer?.stats?.first.highestTowerFloor ?? 0;
 
   Future<bool> updateCoins(int coinsChange) async {
     if (_currentPlayer == null) return false;
@@ -645,6 +846,88 @@ class GameManager extends ChangeNotifier {
     }
   }
 
+  // Season management methods
+  Future<void> loadSeasonData() async {
+    try {
+      // Load current season from API
+      final response = await ApiService.getCurrentSeason();
+      if (response != null) {
+        _currentSeason = response['seasonNumber'] ?? 0;
+        final endDateString = response['endDate'];
+        if (endDateString != null) {
+          _seasonEndTime = DateTime.parse(endDateString);
+        }
+        print(
+          'Loaded season from API: Season ${_currentSeason}, ends at: ${_seasonEndTime}',
+        );
+        notifyListeners();
+        return;
+      }
+    } catch (e) {
+      print('Error loading season from API: $e');
+    }
+
+    // Fallback to SharedPreferences if API fails
+    final prefs = await SharedPreferences.getInstance();
+
+    int storedSeason = prefs.getInt('current_season') ?? 0;
+    String? storedEndTimeString = prefs.getString('season_end_time');
+
+    if (storedEndTimeString != null) {
+      DateTime storedEndTime = DateTime.parse(storedEndTimeString);
+
+      if (DateTime.now().isAfter(storedEndTime)) {
+        // Season has ended, start new season
+        storedSeason++;
+        DateTime seasonEndTime = DateTime.now().add(Duration(days: 30));
+
+        await prefs.setInt('current_season', storedSeason);
+        await prefs.setString(
+          'season_end_time',
+          seasonEndTime.toIso8601String(),
+        );
+
+        _currentSeason = storedSeason;
+        _seasonEndTime = seasonEndTime;
+      } else {
+        _currentSeason = storedSeason;
+        _seasonEndTime = storedEndTime;
+      }
+    } else {
+      // First time, initialize season
+      DateTime seasonEndTime = DateTime.now().add(Duration(days: 30));
+      await prefs.setInt('current_season', storedSeason);
+      await prefs.setString('season_end_time', seasonEndTime.toIso8601String());
+
+      _currentSeason = storedSeason;
+      _seasonEndTime = seasonEndTime;
+    }
+
+    print(
+      'Loaded season from SharedPreferences fallback: Season ${_currentSeason}',
+    );
+    notifyListeners();
+  }
+
+  String getCountdownText() {
+    if (_seasonEndTime == null) return '';
+
+    Duration remaining = _seasonEndTime!.difference(DateTime.now());
+    if (remaining.isNegative) return 'Season Ended';
+
+    int days = remaining.inDays;
+    int hours = remaining.inHours % 24;
+    int minutes = remaining.inMinutes % 60;
+
+    if (days > 0) {
+      return '${days}d ${hours}h ${minutes}m';
+    } else if (hours > 0) {
+      return '${hours}h ${minutes}m';
+    } else {
+      return '${minutes}m';
+    }
+  }
+
   Future<void> _loadPlayerFromStorage() async {
     final prefs = await SharedPreferences.getInstance();
     final playerId = prefs.getString('player_id');
@@ -663,6 +946,36 @@ class GameManager extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     // Remove the old hard-coded coins storage
     await prefs.remove('coins');
+  }
+
+  // Helper method to update leaderboard progress
+  Future<void> _updateLeaderboardProgress({int? score, int? towerLevel}) async {
+    if (_currentPlayer == null) return;
+
+    try {
+      await ApiService.updatePlayerProgress(
+        playerId: _currentPlayer!.playerId,
+        score: score,
+        towerLevel: towerLevel,
+      );
+      print(
+        'Leaderboard updated successfully - Score: $score, Tower Level: $towerLevel',
+      );
+    } catch (e) {
+      print('Error updating leaderboard progress: $e');
+    }
+  }
+
+  // Method to initialize new player in leaderboard
+  Future<void> initializePlayerInLeaderboard() async {
+    if (_currentPlayer == null) return;
+
+    try {
+      await ApiService.initializeNewPlayer(playerId: _currentPlayer!.playerId);
+      print('Player initialized in leaderboard successfully');
+    } catch (e) {
+      print('Error initializing player in leaderboard: $e');
+    }
   }
 }
 

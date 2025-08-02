@@ -30,6 +30,7 @@ namespace MatchAPI.Controllers
                     l.PlayerId,
                     PlayerName = l.Player.PlayerName,
                     l.Score,
+                    l.TowerLevel,
                     l.Rank,
                     l.SeasonId,
                     l.CreatedDate
@@ -54,6 +55,7 @@ namespace MatchAPI.Controllers
                     l.PlayerId,
                     PlayerName = l.Player.PlayerName,
                     l.Score,
+                    l.TowerLevel,
                     l.Rank,
                     l.CreatedDate
                 })
@@ -77,6 +79,7 @@ namespace MatchAPI.Controllers
                     l.PlayerId,
                     PlayerName = l.Player.PlayerName,
                     l.Score,
+                    l.TowerLevel,
                     l.Rank,
                     l.SeasonId,
                     l.CreatedDate
@@ -232,6 +235,145 @@ namespace MatchAPI.Controllers
             await _context.SaveChangesAsync();
         }
 
+        // POST: api/Leaderboard/UpdateProgress
+        [HttpPost("UpdateProgress")]
+        public async Task<ActionResult> UpdatePlayerProgress([FromBody] UpdateProgressRequest request)
+        {
+            try
+            {
+                // Validate input
+                if (string.IsNullOrEmpty(request.PlayerId))
+                {
+                    return BadRequest("Player ID is required");
+                }
+
+                // Get current season
+                var currentSeason = await _context.Seasons
+                    .OrderByDescending(s => s.SeasonId)
+                    .FirstOrDefaultAsync();
+
+                if (currentSeason == null)
+                {
+                    return BadRequest("No active season found");
+                }
+
+                // Find existing leaderboard entry for this player and season
+                var existingEntry = await _context.Leaderboards
+                    .FirstOrDefaultAsync(l => l.PlayerId == request.PlayerId && l.SeasonId == currentSeason.SeasonId);
+
+                if (existingEntry == null)
+                {
+                    // Create new leaderboard entry for first-time player
+                    existingEntry = new Leaderboard
+                    {
+                        PlayerId = request.PlayerId,
+                        SeasonId = currentSeason.SeasonId,
+                        Score = request.Score ?? 0,
+                        TowerLevel = request.TowerLevel ?? 1,
+                        CreatedDate = DateTime.UtcNow,
+                        UpdatedDate = DateTime.UtcNow
+                    };
+                    _context.Leaderboards.Add(existingEntry);
+                }
+                else
+                {
+                    // Update existing entry only if new values are higher
+                    bool updated = false;
+                    
+                    if (request.Score.HasValue && request.Score.Value > (existingEntry.Score ?? 0))
+                    {
+                        existingEntry.Score = request.Score.Value;
+                        updated = true;
+                    }
+                    
+                    if (request.TowerLevel.HasValue && request.TowerLevel.Value > existingEntry.TowerLevel)
+                    {
+                        existingEntry.TowerLevel = request.TowerLevel.Value;
+                        updated = true;
+                    }
+                    
+                    if (updated)
+                    {
+                        existingEntry.UpdatedDate = DateTime.UtcNow;
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+
+                // Recalculate ranks for the season
+                await UpdateRanks(currentSeason.SeasonId);
+
+                return Ok(new { message = "Player progress updated successfully", leaderboardId = existingEntry.LeaderboardId });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        // POST: api/Leaderboard/InitializePlayer
+        [HttpPost("InitializePlayer")]
+        public async Task<ActionResult> InitializeNewPlayer([FromBody] InitializePlayerRequest request)
+        {
+            try
+            {
+                // Validate input
+                if (string.IsNullOrEmpty(request.PlayerId))
+                {
+                    return BadRequest("Player ID is required");
+                }
+
+                // Check if player exists
+                var player = await _context.Players.FindAsync(request.PlayerId);
+                if (player == null)
+                {
+                    return BadRequest("Player not found");
+                }
+
+                // Get current season
+                var currentSeason = await _context.Seasons
+                    .OrderByDescending(s => s.SeasonId)
+                    .FirstOrDefaultAsync();
+
+                if (currentSeason == null)
+                {
+                    return BadRequest("No active season found");
+                }
+
+                // Check if leaderboard entry already exists
+                var existingEntry = await _context.Leaderboards
+                    .FirstOrDefaultAsync(l => l.PlayerId == request.PlayerId && l.SeasonId == currentSeason.SeasonId);
+
+                if (existingEntry != null)
+                {
+                    return Ok(new { message = "Player already initialized in leaderboard", leaderboardId = existingEntry.LeaderboardId });
+                }
+
+                // Create initial leaderboard entry
+                var newEntry = new Leaderboard
+                {
+                    PlayerId = request.PlayerId,
+                    SeasonId = currentSeason.SeasonId,
+                    Score = 0,
+                    TowerLevel = 1,
+                    CreatedDate = DateTime.UtcNow,
+                    UpdatedDate = DateTime.UtcNow
+                };
+
+                _context.Leaderboards.Add(newEntry);
+                await _context.SaveChangesAsync();
+
+                // Recalculate ranks
+                await UpdateRanks(currentSeason.SeasonId);
+
+                return Ok(new { message = "Player initialized in leaderboard successfully", leaderboardId = newEntry.LeaderboardId });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
         private bool LeaderboardExists(int id)
         {
             return _context.Leaderboards.Any(e => e.LeaderboardId == id);
@@ -249,5 +391,17 @@ namespace MatchAPI.Controllers
     public class UpdateLeaderboardRequest
     {
         public int Score { get; set; }
+    }
+
+    public class UpdateProgressRequest
+    {
+        public string PlayerId { get; set; } = string.Empty;
+        public int? Score { get; set; }
+        public int? TowerLevel { get; set; }
+    }
+
+    public class InitializePlayerRequest
+    {
+        public string PlayerId { get; set; } = string.Empty;
     }
 }

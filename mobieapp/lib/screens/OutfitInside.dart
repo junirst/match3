@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import '../managers/audio_manager.dart';
 import '../managers/game_manager.dart';
+import '../managers/language_manager.dart';
 
 class OutfitScreen extends StatefulWidget {
   const OutfitScreen({super.key});
@@ -87,13 +87,18 @@ class _OutfitScreenState extends State<OutfitScreen> {
     _loadLanguagePreference();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reload weapons when screen becomes visible
+    _loadLanguagePreference();
+  }
+
   Future<void> _loadLanguagePreference() async {
-    final prefs = await SharedPreferences.getInstance();
-    final language = prefs.getString('language') ?? 'English';
     final gameManager = Provider.of<GameManager>(context, listen: false);
 
     setState(() {
-      _currentLanguage = language;
+      _currentLanguage = LanguageManager.currentLanguage;
       _equippedWeapon = gameManager.equippedWeapon;
 
       // Load weapon ownership status from GameManager
@@ -250,11 +255,22 @@ class _OutfitScreenState extends State<OutfitScreen> {
     Navigator.of(context).pop(); // Close dialog
 
     final gameManager = context.read<GameManager>();
+
+    // Debug: Log current coins and weapon price
+    print('Attempting to purchase $weaponName for $price coins');
+    print('Current coins: ${gameManager.currentCoins}');
+    print('Player coins: ${gameManager.currentPlayer?.coins}');
+
     final success = await gameManager.purchaseWeapon(weaponName, price);
 
     if (success) {
+      // Reload weapon ownership status from GameManager
       setState(() {
-        _items[itemIndex]['owned'] = true;
+        final ownedWeaponsList = gameManager.ownedWeapons;
+        for (int i = 0; i < _items.length; i++) {
+          final weaponName = _items[i]['name'].toString();
+          _items[i]['owned'] = ownedWeaponsList.contains(weaponName);
+        }
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -398,6 +414,25 @@ class _OutfitScreenState extends State<OutfitScreen> {
                       color: Colors.amber,
                       size: screenWidth * 0.08,
                     ),
+                    const SizedBox(width: 8),
+                    // Add refresh button for coins
+                    GestureDetector(
+                      onTap: () async {
+                        final gameManager = context.read<GameManager>();
+                        await gameManager.refreshPlayerInfo();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Coins refreshed'),
+                            duration: Duration(seconds: 1),
+                          ),
+                        );
+                      },
+                      child: Icon(
+                        Icons.refresh,
+                        color: Colors.blue,
+                        size: screenWidth * 0.06,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -471,181 +506,194 @@ class _OutfitScreenState extends State<OutfitScreen> {
   }
 
   Widget buildItemCard(BuildContext context, int itemIndex) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final item = _items[itemIndex];
-    final isOwned = item['owned'] as bool;
+    return Consumer<GameManager>(
+      builder: (context, gameManager, child) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final item = _items[itemIndex];
+        final weaponName = item['name'] as String;
 
-    return Column(
-      children: [
-        Stack(
-          alignment: Alignment.bottomRight,
+        // Get real-time ownership status from GameManager
+        final isOwned = gameManager.ownedWeapons.contains(weaponName);
+        final isEquipped = gameManager.equippedWeapon == weaponName;
+
+        return Column(
           children: [
             Stack(
-              alignment: Alignment.center,
+              alignment: Alignment.bottomRight,
               children: [
-                Image.asset(
-                  'assets/images/ui/itemslot.png',
-                  height: screenWidth * 0.25,
-                  width: screenWidth * 0.25,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/images/ui/itemslot.png',
                       height: screenWidth * 0.25,
                       width: screenWidth * 0.25,
-                      decoration: BoxDecoration(
-                        color: isOwned ? Colors.green[700] : Colors.grey[600],
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                    );
-                  },
-                ),
-                // Weapon image inside the slot
-                Image.asset(
-                  item['image'],
-                  height: screenWidth * 0.18,
-                  width: screenWidth * 0.18,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Icon(
-                      _getItemIcon(item['name']),
-                      color: Colors.white,
-                      size: screenWidth * 0.12,
-                    );
-                  },
-                ),
-              ],
-            ),
-            if (!isOwned)
-              Positioned(
-                bottom: 6,
-                right: 6,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '${item['price']}',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: screenWidth * 0.04,
-                        shadows: const [
-                          Shadow(
-                            blurRadius: 2,
-                            color: Colors.black,
-                            offset: Offset(1, 1),
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: screenWidth * 0.25,
+                          width: screenWidth * 0.25,
+                          decoration: BoxDecoration(
+                            color: isOwned
+                                ? Colors.green[700]
+                                : Colors.grey[600],
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.white, width: 2),
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
-                    const SizedBox(width: 3),
-                    Icon(
-                      Icons.monetization_on,
-                      color: Colors.amber,
-                      size: screenWidth * 0.045,
+                    // Weapon image inside the slot
+                    Image.asset(
+                      item['image'],
+                      height: screenWidth * 0.18,
+                      width: screenWidth * 0.18,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(
+                          _getItemIcon(item['name']),
+                          color: Colors.white,
+                          size: screenWidth * 0.12,
+                        );
+                      },
                     ),
                   ],
                 ),
-              ),
-            if (isOwned)
-              Positioned(
-                bottom: 6,
-                right: 6,
-                child: Icon(
-                  Icons.check_circle,
-                  color: Colors.green,
-                  size: screenWidth * 0.06,
+                if (!isOwned)
+                  Positioned(
+                    bottom: 6,
+                    right: 6,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${item['price']}',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: screenWidth * 0.04,
+                            shadows: const [
+                              Shadow(
+                                blurRadius: 2,
+                                color: Colors.black,
+                                offset: Offset(1, 1),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 3),
+                        Icon(
+                          Icons.monetization_on,
+                          color: Colors.amber,
+                          size: screenWidth * 0.045,
+                        ),
+                      ],
+                    ),
+                  ),
+                if (isOwned)
+                  Positioned(
+                    bottom: 6,
+                    right: 6,
+                    child: Icon(
+                      Icons.check_circle,
+                      color: Colors.green,
+                      size: screenWidth * 0.06,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (!isOwned)
+              GestureDetector(
+                onTap: () => _showPurchaseDialog(itemIndex),
+                child: Image.asset(
+                  'assets/images/ui/buybutton.png',
+                  height: screenWidth * 0.16,
+                  width: screenWidth * 0.16,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: screenWidth * 0.16,
+                      width: screenWidth * 0.16,
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: Icon(
+                        Icons.shopping_cart,
+                        color: Colors.white,
+                        size: screenWidth * 0.09,
+                      ),
+                    );
+                  },
                 ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        if (!isOwned)
-          GestureDetector(
-            onTap: () => _showPurchaseDialog(itemIndex),
-            child: Image.asset(
-              'assets/images/ui/buybutton.png',
-              height: screenWidth * 0.16,
-              width: screenWidth * 0.16,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
+              )
+            else if (isEquipped)
+              // Show "EQUIPPED" status for currently equipped weapon
+              Container(
+                height: screenWidth * 0.16,
+                width: screenWidth * 0.16,
+                decoration: BoxDecoration(
+                  color: Colors.orange,
+                  borderRadius: BorderRadius.circular(25),
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                child: Center(
+                  child: Text(
+                    _translate('equipped'),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: screenWidth * 0.025,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              )
+            else
+              // Show equip button for owned but not equipped weapons
+              GestureDetector(
+                onTap: () => _onEquipPressed(itemIndex),
+                child: Container(
                   height: screenWidth * 0.16,
                   width: screenWidth * 0.16,
                   decoration: BoxDecoration(
-                    color: Colors.green,
+                    color: Colors.blue,
                     borderRadius: BorderRadius.circular(25),
+                    border: Border.all(color: Colors.white, width: 2),
                   ),
-                  child: Icon(
-                    Icons.shopping_cart,
-                    color: Colors.white,
-                    size: screenWidth * 0.09,
+                  child: Center(
+                    child: Text(
+                      _translate('equip'),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: screenWidth * 0.03,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                );
-              },
-            ),
-          )
-        else if (_equippedWeapon == item['name'])
-          // Show "EQUIPPED" status for currently equipped weapon
-          Container(
-            height: screenWidth * 0.16,
-            width: screenWidth * 0.16,
-            decoration: BoxDecoration(
-              color: Colors.orange,
-              borderRadius: BorderRadius.circular(25),
-              border: Border.all(color: Colors.white, width: 2),
-            ),
-            child: Center(
+                ),
+              ),
+            const SizedBox(height: 8),
+            // Weapon description
+            Container(
+              width: screenWidth * 0.3,
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white.withOpacity(0.3)),
+              ),
               child: Text(
-                _translate('equipped'),
+                item['description'] ?? '',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: screenWidth * 0.025,
-                  fontWeight: FontWeight.bold,
+                  fontSize: screenWidth * 0.02,
                 ),
+                textAlign: TextAlign.center,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-          )
-        else
-          // Show equip button for owned but not equipped weapons
-          GestureDetector(
-            onTap: () => _onEquipPressed(itemIndex),
-            child: Container(
-              height: screenWidth * 0.16,
-              width: screenWidth * 0.16,
-              decoration: BoxDecoration(
-                color: Colors.blue,
-                borderRadius: BorderRadius.circular(25),
-                border: Border.all(color: Colors.white, width: 2),
-              ),
-              child: Center(
-                child: Text(
-                  _translate('equip'),
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: screenWidth * 0.03,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        const SizedBox(height: 8),
-        // Weapon description
-        Container(
-          width: screenWidth * 0.3,
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.7),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white.withOpacity(0.3)),
-          ),
-          child: Text(
-            item['description'] ?? '',
-            style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.02),
-            textAlign: TextAlign.center,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

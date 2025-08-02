@@ -10,6 +10,9 @@ class Player {
   final DateTime? lastLoginDate;
   final bool? isActive;
   final List<PlayerWeapon>? weapons;
+  final List<PlayerProgress>? progress;
+  final List<PlayerSetting>? settings;
+  final List<PlayerStat>? stats;
 
   Player({
     required this.playerId,
@@ -23,6 +26,9 @@ class Player {
     this.lastLoginDate,
     this.isActive,
     this.weapons,
+    this.progress,
+    this.settings,
+    this.stats,
   });
 
   factory Player.fromJson(Map<String, dynamic> json) {
@@ -41,14 +47,28 @@ class Player {
           ? DateTime.parse(json['lastLoginDate'])
           : null,
       isActive: json['isActive'],
-      weapons: json['weapons'] != null
-          ? (json['weapons'] as List)
+      weapons: (json['weapons'] ?? json['Weapons']) != null
+          ? ((json['weapons'] ?? json['Weapons']) as List)
                 .map((weapon) => PlayerWeapon.fromJson(weapon))
+                .toList()
+          : null,
+      progress: json['progress'] != null
+          ? (json['progress'] as List)
+                .map((progress) => PlayerProgress.fromJson(progress))
+                .toList()
+          : null,
+      settings: json['settings'] != null
+          ? (json['settings'] as List)
+                .map((setting) => PlayerSetting.fromJson(setting))
+                .toList()
+          : null,
+      stats: json['stats'] != null
+          ? (json['stats'] as List)
+                .map((stat) => PlayerStat.fromJson(stat))
                 .toList()
           : null,
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'playerId': playerId,
@@ -62,6 +82,9 @@ class Player {
       'lastLoginDate': lastLoginDate?.toIso8601String(),
       'isActive': isActive,
       'weapons': weapons?.map((weapon) => weapon.toJson()).toList(),
+      'progress': progress?.map((progress) => progress.toJson()).toList(),
+      'settings': settings?.map((setting) => setting.toJson()).toList(),
+      'stats': stats?.map((stat) => stat.toJson()).toList(),
     };
   }
 
@@ -77,6 +100,9 @@ class Player {
     DateTime? lastLoginDate,
     bool? isActive,
     List<PlayerWeapon>? weapons,
+    List<PlayerProgress>? progress,
+    List<PlayerSetting>? settings,
+    List<PlayerStat>? stats,
   }) {
     return Player(
       playerId: playerId ?? this.playerId,
@@ -90,6 +116,9 @@ class Player {
       lastLoginDate: lastLoginDate ?? this.lastLoginDate,
       isActive: isActive ?? this.isActive,
       weapons: weapons ?? this.weapons,
+      progress: progress ?? this.progress,
+      settings: settings ?? this.settings,
+      stats: stats ?? this.stats,
     );
   }
 }
@@ -128,6 +157,118 @@ class PlayerWeapon {
       'weaponName': weaponName,
       'isOwned': isOwned,
       'purchaseDate': purchaseDate?.toIso8601String(),
+    };
+  }
+}
+
+class PlayerSetting {
+  final int settingId;
+  final String playerId;
+  final bool? bgmEnabled;
+  final bool? sfxEnabled;
+  final double? bgmVolume;
+  final double? sfxVolume;
+  final DateTime? createdDate;
+  final DateTime? updatedDate;
+
+  PlayerSetting({
+    required this.settingId,
+    required this.playerId,
+    this.bgmEnabled,
+    this.sfxEnabled,
+    this.bgmVolume,
+    this.sfxVolume,
+    this.createdDate,
+    this.updatedDate,
+  });
+
+  factory PlayerSetting.fromJson(Map<String, dynamic> json) {
+    return PlayerSetting(
+      settingId: json['settingId'] ?? 0,
+      playerId: json['playerId'] ?? '',
+      bgmEnabled: json['bgmEnabled'],
+      sfxEnabled: json['sfxEnabled'],
+      bgmVolume: json['bgmVolume']?.toDouble(),
+      sfxVolume: json['sfxVolume']?.toDouble(),
+      createdDate: json['createdDate'] != null
+          ? DateTime.parse(json['createdDate'])
+          : null,
+      updatedDate: json['updatedDate'] != null
+          ? DateTime.parse(json['updatedDate'])
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'settingId': settingId,
+      'playerId': playerId,
+      'bgmEnabled': bgmEnabled,
+      'sfxEnabled': sfxEnabled,
+      'bgmVolume': bgmVolume,
+      'sfxVolume': sfxVolume,
+      'createdDate': createdDate?.toIso8601String(),
+      'updatedDate': updatedDate?.toIso8601String(),
+    };
+  }
+}
+
+class PlayerStat {
+  final int statId;
+  final String playerId;
+  final int seasonId;
+  final int? totalGamesPlayed;
+  final int? totalVictories;
+  final int? totalDefeats;
+  final int? highestTowerFloor;
+  final int? totalCoinsEarned;
+  final DateTime? createdDate;
+  final DateTime? updatedDate;
+
+  PlayerStat({
+    required this.statId,
+    required this.playerId,
+    required this.seasonId,
+    this.totalGamesPlayed,
+    this.totalVictories,
+    this.totalDefeats,
+    this.highestTowerFloor,
+    this.totalCoinsEarned,
+    this.createdDate,
+    this.updatedDate,
+  });
+
+  factory PlayerStat.fromJson(Map<String, dynamic> json) {
+    return PlayerStat(
+      statId: json['statId'] ?? 0,
+      playerId: json['playerId'] ?? '',
+      seasonId: json['seasonId'] ?? 0,
+      totalGamesPlayed: json['totalGamesPlayed'],
+      totalVictories: json['totalVictories'],
+      totalDefeats: json['totalDefeats'],
+      highestTowerFloor: json['highestTowerFloor'],
+      totalCoinsEarned: json['totalCoinsEarned'],
+      createdDate: json['createdDate'] != null
+          ? DateTime.parse(json['createdDate'])
+          : null,
+      updatedDate: json['updatedDate'] != null
+          ? DateTime.parse(json['updatedDate'])
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'statId': statId,
+      'playerId': playerId,
+      'seasonId': seasonId,
+      'totalGamesPlayed': totalGamesPlayed,
+      'totalVictories': totalVictories,
+      'totalDefeats': totalDefeats,
+      'highestTowerFloor': highestTowerFloor,
+      'totalCoinsEarned': totalCoinsEarned,
+      'createdDate': createdDate?.toIso8601String(),
+      'updatedDate': updatedDate?.toIso8601String(),
     };
   }
 }
@@ -337,6 +478,7 @@ class LeaderboardEntry {
   final String playerId;
   final String playerName;
   final int score;
+  final int towerLevel;
   final int rank;
   final int? seasonId;
   final String? seasonName;
@@ -347,6 +489,7 @@ class LeaderboardEntry {
     required this.playerId,
     required this.playerName,
     required this.score,
+    required this.towerLevel,
     required this.rank,
     this.seasonId,
     this.seasonName,
@@ -359,6 +502,7 @@ class LeaderboardEntry {
       playerId: json['playerId'] ?? '',
       playerName: json['playerName'] ?? '',
       score: json['score'] ?? 0,
+      towerLevel: json['towerLevel'] ?? 0,
       rank: json['rank'] ?? 0,
       seasonId: json['seasonId'],
       seasonName: json['seasonName'],
@@ -374,6 +518,7 @@ class LeaderboardEntry {
       'playerId': playerId,
       'playerName': playerName,
       'score': score,
+      'towerLevel': towerLevel,
       'rank': rank,
       'seasonId': seasonId,
       'seasonName': seasonName,

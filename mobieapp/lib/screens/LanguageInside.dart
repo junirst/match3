@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../managers/audio_manager.dart';
 import '../managers/language_manager.dart';
 
@@ -23,17 +22,16 @@ class _LanguageScreenState extends State<LanguageScreen> {
   }
 
   Future<void> _loadLanguagePreference() async {
-    final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _selectedLanguage = prefs.getString('language') ?? 'English';
-      LanguageManager.setLanguage(_selectedLanguage);
+      _selectedLanguage = LanguageManager.currentLanguage;
     });
   }
 
   Future<void> _saveLanguagePreference(String language) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('language', language);
     LanguageManager.setLanguage(language);
+    setState(() {
+      _selectedLanguage = language;
+    });
   }
 
   String _getLocalizedText(String englishText, String vietnameseText) {
@@ -68,14 +66,17 @@ class _LanguageScreenState extends State<LanguageScreen> {
         Navigator.pop(context);
       } else if (buttonName == 'english' && _selectedLanguage != 'English') {
         _showLanguageConfirmationDialog('English');
-      } else if (buttonName == 'vietnamese' && _selectedLanguage != 'Vietnamese') {
+      } else if (buttonName == 'vietnamese' &&
+          _selectedLanguage != 'Vietnamese') {
         _showLanguageConfirmationDialog('Vietnamese');
       }
     });
   }
 
   void _showLanguageConfirmationDialog(String newLanguage) {
-    String title = newLanguage == 'English' ? 'Change Language' : 'Thay đổi ngôn ngữ';
+    String title = newLanguage == 'English'
+        ? 'Change Language'
+        : 'Thay đổi ngôn ngữ';
     String content = newLanguage == 'English'
         ? 'Are you sure you want to change the language to English?'
         : 'Bạn có chắc chắn muốn thay đổi ngôn ngữ sang Tiếng Việt?';
@@ -100,10 +101,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
           ),
           content: Text(
             content,
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 16,
-            ),
+            style: TextStyle(color: Colors.white70, fontSize: 16),
           ),
           actions: [
             TextButton(
@@ -132,7 +130,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
                 Navigator.pushNamedAndRemoveUntil(
                   context,
                   '/',
-                      (route) => false,
+                  (route) => false,
                 );
               },
               child: Text(
@@ -149,7 +147,15 @@ class _LanguageScreenState extends State<LanguageScreen> {
     );
   }
 
-  Widget _buildLanguageButton(String text, String buttonType, double scale, VoidCallback onTap, double screenWidth, double screenHeight, {bool isSelected = false}) {
+  Widget _buildLanguageButton(
+    String text,
+    String buttonType,
+    double scale,
+    VoidCallback onTap,
+    double screenWidth,
+    double screenHeight, {
+    bool isSelected = false,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedScale(
@@ -239,11 +245,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
               Shadow(offset: Offset(1, -1), color: Colors.black),
               Shadow(offset: Offset(-1, 1), color: Colors.black),
               Shadow(offset: Offset(1, 1), color: Colors.black),
-              Shadow(
-                offset: Offset(0, 0),
-                color: Colors.black,
-                blurRadius: 2,
-              ),
+              Shadow(offset: Offset(0, 0), color: Colors.black, blurRadius: 2),
             ],
           ),
         ),
@@ -284,7 +286,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
                   'ENGLISH',
                   'english',
                   _englishScale,
-                      () => _onButtonTap('english'),
+                  () => _onButtonTap('english'),
                   screenWidth,
                   screenHeight,
                   isSelected: _selectedLanguage == 'English',
@@ -294,7 +296,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
                   'TIẾNG VIỆT',
                   'vietnamese',
                   _vietnameseScale,
-                      () => _onButtonTap('vietnamese'),
+                  () => _onButtonTap('vietnamese'),
                   screenWidth,
                   screenHeight,
                   isSelected: _selectedLanguage == 'Vietnamese',

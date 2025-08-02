@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../managers/audio_manager.dart';
 import '../managers/language_manager.dart';
 
@@ -34,10 +33,8 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
   }
 
   Future<void> _loadLanguagePreference() async {
-    final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _currentLanguage = prefs.getString('language') ?? 'English'; // Default to English
-      LanguageManager.setLanguage(_currentLanguage);
+      _currentLanguage = LanguageManager.currentLanguage;
     });
   }
 
@@ -108,7 +105,10 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
                     ),
                     SizedBox(width: screenWidth * 0.02),
                     Text(
-                      _getLocalizedText('SFX: ${_sfxVolume.round()}', 'HIỆU ỨNG ÂM THANH: ${_sfxVolume.round()}'),
+                      _getLocalizedText(
+                        'SFX: ${_sfxVolume.round()}',
+                        'HIỆU ỨNG ÂM THANH: ${_sfxVolume.round()}',
+                      ),
                       style: const TextStyle(
                         fontFamily: 'Bungee',
                         color: Colors.white,
@@ -152,7 +152,10 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
                     ),
                     SizedBox(width: screenWidth * 0.02),
                     Text(
-                      _getLocalizedText('MUSIC: ${_musicVolume.round()}', 'NHẠC NỀN: ${_musicVolume.round()}'),
+                      _getLocalizedText(
+                        'MUSIC: ${_musicVolume.round()}',
+                        'NHẠC NỀN: ${_musicVolume.round()}',
+                      ),
                       style: const TextStyle(
                         fontFamily: 'Bungee',
                         color: Colors.white,

@@ -64,13 +64,72 @@ namespace MatchAPI.Controllers
                 CreatedDate = player.CreatedDate,
                 LastLoginDate = player.LastLoginDate,
                 IsActive = player.IsActive,
-                Progress = player.PlayerProgresses,
-                Settings = player.PlayerSettings,
-                Stats = player.PlayerStats,
-                Weapons = player.PlayerWeapons
+                Progress = player.PlayerProgresses?.Select(p => new {
+                    progressId = p.ProgressId,
+                    playerId = p.PlayerId,
+                    chapterId = p.ChapterId,
+                    levelNumber = p.LevelNumber,
+                    isCompleted = p.IsCompleted,
+                    bestScore = p.BestScore,
+                    completionDate = p.CompletionDate,
+                    attemptsCount = p.AttemptsCount
+                }).ToList(),
+                Settings = player.PlayerSettings?.Select(s => new {
+                    settingId = s.SettingId,
+                    playerId = s.PlayerId,
+                    bgmEnabled = s.Bgmenabled,
+                    sfxEnabled = s.Sfxenabled,
+                    bgmVolume = s.Bgmvolume,
+                    sfxVolume = s.Sfxvolume,
+                    language = s.Language,
+                    firstLaunch = s.FirstLaunch,
+                    updatedDate = s.UpdatedDate
+                }).ToList(),
+                Stats = player.PlayerStats?.Select(st => new {
+                    statId = st.StatId,
+                    playerId = st.PlayerId,
+                    seasonId = st.SeasonId,
+                    totalGamesPlayed = st.TotalGamesPlayed,
+                    totalVictories = st.TotalVictories,
+                    totalDefeats = st.TotalDefeats,
+                    highestTowerFloor = st.HighestTowerFloor,
+                    totalPlayTime = st.TotalPlayTime,
+                    lastUpdated = st.LastUpdated
+                }).ToList(),
+                Weapons = player.PlayerWeapons?.Select(w => new {
+                    playerWeaponId = w.PlayerWeaponId,
+                    playerId = w.PlayerId,
+                    weaponName = w.WeaponName,
+                    isOwned = w.IsOwned,
+                    purchaseDate = w.PurchaseDate
+                }).ToList()
             };
 
             return profile;
+        }
+
+        // GET: api/Player/current-season
+        [HttpGet("current-season")]
+        public async Task<ActionResult<object>> GetCurrentSeason()
+        {
+            var currentSeason = await _context.Seasons
+                .Where(s => s.IsActive == true)
+                .FirstOrDefaultAsync();
+
+            if (currentSeason == null)
+            {
+                return NotFound("No active season found");
+            }
+
+            return Ok(new
+            {
+                seasonId = currentSeason.SeasonId,
+                seasonNumber = currentSeason.SeasonNumber,
+                startDate = currentSeason.StartDate,
+                endDate = currentSeason.EndDate,
+                isActive = currentSeason.IsActive,
+                createdDate = currentSeason.CreatedDate
+            });
         }
 
         // PUT: api/Player/5
@@ -153,6 +212,24 @@ namespace MatchAPI.Controllers
             try
             {
                 await _context.SaveChangesAsync();
+                
+                // Return a clean response without navigation properties to avoid JSON cycle
+                return Created($"api/Player/{player.PlayerId}", new { 
+                    Message = "Registration successful", 
+                    Player = new {
+                        PlayerId = player.PlayerId,
+                        PlayerName = player.PlayerName,
+                        Email = player.Email,
+                        Gender = player.Gender,
+                        LanguagePreference = player.LanguagePreference,
+                        Coins = player.Coins,
+                        TowerRecord = player.TowerRecord,
+                        EquippedWeapon = player.EquippedWeapon,
+                        CreatedDate = player.CreatedDate,
+                        LastLoginDate = player.LastLoginDate,
+                        IsActive = player.IsActive
+                    }
+                });
             }
             catch (DbUpdateException)
             {
@@ -165,8 +242,6 @@ namespace MatchAPI.Controllers
                     throw;
                 }
             }
-
-            return CreatedAtAction("GetPlayer", new { id = player.PlayerId }, player);
         }
 
         // POST: api/Player/login
@@ -477,7 +552,13 @@ namespace MatchAPI.Controllers
                 return Ok(new
                 {
                     coins = updatedPlayer.Coins,
-                    weapons = updatedPlayer.PlayerWeapons
+                    weapons = updatedPlayer.PlayerWeapons.Select(w => new {
+                        playerWeaponId = w.PlayerWeaponId,
+                        playerId = w.PlayerId,
+                        weaponName = w.WeaponName,
+                        isOwned = w.IsOwned,
+                        purchaseDate = w.PurchaseDate
+                    }).ToList()
                 });
             }
             catch (DbUpdateException)

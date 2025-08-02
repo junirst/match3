@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 import '../managers/audio_manager.dart';
+import '../managers/game_manager.dart';
 import 'GameplayScreen.dart';
 import '../managers/language_manager.dart';
 
@@ -29,11 +30,15 @@ class _Chapter1ScreenState extends State<Chapter1Screen> {
   }
 
   Future<void> _loadLevelCompletionStatus() async {
-    final prefs = await SharedPreferences.getInstance();
+    final gameManager = Provider.of<GameManager>(context, listen: false);
+
     setState(() {
       for (int level = 1; level <= 5; level++) {
-        _levelCompletionStatus[level] =
-            prefs.getBool('chapter_1_level_${level}_completed') ?? false;
+        // Check if level is completed from GameManager player progress
+        final progress = gameManager.playerProgress;
+        _levelCompletionStatus[level] = progress.any(
+          (p) => p.chapterId == 1 && p.levelId == level && p.isCompleted,
+        );
       }
     });
   }

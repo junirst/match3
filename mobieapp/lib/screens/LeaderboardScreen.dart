@@ -1,220 +1,84 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../managers/audio_manager.dart';
-import '../managers/language_manager.dart';
+import 'package:provider/provider.dart';
+import '../managers/game_manager.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
 
   @override
-  _LeaderboardScreenState createState() => _LeaderboardScreenState();
+  State<LeaderboardScreen> createState() => _LeaderboardScreenState();
 }
 
-class _LeaderboardScreenState extends State<LeaderboardScreen> {
-  double _backButtonScale = 1.0;
-  String _currentLanguage = LanguageManager.currentLanguage;
-  List<Map<String, dynamic>> _players = [];
-  bool _isLoading = true;
-
-  // Season data
-  int _currentSeason = 0;
-  DateTime? _seasonEndTime;
-  String _countdownText = '';
-  Timer? _countdownTimer;
+class _LeaderboardScreenState extends State<LeaderboardScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _loadLanguagePreference();
-    _loadSeasonData();
-    _loadLeaderboardData();
+    _tabController = TabController(length: 2, vsync: this);
+    _loadLeaderboards();
   }
 
   @override
   void dispose() {
-    _countdownTimer?.cancel();
+    _tabController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadLanguagePreference() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _currentLanguage = prefs.getString('language') ?? 'English';
-      LanguageManager.setLanguage(_currentLanguage);
-    });
-  }
+  Future<void> _loadLeaderboards() async {
+    final gameManager = Provider.of<GameManager>(context, listen: false);
+    await gameManager.loadLeaderboard();
 
-  Future<void> _loadSeasonData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final now = DateTime.now();
-
-    // Get stored season data or initialize
-    int storedSeason = prefs.getInt('current_season') ?? 0;
-    String? storedEndTimeString = prefs.getString('season_end_time');
-
-    DateTime seasonEndTime;
-
-    if (storedEndTimeString != null) {
-      // If we have stored data, use it
-      seasonEndTime = DateTime.parse(storedEndTimeString);
-
-      // Check if current season has ended
-      if (now.isAfter(seasonEndTime)) {
-        // Season has ended, start new season
-        storedSeason += 1;
-        seasonEndTime = _getNextSeasonEndTime(now);
-
-        // Save new season data
-        await prefs.setInt('current_season', storedSeason);
-        await prefs.setString('season_end_time', seasonEndTime.toIso8601String());
-      }
-    } else {
-      // First time setup - start from tomorrow 4 AM
-      seasonEndTime = _getNextSeasonEndTime(now);
-
-      // Save initial season data
-      await prefs.setInt('current_season', storedSeason);
-      await prefs.setString('season_end_time', seasonEndTime.toIso8601String());
-    }
-
-    setState(() {
-      _currentSeason = storedSeason;
-      _seasonEndTime = seasonEndTime;
-    });
-
-    _startCountdownTimer();
-  }
-
-  DateTime _getNextSeasonEndTime(DateTime currentTime) {
-    // Calculate next 4 AM (tomorrow if it's already past 4 AM today, or today if it's before 4 AM)
-    DateTime next4AM = DateTime(
-      currentTime.year,
-      currentTime.month,
-      currentTime.day,
-      4, // 4 AM
-      0, // 0 minutes
-      0, // 0 seconds
-    );
-
-    // If it's already past 4 AM today, move to tomorrow
-    if (currentTime.isAfter(next4AM)) {
-      next4AM = next4AM.add(Duration(days: 1));
-    }
-
-    // Add 21 days for season duration
-    return next4AM.add(Duration(days: 21));
-  }
-
-  void _startCountdownTimer() {
-    _countdownTimer?.cancel();
-    _countdownTimer = Timer.periodic(Duration(seconds: 1), (timer) async {
-      if (_seasonEndTime != null) {
-        final now = DateTime.now();
-        final difference = _seasonEndTime!.difference(now);
-
-        if (difference.isNegative) {
-          // Season ended, reload season data to start new season
-          await _loadSeasonData();
-          return;
-        }
-
-        setState(() {
-          _countdownText = _formatCountdown(difference);
-        });
-      }
-    });
-
-    // Set initial countdown text
-    if (_seasonEndTime != null) {
-      final now = DateTime.now();
-      final difference = _seasonEndTime!.difference(now);
-      if (!difference.isNegative) {
-        setState(() {
-          _countdownText = _formatCountdown(difference);
-        });
-      }
-    }
-  }
-
-  String _formatCountdown(Duration duration) {
-    final days = duration.inDays;
-    final hours = duration.inHours - (days * 24);
-    final minutes = duration.inMinutes % 60;
-
-    if (days > 0) {
-      final dayText = days == 1 ? 'DAY' : 'DAYS';
-      final hourText = hours == 1 ? 'HOUR' : 'HOURS';
-      return _getLocalizedText(
-          '$days $dayText $hours $hourText $minutes M',
-          '$days NGÀY $hours GIỜ $minutes PHÚT'
-      );
-    } else if (hours > 0) {
-      final hourText = hours == 1 ? 'HOUR' : 'HOURS';
-      return _getLocalizedText(
-          '$hours $hourText $minutes M',
-          '$hours GIỜ $minutes PHÚT'
-      );
-    } else {
-      return _getLocalizedText(
-          '$minutes M',
-          '$minutes PHÚT'
-      );
-    }
-  }
-
-  Future<void> _loadLeaderboardData() async {
-    // Mock API call
-    await Future.delayed(Duration(seconds: 1)); // Simulate network delay
-    setState(() {
-      _players = _getMockPlayers();
-      _isLoading = false;
-    });
-  }
-
-  List<Map<String, dynamic>> _getMockPlayers() {
-    return [
-      {'name': 'EliteGamer', 'level': 50},
-      {'name': 'ShadowKing', 'level': 42},
-      {'name': 'TowerMaster', 'level': 35},
-      {'name': 'SkyWalker', 'level': 28},
-      {'name': 'IronClad', 'level': 20},
-    ];
-  }
-
-  String _getLocalizedText(String englishText, String vietnameseText) {
-    return _currentLanguage == 'Vietnamese' ? vietnameseText : englishText;
-  }
-
-  void _onButtonTap(String buttonName) {
-    AudioManager().playButtonSound();
-
-    setState(() {
-      switch (buttonName) {
-        case 'back':
-          _backButtonScale = 1.1;
-          break;
-      }
-    });
-
-    Future.delayed(Duration(milliseconds: 100), () {
-      setState(() {
-        _backButtonScale = 1.0;
-      });
-
-      if (buttonName == 'back') {
-        Navigator.pop(context);
-      }
-    });
+    // Note: Tower leaderboard can be loaded from regular leaderboard data
+    // No need for separate state variables
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
-    final screenWidth = screenSize.width;
-    final screenHeight = screenSize.height;
-
     return Scaffold(
+      backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          'LEADERBOARD',
+          style: TextStyle(
+            fontFamily: 'Bungee',
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            shadows: [
+              Shadow(offset: Offset(-1, -1), color: Colors.black),
+              Shadow(offset: Offset(1, -1), color: Colors.black),
+              Shadow(offset: Offset(-1, 1), color: Colors.black),
+              Shadow(offset: Offset(1, 1), color: Colors.black),
+              Shadow(offset: Offset(0, 0), color: Colors.black, blurRadius: 2),
+            ],
+            letterSpacing: 2,
+          ),
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: Colors.amber,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.grey,
+          labelStyle: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+          tabs: const [
+            Tab(text: 'GENERAL'),
+            Tab(text: 'TOWER'),
+          ],
+        ),
+      ),
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -227,206 +91,260 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               ),
             ),
             child: Container(
-              color: Colors.black.withOpacity(0.3), // Dark overlay for better text visibility
-            ),
-          ),
-
-          // Fallback background if image fails to load
-          Container(
-            color: Colors.grey[800],
-            child: Image.asset(
-              'assets/images/backgrounds/background.png',
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Colors.orange[300]!, Colors.brown[700]!],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          // Leaderboard Title with Frame
-          Positioned(
-            top: screenHeight * 0.02,
-            left: screenWidth * 0.05,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Image.asset(
-                  'assets/images/ui/frame.png',
-                  width: screenWidth * 0.9, // Adjusted width to fit localization
-                  height: screenHeight * 0.12,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: screenWidth * 0.9,
-                      height: screenHeight * 0.12,
-                      decoration: BoxDecoration(
-                        color: Colors.brown[600],
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(color: Colors.brown[800]!, width: 3),
-                      ),
-                    );
-                  },
-                ),
-                Text(
-                  _getLocalizedText('LEADERBOARD', 'BẢNG XẾP HẠNG'),
-                  style: TextStyle(
-                    fontFamily: 'Bungee',
-                    fontSize: screenWidth * 0.06, // Increased size
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    shadows: [
-                      Shadow(offset: Offset(-1, -1), color: Colors.black),
-                      Shadow(offset: Offset(1, -1), color: Colors.black),
-                      Shadow(offset: Offset(-1, 1), color: Colors.black),
-                      Shadow(offset: Offset(1, 1), color: Colors.black),
-                      Shadow(offset: Offset(0, 0), color: Colors.black, blurRadius: 3),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Season Information
-          Positioned(
-            top: screenHeight * 0.16,
-            left: 0,
-            right: 0,
-            child: Column(
-              children: [
-                Text(
-                  _getLocalizedText('SEASON $_currentSeason', 'MÙA $_currentSeason'),
-                  style: TextStyle(
-                    fontFamily: 'Bungee',
-                    fontSize: screenWidth * 0.08,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    shadows: [
-                      Shadow(offset: Offset(2, 2), color: Colors.black, blurRadius: 4),
-                    ],
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.01),
-                Text(
-                  _countdownText.isNotEmpty ? _getLocalizedText('RESETS IN: $_countdownText', 'RESET TRONG: $_countdownText') : _getLocalizedText('LOADING...', 'ĐANG TẢI...'),
-                  style: TextStyle(
-                    fontFamily: 'Bungee',
-                    fontSize: screenWidth * 0.035,
-                    color: Colors.white,
-                    shadows: [
-                      Shadow(offset: Offset(1, 1), color: Colors.black, blurRadius: 2),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Player List
-          Positioned(
-            top: screenHeight * 0.30,
-            left: screenWidth * 0.05,
-            right: screenWidth * 0.05,
-            bottom: screenHeight * 0.15,
-            child: _isLoading
-                ? Center(child: CircularProgressIndicator(color: Colors.white))
-                : ListView.builder(
-              itemCount: _players.length,
-              itemBuilder: (context, index) {
-                final player = _players[index];
-                final isTopPlayer = index == 0;
-                return Padding(
-                  padding: EdgeInsets.symmetric(vertical: screenHeight * 0.01),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        isTopPlayer ? 'assets/images/characters/topplayer.png' : 'assets/images/characters/player.png',
-                        width: screenWidth * 0.12,
-                        height: screenHeight * 0.08,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Icon(
-                            Icons.person,
-                            color: isTopPlayer ? Colors.amber : Colors.white,
-                            size: screenWidth * 0.12,
-                          );
-                        },
-                      ),
-                      SizedBox(width: screenWidth * 0.03),
-                      Text(
-                        player['name'],
-                        style: TextStyle(
-                          fontFamily: 'Bungee',
-                          fontSize: screenWidth * 0.04,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          shadows: [
-                            Shadow(offset: Offset(1, 1), color: Colors.black, blurRadius: 2),
-                          ],
-                        ),
-                      ),
-                      SizedBox(width: screenWidth * 0.03),
-                      Text(
-                        _getLocalizedText('LEVEL ${player['level']}', 'CẤP ${player['level']}'),
-                        style: TextStyle(
-                          fontFamily: 'Bungee',
-                          fontSize: screenWidth * 0.04,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          shadows: [
-                            Shadow(offset: Offset(1, 1), color: Colors.black, blurRadius: 2),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
-
-          // Back Button
-          Positioned(
-            bottom: screenHeight * 0.03,
-            right: screenWidth * 0.04,
-            child: GestureDetector(
-              onTap: () => _onButtonTap('back'),
-              child: AnimatedScale(
-                scale: _backButtonScale,
-                duration: Duration(milliseconds: 100),
-                child: Image.asset(
-                  'assets/images/ui/backbutton.png',
-                  width: screenWidth * 0.18,
-                  height: screenWidth * 0.18,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: screenWidth * 0.12,
-                      height: screenWidth * 0.12,
-                      decoration: BoxDecoration(
-                        color: Colors.brown[600],
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.brown[800]!, width: 3),
-                      ),
-                      child: Icon(
-                        Icons.arrow_back,
-                        color: Colors.white,
-                        size: screenWidth * 0.06,
-                      ),
-                    );
-                  },
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.3),
+                    Colors.black.withOpacity(0.6),
+                  ],
                 ),
               ),
+            ),
+          ),
+
+          // Content
+          SafeArea(
+            child: Consumer<GameManager>(
+              builder: (context, gameManager, child) {
+                return gameManager.isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(color: Colors.amber),
+                      )
+                    : TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildGeneralLeaderboard(),
+                          _buildTowerLeaderboard(),
+                        ],
+                      );
+              },
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildGeneralLeaderboard() {
+    return Consumer<GameManager>(
+      builder: (context, gameManager, child) {
+        final leaderboard = gameManager.leaderboard;
+
+        if (leaderboard.isEmpty) {
+          return const Center(
+            child: Text(
+              'No leaderboard data available',
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
+          );
+        }
+
+        return RefreshIndicator(
+          onRefresh: _loadLeaderboards,
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: leaderboard.length,
+            itemBuilder: (context, index) {
+              final entry = leaderboard[index];
+              return _buildLeaderboardCard(
+                rank: entry.rank,
+                playerName: entry.playerName,
+                score: entry.score,
+                isCurrentPlayer:
+                    gameManager.currentPlayer?.playerId == entry.playerId,
+                scoreLabel: 'Score',
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTowerLeaderboard() {
+    return Consumer<GameManager>(
+      builder: (context, gameManager, child) {
+        if (gameManager.leaderboard.isEmpty) {
+          return const Center(
+            child: Text(
+              'No tower leaderboard data available',
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
+          );
+        }
+
+        return RefreshIndicator(
+          onRefresh: _loadLeaderboards,
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: gameManager.leaderboard.length,
+            itemBuilder: (context, index) {
+              final entry = gameManager.leaderboard[index];
+
+              return _buildLeaderboardCard(
+                rank: entry.rank,
+                playerName: entry.playerName,
+                score: entry.towerLevel,
+                isCurrentPlayer:
+                    gameManager.currentPlayer?.playerId == entry.playerId,
+                scoreLabel: 'Floor',
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLeaderboardCard({
+    required int rank,
+    required String playerName,
+    required int score,
+    required bool isCurrentPlayer,
+    String scoreLabel = 'Score',
+  }) {
+    Color getRankColor() {
+      switch (rank) {
+        case 1:
+          return Colors.amber;
+        case 2:
+          return Colors.grey[300]!;
+        case 3:
+          return const Color(0xFFCD7F32);
+        default:
+          return Colors.blue;
+      }
+    }
+
+    IconData getRankIcon() {
+      switch (rank) {
+        case 1:
+          return Icons.emoji_events;
+        case 2:
+          return Icons.workspace_premium;
+        case 3:
+          return Icons.military_tech;
+        default:
+          return Icons.person;
+      }
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isCurrentPlayer
+              ? [Colors.blue.withOpacity(0.3), Colors.blue.withOpacity(0.1)]
+              : [Colors.white.withOpacity(0.1), Colors.white.withOpacity(0.05)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isCurrentPlayer ? Colors.blue : Colors.white.withOpacity(0.2),
+          width: isCurrentPlayer ? 2 : 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            // Rank
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: getRankColor(),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                getRankIcon(),
+                color: rank <= 3 ? Colors.white : Colors.white,
+                size: rank <= 3 ? 24 : 20,
+              ),
+            ),
+            const SizedBox(width: 16),
+
+            // Rank Number
+            SizedBox(
+              width: 30,
+              child: Text(
+                '#$rank',
+                style: TextStyle(
+                  color: getRankColor(),
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+
+            // Player Name
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    playerName,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: isCurrentPlayer
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (isCurrentPlayer)
+                    const Text(
+                      'You',
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            // Score
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  score.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  scoreLabel,
+                  style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Extension to add getTowerLeaderboard to GameManager
+extension GameManagerLeaderboard on GameManager {
+  Future<List<dynamic>?> getTowerLeaderboard({int limit = 50}) async {
+    try {
+      // This would use the API service to get tower leaderboard
+      // For now, return empty list since we need to implement this in the API service
+      return [];
+    } catch (e) {
+      print('Error getting tower leaderboard: $e');
+      return null;
+    }
   }
 }

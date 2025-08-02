@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import '../managers/audio_manager.dart';
 import '../managers/upgrade_manager.dart';
@@ -527,10 +526,28 @@ class _GameplayScreenState extends State<GameplayScreen> {
   }
 
   Future<void> _saveLevelCompletion() async {
-    final prefs = await SharedPreferences.getInstance();
-    String key = 'chapter_${widget.chapter}_level_${widget.level}_completed';
-    await prefs.setBool(key, true);
-    print('Level completion saved: $key = true');
+    final gameManager = Provider.of<GameManager>(context, listen: false);
+
+    // Save level completion through GameManager
+    await gameManager.updatePlayerProgress(
+      chapterId: widget.chapter.toString(),
+      levelNumber: widget.level,
+      completed: true,
+    );
+
+    // Also trigger leaderboard update for level 2+
+    if (widget.level >= 2) {
+      await gameManager.completeLevel(
+        chapterId: widget.chapter,
+        levelId: widget.level,
+        score: game.score, // Get score from the game
+        coinsEarned: 0,
+      );
+    }
+
+    print(
+      'Level completion saved: Chapter ${widget.chapter} Level ${widget.level}',
+    );
   }
 
   void _onPausePressed() {

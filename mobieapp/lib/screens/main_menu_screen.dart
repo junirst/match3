@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import '../managers/audio_manager.dart';
 import '../managers/language_manager.dart';
@@ -40,10 +39,8 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   }
 
   Future<void> _loadLanguagePreference() async {
-    final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _currentLanguage = prefs.getString('language') ?? 'English';
-      LanguageManager.setLanguage(_currentLanguage);
+      _currentLanguage = LanguageManager.currentLanguage;
     });
   }
 

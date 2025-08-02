@@ -58,6 +58,26 @@ class ApiService {
     }
   }
 
+  // Season API methods
+  static Future<Map<String, dynamic>?> getCurrentSeason() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/Player/current-season'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        print('Error getting current season: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      print('Error getting current season: $e');
+      return null;
+    }
+  }
+
   static Future<Map<String, dynamic>?> loginPlayer(
     String email,
     String password,
@@ -505,10 +525,19 @@ class ApiService {
         body: json.encode({'weaponName': weaponName, 'cost': cost}),
       );
 
+      print('Purchase weapon API response status: ${response.statusCode}');
+      print('Purchase weapon API response body: ${response.body}');
+
       if (response.statusCode == 200) {
         return json.decode(response.body);
+      } else if (response.statusCode == 400 &&
+          response.body.contains('already owned')) {
+        // Weapon already owned - treat as success but return special flag
+        print('Weapon already owned, treating as success');
+        return {'alreadyOwned': true};
       } else {
         print('Error purchasing weapon: ${response.statusCode}');
+        print('Error response body: ${response.body}');
         return null;
       }
     } catch (e) {
@@ -531,6 +560,52 @@ class ApiService {
       return response.statusCode == 200;
     } catch (e) {
       print('Error equipping weapon: $e');
+      return false;
+    }
+  }
+
+  // Leaderboard Progress API methods
+  static Future<bool> updatePlayerProgress({
+    required String playerId,
+    int? score,
+    int? towerLevel,
+  }) async {
+    try {
+      final Map<String, dynamic> requestBody = {'playerId': playerId};
+
+      if (score != null) requestBody['score'] = score;
+      if (towerLevel != null) requestBody['towerLevel'] = towerLevel;
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/Leaderboard/UpdateProgress'),
+        headers: headers,
+        body: json.encode(requestBody),
+      );
+
+      print('Update progress response: ${response.statusCode}');
+      print('Update progress body: ${response.body}');
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error updating player progress: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> initializeNewPlayer({required String playerId}) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/Leaderboard/InitializePlayer'),
+        headers: headers,
+        body: json.encode({'playerId': playerId}),
+      );
+
+      print('Initialize player response: ${response.statusCode}');
+      print('Initialize player body: ${response.body}');
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error initializing player: $e');
       return false;
     }
   }

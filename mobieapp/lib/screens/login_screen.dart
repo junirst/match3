@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../managers/game_manager.dart';
 import '../managers/audio_manager.dart';
 import '../managers/language_manager.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool startInCreateMode;
@@ -25,7 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
   String _currentLanguage = LanguageManager.currentLanguage;
 
   final List<String> _genders = ['Male', 'Female', 'Other'];
-  final List<String> _languages = ['English', 'Vietnamese', 'Japanese'];
+  final List<String> _languages = ['English', 'Vietnamese'];
 
   // Button scales for animations
   double _backButtonScale = 1.0;
@@ -54,10 +53,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _loadLanguagePreference() async {
-    final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _currentLanguage = prefs.getString('language') ?? 'English';
-      LanguageManager.setLanguage(_currentLanguage);
+      _currentLanguage = LanguageManager.currentLanguage;
     });
   }
 
@@ -140,7 +137,9 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (mounted) {
+      print('Registration result: $success'); // Debug log
       if (success) {
+        print('Registration successful, showing success dialog'); // Debug log
         _showSuccessDialog('Account created successfully! Please login.');
         setState(() {
           _isCreateMode = false;
@@ -153,6 +152,7 @@ class _LoginScreenState extends State<LoginScreen> {
           _selectedLanguage = null;
         });
       } else {
+        print('Registration failed: ${gameManager.error}'); // Debug log
         _showErrorDialog(gameManager.error ?? 'Registration failed');
       }
     }
@@ -387,6 +387,9 @@ class _LoginScreenState extends State<LoginScreen> {
               padding: const EdgeInsets.all(24.0),
               child: Consumer<GameManager>(
                 builder: (context, gameManager, child) {
+                  print(
+                    'LoginScreen Consumer builder: isLoading=${gameManager.isLoading}, error=${gameManager.error}',
+                  ); // Debug log
                   return SingleChildScrollView(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,

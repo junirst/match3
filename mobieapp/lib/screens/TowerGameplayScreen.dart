@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
 import 'dart:math';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import '../managers/audio_manager.dart';
 import '../managers/upgrade_manager.dart';
@@ -423,8 +422,15 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
                 ),
                 SizedBox(height: 20),
                 GestureDetector(
-                  onTap: () {
+                  onTap: () async {
                     AudioManager().playButtonSound();
+
+                    // Update tower record in GameManager and leaderboard
+                    await Provider.of<GameManager>(
+                      context,
+                      listen: false,
+                    ).updateTowerRecord(currentFloor);
+
                     setState(() {
                       currentFloor++;
                       _initializeEnemy();
