@@ -205,7 +205,7 @@ namespace MatchAPI.Controllers
             player.CreatedDate = DateTime.Now;
             player.LastLoginDate = DateTime.Now;
             player.IsActive = true;
-            player.Coins = 0;
+            player.Coins = 500;
             player.TowerRecord = 0;
 
             _context.Players.Add(player);
@@ -293,7 +293,7 @@ namespace MatchAPI.Controllers
                 CreatedDate = DateTime.Now,
                 LastLoginDate = DateTime.Now,
                 IsActive = true,
-                Coins = 100, // Starting coins
+                Coins = 500, // Starting coins
                 TowerRecord = 0
             };
 
