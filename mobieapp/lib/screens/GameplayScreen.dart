@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 import '../managers/audio_manager.dart';
 import '../managers/upgrade_manager.dart';
+import '../managers/game_manager.dart';
 import '../core/flame_match3_game.dart';
 import '../utils/game_constants.dart';
 
@@ -99,9 +101,9 @@ class _GameplayScreenState extends State<GameplayScreen> {
   }
 
   Future<void> _loadEquippedWeapon() async {
-    final prefs = await SharedPreferences.getInstance();
+    final gameManager = Provider.of<GameManager>(context, listen: false);
     setState(() {
-      _equippedWeapon = prefs.getString('equipped_weapon') ?? 'Sword';
+      _equippedWeapon = gameManager.equippedWeapon;
     });
   }
 

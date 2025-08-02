@@ -19,7 +19,6 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
   String _playerName = 'PLAYER NAME';
   String _playerId = 'PL123456';
   String _selectedGender = 'Male';
-  int _towerRecord = 42;
 
   // Shop items from OutfitInside
   Map<String, bool> shopItems = {
@@ -46,26 +45,39 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
   }
 
   Future<void> _loadPlayerData() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _playerName = prefs.getString('player_name') ?? 'PLAYER NAME';
-      _playerId = prefs.getString('player_id') ?? 'PL123456';
-      _selectedGender = prefs.getString('player_gender') ?? 'Male';
-      _towerRecord = prefs.getInt('tower_record') ?? 42;
+    // Language preference can still use SharedPreferences as it's app-specific
+    final gameManager = Provider.of<GameManager>(context, listen: false);
 
-      // Load shop item ownership status
+    setState(() {
+      // Load player data from GameManager instead of SharedPreferences
+      _playerName = gameManager.currentPlayer?.playerName ?? 'PLAYER NAME';
+      _playerId = gameManager.currentPlayer?.playerId ?? 'PL123456';
+      _selectedGender = gameManager.currentPlayer?.gender ?? 'Male';
+
+      // Load shop item ownership status from GameManager
+      final ownedWeapons = gameManager.ownedWeapons;
       shopItems['Sword'] = true; // Sword is always owned
-      shopItems['Dagger'] = prefs.getBool('shop_item_dagger') ?? false;
-      shopItems['Hand'] = prefs.getBool('shop_item_hand') ?? false;
+      shopItems['Dagger'] = ownedWeapons.contains('Dagger');
+      shopItems['Hand'] = ownedWeapons.contains('Hand');
     });
   }
 
   Future<void> _saveGender(String gender) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('player_gender', gender);
-    setState(() {
-      _selectedGender = gender;
-    });
+    final gameManager = Provider.of<GameManager>(context, listen: false);
+
+    // Update gender via API
+    final success = await gameManager.updatePlayerProfile(gender: gender);
+
+    if (success) {
+      setState(() {
+        _selectedGender = gender;
+      });
+    } else {
+      // Show error message if update failed
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to update gender')));
+    }
   }
 
   Future<void> _logout() async {
@@ -490,13 +502,19 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> {
                       screenWidth,
                     ),
                     _buildGenderSelector(screenWidth),
-                    _buildInfoSection(
-                      _getLocalizedText('TOWER RECORD:', 'KỶ LỤC THÁP:'),
-                      _getLocalizedText(
-                        'LEVEL $_towerRecord',
-                        'CẤP $_towerRecord',
-                      ),
-                      screenWidth,
+                    Consumer<GameManager>(
+                      builder: (context, gameManager, child) {
+                        final towerRecord =
+                            gameManager.currentPlayer?.towerRecord ?? 42;
+                        return _buildInfoSection(
+                          _getLocalizedText('TOWER RECORD:', 'KỶ LỤC THÁP:'),
+                          _getLocalizedText(
+                            'LEVEL $towerRecord',
+                            'CẤP $towerRecord',
+                          ),
+                          screenWidth,
+                        );
+                      },
                     ),
                     SizedBox(height: screenHeight * 0.02),
                     // Upgrades Section Title

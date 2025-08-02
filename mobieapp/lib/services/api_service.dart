@@ -141,16 +141,20 @@ class ApiService {
     String? playerName,
     String? gender,
     String? languagePreference,
+    int? towerRecord,
   }) async {
     try {
+      final body = <String, dynamic>{};
+      if (playerName != null) body['playerName'] = playerName;
+      if (gender != null) body['gender'] = gender;
+      if (languagePreference != null)
+        body['languagePreference'] = languagePreference;
+      if (towerRecord != null) body['towerRecord'] = towerRecord;
+
       final response = await http.put(
         Uri.parse('$baseUrl/Player/$playerId/updateProfile'),
         headers: headers,
-        body: json.encode({
-          'playerName': playerName,
-          'gender': gender,
-          'languagePreference': languagePreference,
-        }),
+        body: json.encode(body),
       );
 
       return response.statusCode == 200;
@@ -485,6 +489,49 @@ class ApiService {
     } catch (e) {
       print('Error getting player ranking: $e');
       return null;
+    }
+  }
+
+  // Weapon management methods
+  static Future<Map<String, dynamic>?> purchaseWeapon({
+    required String playerId,
+    required String weaponName,
+    required int cost,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/Player/$playerId/purchaseWeapon'),
+        headers: headers,
+        body: json.encode({'weaponName': weaponName, 'cost': cost}),
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        print('Error purchasing weapon: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      print('Error purchasing weapon: $e');
+      return null;
+    }
+  }
+
+  static Future<bool> equipWeapon({
+    required String playerId,
+    required String weaponName,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/Player/$playerId/equipWeapon'),
+        headers: headers,
+        body: json.encode({'weaponName': weaponName}),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error equipping weapon: $e');
+      return false;
     }
   }
 }

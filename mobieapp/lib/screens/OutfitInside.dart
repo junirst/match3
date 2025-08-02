@@ -90,19 +90,17 @@ class _OutfitScreenState extends State<OutfitScreen> {
   Future<void> _loadLanguagePreference() async {
     final prefs = await SharedPreferences.getInstance();
     final language = prefs.getString('language') ?? 'English';
+    final gameManager = Provider.of<GameManager>(context, listen: false);
+
     setState(() {
       _currentLanguage = language;
-      _equippedWeapon = prefs.getString('equipped_weapon') ?? 'Sword';
+      _equippedWeapon = gameManager.equippedWeapon;
 
-      // Load weapon ownership status
+      // Load weapon ownership status from GameManager
+      final ownedWeaponsList = gameManager.ownedWeapons;
       for (int i = 0; i < _items.length; i++) {
-        final weaponName = _items[i]['name'].toString().toLowerCase();
-        if (weaponName == 'sword') {
-          // Sword is always owned
-          _items[i]['owned'] = true;
-        } else {
-          _items[i]['owned'] = prefs.getBool('shop_item_$weaponName') ?? false;
-        }
+        final weaponName = _items[i]['name'].toString();
+        _items[i]['owned'] = ownedWeaponsList.contains(weaponName);
       }
     });
   }
@@ -247,19 +245,17 @@ class _OutfitScreenState extends State<OutfitScreen> {
     AudioManager().playButtonSound();
     final item = _items[itemIndex];
     final price = item['price'] as int;
+    final weaponName = item['name'] as String;
 
     Navigator.of(context).pop(); // Close dialog
 
     final gameManager = context.read<GameManager>();
-    final success = await gameManager.spendCoins(price, 'Purchase ${item['name']}');
-    
+    final success = await gameManager.purchaseWeapon(weaponName, price);
+
     if (success) {
       setState(() {
         _items[itemIndex]['owned'] = true;
       });
-
-      // Save to SharedPreferences
-      _saveWeaponOwnership(item['name'], true);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -279,17 +275,15 @@ class _OutfitScreenState extends State<OutfitScreen> {
     }
   }
 
-  Future<void> _saveWeaponOwnership(String weaponName, bool owned) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('shop_item_${weaponName.toLowerCase()}', owned);
-  }
-
   Future<void> _equipWeapon(String weaponName) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('equipped_weapon', weaponName);
-    setState(() {
-      _equippedWeapon = weaponName;
-    });
+    final gameManager = context.read<GameManager>();
+    final success = await gameManager.equipWeapon(weaponName);
+
+    if (success) {
+      setState(() {
+        _equippedWeapon = weaponName;
+      });
+    }
   }
 
   void _onEquipPressed(int itemIndex) {

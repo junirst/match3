@@ -122,6 +122,9 @@ namespace MatchAPI.Controllers
             if (!string.IsNullOrEmpty(request.LanguagePreference))
                 player.LanguagePreference = request.LanguagePreference;
 
+            if (request.TowerRecord.HasValue)
+                player.TowerRecord = request.TowerRecord.Value;
+
             player.LastLoginDate = DateTime.Now;
 
             try
@@ -221,12 +224,74 @@ namespace MatchAPI.Controllers
 
             _context.Players.Add(player);
             
+            // Get current active season
+            var currentSeason = await _context.Seasons
+                .Where(s => s.IsActive == true)
+                .FirstOrDefaultAsync();
+            
+            if (currentSeason != null)
+            {
+                // Create initial Leaderboard entry
+                var leaderboardEntry = new Leaderboard
+                {
+                    PlayerId = playerId,
+                    SeasonId = currentSeason.SeasonId,
+                    TowerLevel = 0,
+                    Score = 0,
+                    Rank = 0, // Will be calculated later
+                    CreatedDate = DateTime.Now,
+                    UpdatedDate = DateTime.Now
+                };
+                _context.Leaderboards.Add(leaderboardEntry);
+            }
+
+            // Create initial TowerProgress entry
+            var towerProgress = new TowerProgress
+            {
+                PlayerId = playerId,
+                CurrentFloor = 1,
+                HighestFloor = 0,
+                CurrentPlayerHealth = 100, // Default starting health
+                ExcessHealth = 0,
+                ShieldPoints = 0,
+                PowerPoints = 0,
+                LastPlayDate = DateTime.Now
+            };
+            _context.TowerProgresses.Add(towerProgress);
+
+            // Create default weapon (Sword)
+            var defaultWeapon = new PlayerWeapon
+            {
+                PlayerId = playerId,
+                WeaponName = "Sword",
+                IsOwned = true,
+                PurchaseDate = DateTime.Now
+            };
+            _context.PlayerWeapons.Add(defaultWeapon);
+
+            // Set equipped weapon to Sword
+            player.EquippedWeapon = "Sword";
+
             try
             {
                 await _context.SaveChangesAsync();
+                
+                // Return a clean response without navigation properties
                 return Created($"api/Player/{player.PlayerId}", new { 
                     Message = "Registration successful", 
-                    Player = player 
+                    Player = new {
+                        PlayerId = player.PlayerId,
+                        PlayerName = player.PlayerName,
+                        Email = player.Email,
+                        Gender = player.Gender,
+                        LanguagePreference = player.LanguagePreference,
+                        Coins = player.Coins,
+                        TowerRecord = player.TowerRecord,
+                        EquippedWeapon = player.EquippedWeapon,
+                        CreatedDate = player.CreatedDate,
+                        LastLoginDate = player.LastLoginDate,
+                        IsActive = player.IsActive
+                    }
                 });
             }
             catch (DbUpdateException)
@@ -347,6 +412,115 @@ namespace MatchAPI.Controllers
             return NoContent();
         }
 
+        // POST: api/Player/{id}/purchaseWeapon
+        [HttpPost("{id}/purchaseWeapon")]
+        public async Task<ActionResult> PurchaseWeapon(string id, [FromBody] PurchaseWeaponRequest request)
+        {
+            var player = await _context.Players
+                .Include(p => p.PlayerWeapons)
+                .FirstOrDefaultAsync(p => p.PlayerId == id);
+
+            if (player == null)
+            {
+                return NotFound("Player not found");
+            }
+
+            // Check if weapon already owned
+            var existingWeapon = player.PlayerWeapons
+                .FirstOrDefault(w => w.WeaponName == request.WeaponName);
+
+            if (existingWeapon?.IsOwned == true)
+            {
+                return BadRequest("Weapon already owned");
+            }
+
+            // Check if player has enough coins
+            if (player.Coins < request.Cost)
+            {
+                return BadRequest("Insufficient coins");
+            }
+
+            // Deduct coins
+            player.Coins -= request.Cost;
+
+            // Add or update weapon
+            if (existingWeapon != null)
+            {
+                existingWeapon.IsOwned = true;
+                existingWeapon.PurchaseDate = DateTime.Now;
+            }
+            else
+            {
+                _context.PlayerWeapons.Add(new PlayerWeapon
+                {
+                    PlayerId = id,
+                    WeaponName = request.WeaponName,
+                    IsOwned = true,
+                    PurchaseDate = DateTime.Now
+                });
+            }
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                
+                // Return updated player data
+                var updatedPlayer = await _context.Players
+                    .Include(p => p.PlayerWeapons)
+                    .FirstOrDefaultAsync(p => p.PlayerId == id);
+
+                if (updatedPlayer == null)
+                {
+                    return StatusCode(500, "Error retrieving updated player data");
+                }
+
+                return Ok(new
+                {
+                    coins = updatedPlayer.Coins,
+                    weapons = updatedPlayer.PlayerWeapons
+                });
+            }
+            catch (DbUpdateException)
+            {
+                return StatusCode(500, "Error purchasing weapon");
+            }
+        }
+
+        // PUT: api/Player/{id}/equipWeapon
+        [HttpPut("{id}/equipWeapon")]
+        public async Task<ActionResult> EquipWeapon(string id, [FromBody] EquipWeaponRequest request)
+        {
+            var player = await _context.Players
+                .Include(p => p.PlayerWeapons)
+                .FirstOrDefaultAsync(p => p.PlayerId == id);
+
+            if (player == null)
+            {
+                return NotFound("Player not found");
+            }
+
+            // Check if player owns the weapon
+            var weapon = player.PlayerWeapons
+                .FirstOrDefault(w => w.WeaponName == request.WeaponName && w.IsOwned == true);
+
+            if (weapon == null && request.WeaponName != "Sword") // Sword is always available
+            {
+                return BadRequest("Weapon not owned");
+            }
+
+            player.EquippedWeapon = request.WeaponName;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok(new { equippedWeapon = player.EquippedWeapon });
+            }
+            catch (DbUpdateException)
+            {
+                return StatusCode(500, "Error equipping weapon");
+            }
+        }
+
         private bool PlayerExists(string id)
         {
             return _context.Players.Any(e => e.PlayerId == id);
@@ -359,6 +533,7 @@ namespace MatchAPI.Controllers
         public string? PlayerName { get; set; }
         public string? Gender { get; set; }
         public string? LanguagePreference { get; set; }
+        public int? TowerRecord { get; set; }
     }
 
     public class LoginRequest
@@ -385,5 +560,16 @@ namespace MatchAPI.Controllers
     {
         public string UpgradeType { get; set; } = string.Empty;
         public int Level { get; set; }
+    }
+
+    public class PurchaseWeaponRequest
+    {
+        public string WeaponName { get; set; } = string.Empty;
+        public int Cost { get; set; }
+    }
+
+    public class EquipWeaponRequest
+    {
+        public string WeaponName { get; set; } = string.Empty;
     }
 }

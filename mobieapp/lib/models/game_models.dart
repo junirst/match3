@@ -9,6 +9,7 @@ class Player {
   final DateTime? createdDate;
   final DateTime? lastLoginDate;
   final bool? isActive;
+  final List<PlayerWeapon>? weapons;
 
   Player({
     required this.playerId,
@@ -21,6 +22,7 @@ class Player {
     this.createdDate,
     this.lastLoginDate,
     this.isActive,
+    this.weapons,
   });
 
   factory Player.fromJson(Map<String, dynamic> json) {
@@ -39,6 +41,11 @@ class Player {
           ? DateTime.parse(json['lastLoginDate'])
           : null,
       isActive: json['isActive'],
+      weapons: json['weapons'] != null
+          ? (json['weapons'] as List)
+                .map((weapon) => PlayerWeapon.fromJson(weapon))
+                .toList()
+          : null,
     );
   }
 
@@ -54,6 +61,7 @@ class Player {
       'createdDate': createdDate?.toIso8601String(),
       'lastLoginDate': lastLoginDate?.toIso8601String(),
       'isActive': isActive,
+      'weapons': weapons?.map((weapon) => weapon.toJson()).toList(),
     };
   }
 
@@ -68,6 +76,7 @@ class Player {
     DateTime? createdDate,
     DateTime? lastLoginDate,
     bool? isActive,
+    List<PlayerWeapon>? weapons,
   }) {
     return Player(
       playerId: playerId ?? this.playerId,
@@ -80,7 +89,46 @@ class Player {
       createdDate: createdDate ?? this.createdDate,
       lastLoginDate: lastLoginDate ?? this.lastLoginDate,
       isActive: isActive ?? this.isActive,
+      weapons: weapons ?? this.weapons,
     );
+  }
+}
+
+class PlayerWeapon {
+  final int playerWeaponId;
+  final String playerId;
+  final String weaponName;
+  final bool? isOwned;
+  final DateTime? purchaseDate;
+
+  PlayerWeapon({
+    required this.playerWeaponId,
+    required this.playerId,
+    required this.weaponName,
+    this.isOwned,
+    this.purchaseDate,
+  });
+
+  factory PlayerWeapon.fromJson(Map<String, dynamic> json) {
+    return PlayerWeapon(
+      playerWeaponId: json['playerWeaponId'] ?? 0,
+      playerId: json['playerId'] ?? '',
+      weaponName: json['weaponName'] ?? '',
+      isOwned: json['isOwned'],
+      purchaseDate: json['purchaseDate'] != null
+          ? DateTime.parse(json['purchaseDate'])
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'playerWeaponId': playerWeaponId,
+      'playerId': playerId,
+      'weaponName': weaponName,
+      'isOwned': isOwned,
+      'purchaseDate': purchaseDate?.toIso8601String(),
+    };
   }
 }
 

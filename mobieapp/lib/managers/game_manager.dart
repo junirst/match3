@@ -42,7 +42,8 @@ class GameManager extends ChangeNotifier {
         if (response.containsKey('error')) {
           _setError(response['error']);
           return false;
-        } else if (response['player'] != null) { // Fixed: 'player' instead of 'Player'
+        } else if (response['player'] != null) {
+          // Fixed: 'player' instead of 'Player'
           _currentPlayer = Player.fromJson(response['player']);
           await _savePlayerToStorage();
           await loadPlayerData();
@@ -79,15 +80,22 @@ class GameManager extends ChangeNotifier {
       );
 
       if (response != null) {
+        print('Registration response: $response'); // Debug log
         if (response.containsKey('error')) {
           _setError(response['error']);
           return false;
-        } else if (response['player'] != null) { // Fixed: 'player' instead of 'Player'
-          _currentPlayer = Player.fromJson(response['player']);
+        } else if (response['Player'] != null) {
+          // API returns 'Player' (capital P) in registration response
+          _currentPlayer = Player.fromJson(response['Player']);
           await _savePlayerToStorage();
           await loadPlayerData();
           _setError(null);
           notifyListeners();
+          return true;
+        } else if (response['Message'] != null &&
+            response['Message'].contains('successful')) {
+          // Registration was successful but no player data returned, that's ok
+          _setError(null);
           return true;
         }
       }
@@ -321,6 +329,7 @@ class GameManager extends ChangeNotifier {
     String? playerName,
     String? gender,
     String? languagePreference,
+    int? towerRecord,
   }) async {
     if (_currentPlayer == null) return false;
 
@@ -330,6 +339,7 @@ class GameManager extends ChangeNotifier {
         playerName: playerName,
         gender: gender,
         languagePreference: languagePreference,
+        towerRecord: towerRecord,
       );
 
       if (success) {
@@ -338,6 +348,7 @@ class GameManager extends ChangeNotifier {
           gender: gender ?? _currentPlayer!.gender,
           languagePreference:
               languagePreference ?? _currentPlayer!.languagePreference,
+          towerRecord: towerRecord ?? _currentPlayer!.towerRecord,
         );
 
         await _savePlayerToStorage();
@@ -350,6 +361,81 @@ class GameManager extends ChangeNotifier {
       return false;
     }
   }
+
+  // Method to update tower record specifically
+  Future<bool> updateTowerRecord(int newRecord) async {
+    if (_currentPlayer == null) return false;
+
+    // Only update if new record is higher than current
+    final currentRecord = _currentPlayer!.towerRecord ?? 0;
+    if (newRecord <= currentRecord) return true;
+
+    return await updatePlayerProfile(towerRecord: newRecord);
+  }
+
+  // Weapon management methods
+  Future<bool> purchaseWeapon(String weaponName, int cost) async {
+    if (_currentPlayer == null) return false;
+
+    try {
+      final response = await ApiService.purchaseWeapon(
+        playerId: _currentPlayer!.playerId,
+        weaponName: weaponName,
+        cost: cost,
+      );
+
+      if (response != null) {
+        // Update local player data
+        _currentPlayer = _currentPlayer!.copyWith(
+          coins: response['coins'] ?? _currentPlayer!.coins,
+        );
+
+        // Update weapons list (we'll need to add this to Player model)
+        await _savePlayerToStorage();
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('Error purchasing weapon: $e');
+      return false;
+    }
+  }
+
+  Future<bool> equipWeapon(String weaponName) async {
+    if (_currentPlayer == null) return false;
+
+    try {
+      final success = await ApiService.equipWeapon(
+        playerId: _currentPlayer!.playerId,
+        weaponName: weaponName,
+      );
+
+      if (success) {
+        _currentPlayer = _currentPlayer!.copyWith(equippedWeapon: weaponName);
+
+        await _savePlayerToStorage();
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('Error equipping weapon: $e');
+      return false;
+    }
+  }
+
+  // Get weapons owned by player
+  List<String> get ownedWeapons {
+    if (_currentPlayer?.weapons == null) return ['Sword']; // Default sword
+
+    return _currentPlayer!.weapons!
+        .where((weapon) => weapon.isOwned == true)
+        .map((weapon) => weapon.weaponName)
+        .toList();
+  }
+
+  String get equippedWeapon => _currentPlayer?.equippedWeapon ?? 'Sword';
 
   Future<bool> updateCoins(int coinsChange) async {
     if (_currentPlayer == null) return false;
@@ -400,10 +486,12 @@ class GameManager extends ChangeNotifier {
 
   Future<bool> spendCoins(int amount, String reason) async {
     if (_currentPlayer == null) return false;
-    
+
     final currentCoins = _currentPlayer!.coins ?? 0;
     if (currentCoins < amount) {
-      _setError('Not enough coins! You need $amount coins but only have $currentCoins.');
+      _setError(
+        'Not enough coins! You need $amount coins but only have $currentCoins.',
+      );
       return false;
     }
 
@@ -411,10 +499,10 @@ class GameManager extends ChangeNotifier {
       // Calculate coins change (negative for spending)
       final coinsChange = -amount;
       final response = await ApiService.updateCoins(
-        playerId: _currentPlayer!.playerId, 
-        coinsChange: coinsChange
+        playerId: _currentPlayer!.playerId,
+        coinsChange: coinsChange,
       );
-      
+
       if (response != null && response['success'] == true) {
         _currentPlayer!.coins = currentCoins - amount;
         await _savePlayerToStorage();
@@ -438,10 +526,10 @@ class GameManager extends ChangeNotifier {
       // Calculate coins change (positive for adding)
       final coinsChange = amount;
       final response = await ApiService.updateCoins(
-        playerId: _currentPlayer!.playerId, 
-        coinsChange: coinsChange
+        playerId: _currentPlayer!.playerId,
+        coinsChange: coinsChange,
       );
-      
+
       if (response != null && response['success'] == true) {
         _currentPlayer!.coins = currentCoins + amount;
         await _savePlayerToStorage();
@@ -459,17 +547,21 @@ class GameManager extends ChangeNotifier {
 
   // Upgrade management methods
   Map<String, int> _upgradeLevels = {};
-  
+
   Map<String, int> get upgradeLevels => _upgradeLevels;
 
   Future<void> loadPlayerUpgrades() async {
     if (_currentPlayer == null) return;
 
     try {
-      final response = await ApiService.getPlayerUpgrades(_currentPlayer!.playerId);
+      final response = await ApiService.getPlayerUpgrades(
+        _currentPlayer!.playerId,
+      );
       if (response != null) {
-        _upgradeLevels = Map<String, int>.from(response.map((key, value) => MapEntry(key, value as int)));
-        
+        _upgradeLevels = Map<String, int>.from(
+          response.map((key, value) => MapEntry(key, value as int)),
+        );
+
         // Ensure all upgrade types have at least level 1
         final defaultUpgrades = ['sword', 'heart', 'star', 'shield'];
         for (String upgradeType in defaultUpgrades) {
@@ -477,7 +569,7 @@ class GameManager extends ChangeNotifier {
             _upgradeLevels[upgradeType] = 1;
           }
         }
-        
+
         notifyListeners();
       }
     } catch (e) {
@@ -494,7 +586,7 @@ class GameManager extends ChangeNotifier {
         upgradeType: upgradeType,
         level: newLevel,
       );
-      
+
       if (response != null && response['success'] == true) {
         _upgradeLevels[upgradeType] = newLevel;
         notifyListeners();
@@ -509,15 +601,22 @@ class GameManager extends ChangeNotifier {
     }
   }
 
-  Future<bool> purchaseUpgrade(String upgradeType, int quantity, int totalCost) async {
+  Future<bool> purchaseUpgrade(
+    String upgradeType,
+    int quantity,
+    int totalCost,
+  ) async {
     // First spend the coins
-    final coinsSpent = await spendCoins(totalCost, 'Upgrade $upgradeType x$quantity');
+    final coinsSpent = await spendCoins(
+      totalCost,
+      'Upgrade $upgradeType x$quantity',
+    );
     if (!coinsSpent) return false;
 
     // Then update the upgrade level
     final currentLevel = _upgradeLevels[upgradeType] ?? 1;
     final newLevel = currentLevel + quantity;
-    
+
     final upgradeUpdated = await updateUpgradeLevel(upgradeType, newLevel);
     if (!upgradeUpdated) {
       // If upgrade update failed, try to refund coins
