@@ -334,16 +334,13 @@ class _GameplayScreenState extends State<GameplayScreen> {
     int mobDamage = _calculateMobDamage();
 
     setState(() {
-      // Shield blocking system - use 10 shield to block damage, keep remainder
+      // Shield blocking system - use exactly 10 shield to block all damage, keep remainder
       if (shieldPoints >= shieldBlockThreshold) {
-        int blocksUsed =
-            shieldPoints ~/
-            shieldBlockThreshold; // How many blocks of 10 we can use
-        shieldPoints -=
-            blocksUsed * shieldBlockThreshold; // Subtract only the used shields
+        // Use exactly 10 shield points to block all damage
+        shieldPoints -= shieldBlockThreshold; // Subtract exactly 10 shields
         mobDamage = 0; // Block all damage
         print(
-          'Shield blocked all damage! Used ${blocksUsed * shieldBlockThreshold} shield points, ${shieldPoints} remaining.',
+          'Shield blocked all damage! Used $shieldBlockThreshold shield points, $shieldPoints remaining.',
         );
       } else {
         // Then check if excess health can absorb damage
@@ -602,9 +599,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                   onTap: () {
                     AudioManager().playButtonSound();
                     Navigator.pop(context); // Close dialog
-
-                    // Navigate back to Chapter1 screen instead of just popping
-                    Navigator.pushReplacementNamed(context, '/chapter1');
+                    Navigator.pop(context); // Return to Chapter1Screen
                   },
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),

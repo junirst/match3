@@ -252,12 +252,15 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
         case 1: // Shield
           int effectiveShieldPoints =
               UpgradeManager.instance.effectiveShieldPoints;
-          int gainedShieldPoints =
-              effectiveShieldPoints * (matchCount ~/ 3) +
-              effectiveShieldPoints; // Each shield tile contributes upgraded amount
-          shieldPoints += gainedShieldPoints; // Accumulate shield points
+
+          // Simple calculation: matchCount × effectiveShieldPoints
+          int gainedShieldPoints = matchCount * effectiveShieldPoints;
+
+          // Add to shield points
+          shieldPoints += gainedShieldPoints;
+
           print(
-            'Shield match! Gained $gainedShieldPoints shield points (upgraded from $matchCount to ${matchCount}x$effectiveShieldPoints). Total Shield: $shieldPoints (threshold: $shieldBlockThreshold)',
+            'Shield match! Gained $gainedShieldPoints shield points (${matchCount} tiles × $effectiveShieldPoints each). Total Shield: $shieldPoints (threshold: $shieldBlockThreshold)',
           );
           break;
         case 2: // Heart
@@ -314,16 +317,13 @@ class _TowerGameplayScreenState extends State<TowerGameplayScreen> {
       // Use the scaling damage from Match3Game directly, no additional floor damage
       int finalDamage = damage;
 
-      // Shield blocking system - use 10 shield to block damage, keep remainder
+      // Shield blocking system - use exactly 10 shield to block all damage, keep remainder
       if (shieldPoints >= shieldBlockThreshold) {
-        int blocksUsed =
-            shieldPoints ~/
-            shieldBlockThreshold; // How many blocks of 10 we can use
-        shieldPoints -=
-            blocksUsed * shieldBlockThreshold; // Subtract only the used shields
+        // Use exactly 10 shield points to block all damage
+        shieldPoints -= shieldBlockThreshold; // Subtract exactly 10 shields
         finalDamage = 0; // Block all damage
         print(
-          'Shield blocked all damage! Used ${blocksUsed * shieldBlockThreshold} shield points, ${shieldPoints} remaining.',
+          'Shield blocked all damage! Used $shieldBlockThreshold shield points, $shieldPoints remaining.',
         );
       }
 

@@ -244,42 +244,21 @@ class ApiService {
     required int level,
   }) async {
     try {
-      print('Update upgrade request:');
-      print('  URL: $baseUrl/Player/$playerId/upgrades');
-      print(
-        '  Body: ${json.encode({'upgradeType': upgradeType, 'level': level})}',
-      );
-
       final response = await http.post(
         Uri.parse('$baseUrl/Player/$playerId/upgrades'),
         headers: headers,
         body: json.encode({'upgradeType': upgradeType, 'level': level}),
       );
 
-      print('Update upgrade API response status: ${response.statusCode}');
-      print('Update upgrade API response body: ${response.body}');
-
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else {
         print('Error updating player upgrade: ${response.statusCode}');
-        print('Error response body: ${response.body}');
-
-        // Try to parse error message from response
-        try {
-          final errorData = json.decode(response.body);
-          print('Parsed error data: $errorData');
-        } catch (e) {
-          print('Could not parse error response as JSON');
-        }
-
-        return {
-          'error': 'Server error ${response.statusCode}: ${response.body}',
-        };
+        return null;
       }
     } catch (e) {
-      print('Exception updating player upgrade: $e');
-      return {'error': 'Network error: $e'};
+      print('Error updating player upgrade: $e');
+      return null;
     }
   }
 
@@ -314,22 +293,11 @@ class ApiService {
       } else {
         print('Error purchasing upgrade: ${response.statusCode}');
         print('Error response body: ${response.body}');
-
-        // Try to parse error message from response
-        try {
-          final errorData = json.decode(response.body);
-          print('Parsed error data: $errorData');
-          return {'error': errorData.toString()};
-        } catch (e) {
-          print('Could not parse error response as JSON');
-          return {
-            'error': 'Server error ${response.statusCode}: ${response.body}',
-          };
-        }
+        return null;
       }
     } catch (e) {
       print('Exception purchasing upgrade: $e');
-      return {'error': 'Network error: $e'};
+      return null;
     }
   }
 

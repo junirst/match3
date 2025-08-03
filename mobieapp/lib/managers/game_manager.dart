@@ -1173,11 +1173,7 @@ class GameManager extends ChangeNotifier {
         return true;
       } else {
         // API failed, show warning but allow local update
-        String errorMsg = 'API failed for upgrade purchase';
-        if (response != null && response.containsKey('error')) {
-          errorMsg = 'Server error: ${response['error']}';
-        }
-        print('$errorMsg, falling back to local update');
+        print('API failed for upgrade purchase, falling back to local update');
         print('API response: $response');
 
         // Update local data as fallback
@@ -1195,9 +1191,9 @@ class GameManager extends ChangeNotifier {
         // Try to sync with server in background
         _syncUpgradeInBackground(upgradeType, newLevel);
 
-        // Set a warning message for UI with more detailed error
+        // Set a warning message for UI
         _setError(
-          'Upgrade saved locally. $errorMsg. Will sync when connection improves.',
+          'Upgrade saved locally. Will sync with server when connection improves.',
         );
 
         return true; // Still return success for better UX, but user sees warning
