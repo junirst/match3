@@ -12,7 +12,7 @@ class ApiService {
 
   // Current environment - change this based on your setup
   static String _currentEnv =
-      'local_emulator'; // Options: 'local_emulator', 'local_physical', 'remote'
+      'local_physical'; // Options: 'local_emulator', 'local_physical', 'remote'
 
   static void setEnvironment(String environment) {
     _currentEnv = environment;
