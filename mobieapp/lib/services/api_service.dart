@@ -6,7 +6,7 @@ class ApiService {
   static const String _localEmulatorUrl =
       'http://10.0.2.2:5000/api'; // For Android emulator - 10.0.2.2 maps to host machine's localhost
   static const String _localPhysicalUrl =
-      'http://192.168.1.9:5000/api'; // Your local network IP for physical devices
+      'http://172.17.161.97:5000/api'; // Your local network IP for physical devices
   static const String _remoteUrl =
       'http://1.54.215.45:5000/api'; // Your public IP for remote access
 
@@ -287,12 +287,24 @@ class ApiService {
 
       print('Purchase upgrade API response status: ${response.statusCode}');
       print('Purchase upgrade API response body: ${response.body}');
+      print(
+        'Purchase upgrade request - PlayerId: $playerId, UpgradeType: $upgradeType, NewLevel: $newLevel, TotalCost: $totalCost',
+      );
 
       if (response.statusCode == 200) {
-        return json.decode(response.body);
+        final result = json.decode(response.body);
+        print('Purchase upgrade successful: $result');
+        return result;
       } else {
         print('Error purchasing upgrade: ${response.statusCode}');
         print('Error response body: ${response.body}');
+        // Parse error response for more details
+        try {
+          final errorBody = json.decode(response.body);
+          print('Parsed error response: $errorBody');
+        } catch (e) {
+          print('Could not parse error response: $e');
+        }
         return null;
       }
     } catch (e) {

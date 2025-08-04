@@ -445,11 +445,24 @@ namespace MatchAPI.Controllers
                 return NotFound();
             }
 
+            // Validate new level is within allowed range
+            const int maxUpgradeLevel = 15;
+            if (request.Level > maxUpgradeLevel)
+            {
+                return BadRequest($"Maximum upgrade level is {maxUpgradeLevel}. Requested level: {request.Level}");
+            }
+
             var existingUpgrade = player.Upgrades
                 .FirstOrDefault(u => u.UpgradeType.ToLower() == request.UpgradeType.ToLower());
 
             if (existingUpgrade != null)
             {
+                // Additional validation to ensure level is not decreasing
+                if (request.Level < existingUpgrade.Level)
+                {
+                    return BadRequest($"Cannot downgrade from level {existingUpgrade.Level} to {request.Level}");
+                }
+                
                 existingUpgrade.Level = request.Level;
                 existingUpgrade.UpdatedDate = DateTime.UtcNow;
             }
@@ -466,27 +479,62 @@ namespace MatchAPI.Controllers
                 _context.Upgrades.Add(newUpgrade);
             }
 
-            await _context.SaveChangesAsync();
-
-            return Ok(new { success = true, UpgradeType = request.UpgradeType, Level = request.Level });
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok(new { success = true, UpgradeType = request.UpgradeType, Level = request.Level });
+            }
+            catch (DbUpdateException ex)
+            {
+                // Log the detailed exception
+                Console.WriteLine($"DbUpdateException in UpdatePlayerUpgrade: {ex.Message}");
+                Console.WriteLine($"Inner Exception: {ex.InnerException?.Message}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+                
+                return StatusCode(500, $"Error updating upgrade: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                // Log any other exceptions
+                Console.WriteLine($"General Exception in UpdatePlayerUpgrade: {ex.Message}");
+                Console.WriteLine($"Inner Exception: {ex.InnerException?.Message}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+                
+                return StatusCode(500, $"Unexpected error: {ex.Message}");
+            }
         }
 
         // POST: api/Player/{id}/purchaseUpgrade
         [HttpPost("{id}/purchaseUpgrade")]
         public async Task<ActionResult> PurchaseUpgrade(string id, [FromBody] PurchaseUpgradeRequest request)
         {
+            // Log the incoming request for debugging
+            Console.WriteLine($"PurchaseUpgrade Request - PlayerId: {id}, UpgradeType: {request.UpgradeType}, NewLevel: {request.NewLevel}, TotalCost: {request.TotalCost}");
+
             var player = await _context.Players
                 .Include(p => p.Upgrades)
                 .FirstOrDefaultAsync(p => p.PlayerId == id);
 
             if (player == null)
             {
+                Console.WriteLine($"Player not found: {id}");
                 return NotFound("Player not found");
+            }
+
+            Console.WriteLine($"Player found: {player.PlayerId}, Current Coins: {player.Coins}");
+
+            // Validate new level is within allowed range
+            const int maxUpgradeLevel = 15;
+            if (request.NewLevel > maxUpgradeLevel)
+            {
+                Console.WriteLine($"Level validation failed: {request.NewLevel} > {maxUpgradeLevel}");
+                return BadRequest($"Maximum upgrade level is {maxUpgradeLevel}. Requested level: {request.NewLevel}");
             }
 
             // Check if player has enough coins
             if (player.Coins < request.TotalCost)
             {
+                Console.WriteLine($"Insufficient coins: {player.Coins} < {request.TotalCost}");
                 return BadRequest("Insufficient coins");
             }
 
@@ -494,6 +542,22 @@ namespace MatchAPI.Controllers
                 .FirstOrDefault(u => u.UpgradeType.ToLower() == request.UpgradeType.ToLower());
 
             int newLevel = request.NewLevel;
+
+            if (existingUpgrade != null)
+            {
+                Console.WriteLine($"Existing upgrade found: {existingUpgrade.UpgradeType} Level {existingUpgrade.Level}");
+                
+                // Additional validation to ensure level is not decreasing
+                if (newLevel < existingUpgrade.Level)
+                {
+                    Console.WriteLine($"Level downgrade attempt: {existingUpgrade.Level} -> {newLevel}");
+                    return BadRequest($"Cannot downgrade from level {existingUpgrade.Level} to {newLevel}");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"No existing upgrade found for {request.UpgradeType}");
+            }
 
             try
             {
@@ -530,16 +594,7 @@ namespace MatchAPI.Controllers
             }
             catch (DbUpdateException ex)
             {
-                // Log the actual exception details
-                Console.WriteLine($"Database error in PurchaseUpgrade: {ex.Message}");
-                Console.WriteLine($"Inner exception: {ex.InnerException?.Message}");
-                
-                return StatusCode(500, $"Database error: {ex.InnerException?.Message ?? ex.Message}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"General error in PurchaseUpgrade: {ex.Message}");
-                return StatusCode(500, $"Server error: {ex.Message}");
+                return StatusCode(500, "Error updating upgrade");
             }
         }
 

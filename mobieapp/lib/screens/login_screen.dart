@@ -36,8 +36,8 @@ class _LoginScreenState extends State<LoginScreen> {
     _loadLanguagePreference();
 
     // Pre-fill test credentials for easier testing
-    _emailController.text = 'test@gmail.com';
-    _passwordController.text = '123456';
+    //_emailController.text = 'test@gmail.com';
+    //_passwordController.text = '123456';
 
     // Ensure BGM is playing in login screen
     _ensureBgmPlaying();
